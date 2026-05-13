@@ -42,6 +42,10 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+nextjs-portal {
+  pointer-events: none !important;
+}
+
 .hide-scrollbar {
   scrollbar-width: none;
 }

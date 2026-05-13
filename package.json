@@ -5,6 +5,7 @@
     "dev": "next dev -p 3000",
     "start": "next dev -p 3000",
     "build": "next build",
+    "test:ui": "playwright test",
     "typecheck": "tsc --noEmit",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
@@ -28,6 +29,7 @@
     "tailwindcss": "4.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.60.0",
     "@types/node": "25.7.0",
     "@types/pg": "8.20.0",
     "@types/react": "~19.1.0",

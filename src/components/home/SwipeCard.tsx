@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronRight, Info, Zap } from 'lucide-react';
 import { AssetChart } from '@/components/chart/AssetChart';
 import { Badge } from '@/components/common/Badge';
@@ -33,8 +34,11 @@ const fomoTone: Record<StockCard['fomoType'], 'blue' | 'green' | 'orange' | 'red
 };
 
 export function SwipeCard({ card, index, total, nextCard, showDeck, compact, onSwipeLeft, onSwipeRight, onSwipeCancel, onTapDetail }: SwipeCardProps) {
+  const router = useRouter();
   const startX = useRef(0);
   const startY = useRef(0);
+  const dragXRef = useRef(0);
+  const suppressClickRef = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const rotation = dragX / 18;
@@ -44,8 +48,9 @@ export function SwipeCard({ card, index, total, nextCard, showDeck, compact, onS
   const handlePointerDown = (event: React.PointerEvent<HTMLElement>) => {
     startX.current = event.clientX;
     startY.current = event.clientY;
+    dragXRef.current = 0;
+    suppressClickRef.current = false;
     setDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
@@ -55,7 +60,9 @@ export function SwipeCard({ card, index, total, nextCard, showDeck, compact, onS
     const dx = event.clientX - startX.current;
     const dy = event.clientY - startY.current;
     if (Math.abs(dx) > Math.abs(dy) || Math.abs(dx) > 18) {
-      setDragX(Math.max(-160, Math.min(160, dx)));
+      const nextDragX = Math.max(-160, Math.min(160, dx));
+      dragXRef.current = nextDragX;
+      setDragX(nextDragX);
     }
   };
 
@@ -64,26 +71,42 @@ export function SwipeCard({ card, index, total, nextCard, showDeck, compact, onS
       return;
     }
     setDragging(false);
-    if (dragX <= -threshold) {
+    const finalDragX = dragXRef.current;
+    if (finalDragX <= -threshold) {
+      suppressClickRef.current = true;
       setDragX(-430);
       window.setTimeout(() => {
+        dragXRef.current = 0;
         setDragX(0);
         onSwipeLeft?.();
       }, 170);
       return;
     }
-    if (dragX >= threshold) {
+    if (finalDragX >= threshold) {
+      suppressClickRef.current = true;
       setDragX(430);
       window.setTimeout(() => {
+        dragXRef.current = 0;
         setDragX(0);
         onSwipeRight?.();
       }, 170);
       return;
     }
-    if (absDrag > 12) {
+    if (Math.abs(finalDragX) > 12) {
+      suppressClickRef.current = true;
       onSwipeCancel?.();
     }
+    dragXRef.current = 0;
     setDragX(0);
+  };
+
+  const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (suppressClickRef.current || Math.abs(dragXRef.current) > 8) {
+      event.preventDefault();
+      return;
+    }
+    onTapDetail?.();
+    router.push(`/cards/${card.id}`);
   };
 
   const cardBody = (
@@ -92,6 +115,7 @@ export function SwipeCard({ card, index, total, nextCard, showDeck, compact, onS
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onClick={handleCardClick}
       style={{
         transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
         transition: dragging ? 'none' : 'transform 180ms ease',
@@ -106,11 +130,13 @@ export function SwipeCard({ card, index, total, nextCard, showDeck, compact, onS
       <Link
         href={`/cards/${card.id}`}
         onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
           if (absDrag > 8) {
-            event.preventDefault();
             return;
           }
           onTapDetail?.();
+          router.push(`/cards/${card.id}`);
         }}
         className="block"
       >

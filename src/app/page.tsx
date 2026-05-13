@@ -10,6 +10,7 @@ import { SwipeCard } from '@/components/home/SwipeCard';
 import { ThemeChipRow } from '@/components/home/ThemeChipRow';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { useAppState } from '@/context/AppStateContext';
+import { accumulation, afterHours, losers, marketMovers, news } from '@/data/mockExplore';
 import { stockCards, type StockCard } from '@/data/mockStocks';
 import { getTimeBasedCards } from '@/lib/curation/timeBasedCuration';
 import type { MarketType } from '@/lib/display/displayPolicy';
@@ -160,6 +161,18 @@ export default function HomePage() {
 
       <div className="space-y-5 px-5 py-6">
         <section className="rounded-3xl border border-slate-200 bg-white p-4">
+          <SectionTitle title="다음 판단 후보" href="/explore/movers" onClick={() => logEvent('home_section_click', { source: 'next_two_cards', homeVariant: variant })} />
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {visibleCards.slice(index + 1, index + 3).map((item) => (
+              <TwoUpStockCard key={item.id} card={item} onClick={() => logEvent('home_section_click', { source: `next_two_cards:${item.id}`, homeVariant: variant })} />
+            ))}
+            {visibleCards.length < 3 ? stockCards.slice(0, 2 - Math.max(0, visibleCards.length - 1)).map((item) => (
+              <TwoUpStockCard key={`fallback-${item.id}`} card={item} onClick={() => logEvent('home_section_click', { source: `next_two_cards:${item.id}`, homeVariant: variant })} />
+            )) : null}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center gap-3">
             <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#0B63F6] text-white">
               <TrendingUp className="h-6 w-6" />
@@ -199,6 +212,46 @@ export default function HomePage() {
             <HomeSection title="놓친 카드" href="/report" cards={stockCards.filter((item) => item.fomoType === 'missed_profit').slice(0, 3)} onClick={(source) => logEvent('home_section_click', { source, homeVariant: variant })} />
             <HomeSection title="차트자리 카드" href="/explore/pullback" cards={stockCards.filter((item) => item.tags.includes('차트자리')).slice(0, 3)} onClick={(source) => logEvent('home_section_click', { source, homeVariant: variant })} />
             <HomeSection title="조건식 인기 카드" href="/rankings" cards={stockCards.filter((item) => item.fomoType === 'formula_copy').slice(0, 3)} onClick={(source) => logEvent('home_section_click', { source, homeVariant: variant })} />
+            <section className="rounded-3xl border border-slate-200 bg-white p-4">
+              <SectionTitle title="실시간 급등 / 상승예상 / 상한가" href="/explore/movers" onClick={() => logEvent('home_section_click', { source: 'legacy_movers', homeVariant: variant })} />
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {marketMovers.map((item) => (
+                  <Link key={item.cardId} href={`/cards/${item.cardId}`} className="rounded-2xl bg-slate-50 p-3" onClick={() => logEvent('home_section_click', { source: `legacy_movers:${item.cardId}`, homeVariant: variant })}>
+                    <p className="text-xs font-black text-[#0B63F6]">{cleanLegacy(item.label, '급등')}</p>
+                    <p className="mt-2 truncate text-sm font-black">{cleanLegacy(item.name, item.cardId)}</p>
+                    <p className="text-sm font-black text-red-500">+{item.rate.toFixed(2)}%</p>
+                    <p className="mt-1 line-clamp-2 text-[11px] font-bold leading-4 text-slate-500">{cleanLegacy(item.hint, '오늘 다시 확인할 후보')}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+            <section className="rounded-3xl border border-slate-200 bg-white p-4">
+              <SectionTitle title="하락종목 / 눌림목 후보" href="/explore/pullback" onClick={() => logEvent('home_section_click', { source: 'legacy_pullback', homeVariant: variant })} />
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {losers.map((item) => (
+                  <div key={item.label} className="rounded-2xl bg-slate-50 p-3">
+                    <p className="text-xs font-black text-slate-500">{cleanLegacy(item.label, '눌림목')}</p>
+                    <p className={item.value.startsWith('-') ? 'mt-2 text-lg font-black text-blue-500' : 'mt-2 text-base font-black text-slate-950'}>{cleanLegacy(item.value, item.value)}</p>
+                    <p className="mt-1 line-clamp-2 text-[11px] font-bold leading-4 text-slate-500">{cleanLegacy(item.hint, '같은 차트자리 관심 증가')}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="rounded-3xl border border-slate-200 bg-white p-4">
+              <SectionTitle title="기관외인매집" href="/explore/flows" onClick={() => logEvent('home_section_click', { source: 'legacy_flows', homeVariant: variant })} />
+              <div className="mt-3 space-y-2">
+                {accumulation.map((item) => (
+                  <Link key={item.card.id} href={`/cards/${item.card.id}`} className="flex items-center justify-between rounded-2xl bg-slate-50 p-3" onClick={() => logEvent('home_section_click', { source: `legacy_flows:${item.card.id}`, homeVariant: variant })}>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-orange-500">{cleanLegacy(item.label, '수급 TOP')}</p>
+                      <p className="mt-1 truncate text-sm font-black">{item.card.name}</p>
+                      <p className="mt-1 truncate text-xs font-bold text-slate-500">{cleanLegacy(item.hint, '기관·외인 수급 후보')}</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-slate-400" />
+                  </Link>
+                ))}
+              </div>
+            </section>
           </>
         ) : null}
 
@@ -212,9 +265,27 @@ export default function HomePage() {
         </section>
         <section className="rounded-3xl border border-slate-200 bg-white p-4">
           <SectionTitle title="뉴스·커뮤니티 반응" href="/explore/news" onClick={() => logEvent('home_section_click', { source: 'news', homeVariant: variant })} />
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">뉴스와 커뮤니티 정보는 제목 일부, 키워드, 링크, 자체 라벨 중심으로 제공합니다.</p>
+          <div className="mt-3 space-y-2">
+            {news.map((item, newsIndex) => (
+              <Link key={item} href="/explore/news" className="block rounded-2xl bg-slate-50 p-3 text-sm font-bold leading-5 text-slate-700" onClick={() => logEvent('home_section_click', { source: `news:${newsIndex}`, homeVariant: variant })}>
+                {newsIndex + 1}. {cleanLegacy(item, ['[속보] 반도체 수출 모멘텀, 관련주 강세', '로봇 시장 성장 전망 재확인', 'AI 반도체 수요 증가 기대 확산'][newsIndex] ?? item)}
+              </Link>
+            ))}
+          </div>
+          <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">뉴스와 커뮤니티 정보는 제목 일부, 키워드, 링크, 자체 라벨 중심으로 제공합니다.</p>
         </section>
-        <HomeSection title="시간외/장전 후보" href="/explore/after-hours" cards={stockCards.filter((item) => item.tags.includes('시간외') || item.tags.includes('프리마켓')).slice(0, 3)} onClick={(source) => logEvent('home_section_click', { source, homeVariant: variant })} />
+        <section className="rounded-3xl border border-slate-200 bg-white p-4">
+          <SectionTitle title="시간외/장전 후보" href="/explore/after-hours" onClick={() => logEvent('home_section_click', { source: 'after_hours', homeVariant: variant })} />
+          <div className="mt-3 space-y-2">
+            {afterHours.map((item, itemIndex) => (
+              <Link key={`${item.name}-${itemIndex}`} href="/explore/after-hours" className="grid grid-cols-[1fr_64px_52px] items-center rounded-2xl bg-slate-50 p-3 text-sm font-bold" onClick={() => logEvent('home_section_click', { source: `after_hours:${itemIndex}`, homeVariant: variant })}>
+                <span className="truncate">{cleanLegacy(item.name, ['일진전기', '에스피시스템스', '두산'][itemIndex] ?? item.name)}</span>
+                <span className={item.rate.startsWith('-') ? 'text-right text-blue-500' : 'text-right text-red-500'}>{item.rate}</span>
+                <span className="text-right text-slate-400">{item.time}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
 
       {showThemeSheet ? <ThemeBottomSheet onClose={() => setShowThemeSheet(false)} onSelect={(theme) => { setIntentFilter(theme); setShowThemeSheet(false); logEvent('theme_filter_change', { filterIntent: theme, filterMarket: marketFilter, homeVariant: variant }); }} /> : null}
@@ -255,10 +326,6 @@ function MarketFilterRow({ active, onChange }: { active: 'ALL' | MarketType; onC
 }
 
 function HomeSection({ title, href, cards, onClick }: { title: string; href: string; cards: StockCard[]; onClick: (source: string) => void }) {
-  useEffect(() => {
-    onClick(`${title}:impression`);
-  }, [onClick, title]);
-
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-4">
       <SectionTitle title={title} href={href} onClick={() => onClick(title)} />
@@ -267,6 +334,29 @@ function HomeSection({ title, href, cards, onClick }: { title: string; href: str
       </div>
     </section>
   );
+}
+
+function TwoUpStockCard({ card, onClick }: { card: StockCard; onClick?: () => void }) {
+  return (
+    <Link href={`/cards/${card.id}`} onClick={onClick} className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
+      <p className="text-xs font-black text-[#0B63F6]">{card.market} · {card.theme}</p>
+      <h3 className="mt-1 truncate text-base font-black">{card.name}</h3>
+      <p className="mt-1 line-clamp-2 text-xs font-bold leading-4 text-slate-500">{card.chartSetupType}</p>
+      <div className="mt-3 flex items-center justify-between">
+        <span className={card.priceChangeRate >= 0 ? 'text-sm font-black text-red-500' : 'text-sm font-black text-blue-500'}>
+          {card.marketType === 'US' ? '위젯' : `${card.priceChangeRate > 0 ? '+' : ''}${card.priceChangeRate}%`}
+        </span>
+        <Badge tone="blue">{card.fomoMetric}</Badge>
+      </div>
+    </Link>
+  );
+}
+
+function cleanLegacy(value: string | undefined, fallback: string) {
+  if (!value || /[�]/.test(value) || /[媛-힣]/.test(value)) {
+    return fallback;
+  }
+  return value;
 }
 
 function SectionTitle({ title, href, onClick }: { title: string; href: string; onClick?: () => void }) {
@@ -316,8 +406,8 @@ function MarketPreferenceSheet({ onClose, onSave }: { onClose: () => void; onSav
   const [selected, setSelected] = useState<string[]>([]);
   const options = ['국장', '미장', '코인'];
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/40" onClick={onClose}>
-      <div className="absolute bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 rounded-t-[28px] bg-white p-5" onClick={(event) => event.stopPropagation()}>
+    <div className="pointer-events-none fixed inset-x-0 bottom-[78px] z-50 mx-auto w-full max-w-[430px] px-4 pb-3">
+      <div className="pointer-events-auto rounded-[24px] border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-900/20">
         <h2 className="text-xl font-black">주로 보고 싶은 시장을 골라주세요.</h2>
         <p className="mt-2 text-sm font-semibold text-slate-500">복수 선택 가능, 건너뛰기 가능</p>
         <div className="mt-4 grid grid-cols-3 gap-2">

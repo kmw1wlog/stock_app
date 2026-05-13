@@ -30,6 +30,8 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 *.log
+test-results/
+playwright-report/
 
 # macOS
 .DS_Store

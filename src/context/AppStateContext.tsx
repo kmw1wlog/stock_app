@@ -215,7 +215,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     <AppStateContext.Provider value={value}>
       {children}
       {toast ? (
-        <div className="fixed left-1/2 top-5 z-50 w-[calc(100%-40px)] max-w-[390px] -translate-x-1/2 rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-bold text-white shadow-2xl">
+        <div className="pointer-events-none fixed left-1/2 top-5 z-50 w-[calc(100%-40px)] max-w-[390px] -translate-x-1/2 rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-bold text-white shadow-2xl">
           {toast}
         </div>
       ) : null}
