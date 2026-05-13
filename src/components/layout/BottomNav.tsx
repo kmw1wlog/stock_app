@@ -14,7 +14,6 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
-
   return (
     <nav className="fixed bottom-0 left-1/2 z-40 grid h-[78px] w-full max-w-[430px] -translate-x-1/2 grid-cols-5 border-t border-slate-200 bg-white/95 px-2 pb-2 pt-2 backdrop-blur-xl">
       {navItems.map((item) => {

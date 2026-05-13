@@ -1,22 +1,18 @@
 import { getDisplayPolicy, type MarketType } from '@/lib/display/displayPolicy';
-import { generateFomoText } from './fomoTextGenerator';
-import { generateReactionZone } from './reactionZoneGenerator';
 import type { AssetLabelView } from '@/lib/labels/labelEngine';
 
 export type GeneratedCardType =
-  | 'stock_recommendation'
-  | 'theme_hot'
-  | 'gainer'
-  | 'upper_limit'
-  | 'loser'
-  | 'after_hours'
-  | 'chart_setup'
-  | 'copy_popular_formula'
-  | 'news_momentum'
-  | 'community_attention'
-  | 'missed_opportunity'
-  | 'crypto_leverage'
-  | 'us_earnings_event';
+  | 'kr_gainer'
+  | 'kr_loser'
+  | 'kr_volume'
+  | 'kr_disclosure'
+  | 'kr_news'
+  | 'kr_chart_setup'
+  | 'us_widget'
+  | 'us_sec_event'
+  | 'crypto_gainer_24h'
+  | 'crypto_volume'
+  | 'crypto_chart_setup';
 
 export function generateCardFromLabels(input: {
   market: MarketType;
@@ -24,18 +20,21 @@ export function generateCardFromLabels(input: {
   name: string;
   theme?: string;
   labels: AssetLabelView[];
-  returnToHighPct?: number;
+  changePct?: number;
 }) {
   const displayPolicy = getDisplayPolicy(input.market);
-  const reactionZone = generateReactionZone(input.labels);
+  const primary = input.labels[0];
+  const hasEvent = input.labels.some((label) => ['news', 'disclosure', 'sec'].includes(label.labelType));
   const cardType: GeneratedCardType =
     input.market === 'CRYPTO'
-      ? 'crypto_leverage'
+      ? 'crypto_gainer_24h'
       : input.market === 'US'
-        ? 'us_earnings_event'
-        : input.returnToHighPct
-          ? 'missed_opportunity'
-          : 'chart_setup';
+        ? hasEvent ? 'us_sec_event' : 'us_widget'
+        : hasEvent
+          ? 'kr_disclosure'
+          : input.changePct !== undefined && input.changePct < 0
+            ? 'kr_loser'
+            : 'kr_gainer';
 
   return {
     market: input.market,
@@ -43,15 +42,9 @@ export function generateCardFromLabels(input: {
     title: input.name,
     subtitle: input.theme,
     cardType,
-    primaryReason: reactionZone.title,
-    secondaryReason: reactionZone.description,
-    fomoText: generateFomoText({
-      market: input.market,
-      cardType,
-      returnToHighPct: input.returnToHighPct,
-      displayPolicy,
-      basis: displayPolicy.dataBasisLabel,
-    }),
+    primaryReason: primary?.displayText ?? '공식 데이터 기준 후보',
+    secondaryReason: primary?.basis ?? displayPolicy.dataBasisLabel,
+    fomoText: null,
     dataBasisLabel: displayPolicy.dataBasisLabel,
     priceDisplayMode: displayPolicy.priceDisplayMode,
     chartDisplayMode: displayPolicy.chartDisplayMode,

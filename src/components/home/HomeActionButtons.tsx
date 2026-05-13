@@ -14,7 +14,7 @@ const actions = [
   { label: '넘기기', icon: X, tone: 'text-slate-500', ring: 'border-slate-200' },
   { label: '관심', icon: Heart, tone: 'text-rose-500', ring: 'border-rose-100' },
   { label: '저장', icon: Bookmark, tone: 'text-[#0B63F6]', ring: 'border-blue-100' },
-  { label: '의견', icon: MessageCircle, tone: 'text-violet-500', ring: 'border-violet-100' },
+  { label: '뉴스', icon: MessageCircle, tone: 'text-violet-500', ring: 'border-violet-100' },
   { label: '더보기', icon: MoreHorizontal, tone: 'text-slate-500', ring: 'border-slate-200' },
 ];
 

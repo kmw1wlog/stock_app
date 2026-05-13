@@ -5,53 +5,36 @@ import { useEffect, useState } from 'react';
 import type { Candle } from '@/lib/chart/candleService';
 import type { MarketType } from '@/lib/display/displayPolicy';
 import { getDisplayPolicy } from '@/lib/display/displayPolicy';
-import { SparklineChart } from './SparklineChart';
 
 const NativePriceChart = dynamic(() => import('./NativePriceChart').then((mod) => mod.NativePriceChart), { ssr: false });
 const TradingViewAdvancedChartWidget = dynamic(() => import('@/components/widgets/TradingViewChartWidget').then((mod) => mod.TradingViewAdvancedChartWidget), { ssr: false });
+const TradingViewMiniSymbolWidget = dynamic(() => import('@/components/widgets/TradingViewChartWidget').then((mod) => mod.TradingViewMiniSymbolWidget), { ssr: false });
 const CoinGeckoPriceWidget = dynamic(() => import('@/components/widgets/CoinGeckoPriceWidget').then((mod) => mod.CoinGeckoPriceWidget), { ssr: false });
 
-export function AssetChart({
-  market,
-  assetKey,
-  tvSymbol,
-  coingeckoId,
-  compact,
-}: {
-  market: MarketType;
-  assetKey?: string;
-  tvSymbol?: string;
-  coingeckoId?: string;
-  compact?: boolean;
-}) {
+export function AssetChart({ market, assetKey, tvSymbol, coingeckoId, compact }: { market: MarketType; assetKey?: string; tvSymbol?: string; coingeckoId?: string; compact?: boolean }) {
   const policy = getDisplayPolicy(market);
   const [candles, setCandles] = useState<Candle[]>([]);
-  const [fallback, setFallback] = useState(false);
+  const [message, setMessage] = useState('차트 데이터 준비중');
 
   useEffect(() => {
-    if (market !== 'KR' || compact || !assetKey) {
-      return;
-    }
+    if ((market !== 'KR' && market !== 'CRYPTO') || compact || !assetKey) return;
     fetch(`/api/assets/${assetKey}/candles?interval=1d`)
       .then((response) => response.json())
-      .then((data: { candles?: Candle[]; fallback?: boolean }) => {
+      .then((data: { candles?: Candle[]; message?: string }) => {
         setCandles(data.candles ?? []);
-        setFallback(Boolean(data.fallback));
+        setMessage(data.message ?? '차트 데이터 준비중');
       })
-      .catch(() => setFallback(true));
+      .catch(() => setMessage('차트 데이터 준비중'));
   }, [assetKey, compact, market]);
 
   if (compact) {
-    return <SparklineChart tone={market === 'CRYPTO' ? 'orange' : market === 'US' ? 'green' : 'blue'} />;
+    if (market === 'US' && tvSymbol) return <TradingViewMiniSymbolWidget symbol={tvSymbol} />;
+    return <div className="grid min-h-[120px] place-items-center rounded-2xl bg-slate-50 text-xs font-bold text-slate-500">차트 데이터 준비중</div>;
   }
-  if (policy.chartDisplayMode === 'native_lightweight') {
-    return candles.length ? <NativePriceChart candles={candles} fallback={fallback} /> : <SparklineChart tone="blue" />;
+  if (market === 'US' && tvSymbol) return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
+  if (market === 'CRYPTO' && coingeckoId && process.env.NEXT_PUBLIC_ENABLE_COINGECKO_WIDGETS === 'true') return <CoinGeckoPriceWidget coinId={coingeckoId} />;
+  if (policy.chartDisplayMode === 'native_lightweight' || market === 'CRYPTO') {
+    return candles.length ? <NativePriceChart candles={candles} /> : <div className="grid min-h-[220px] place-items-center rounded-3xl border border-slate-200 bg-white text-sm font-bold text-slate-500">{message}</div>;
   }
-  if (market === 'CRYPTO' && coingeckoId) {
-    return <CoinGeckoPriceWidget coinId={coingeckoId} />;
-  }
-  if (policy.chartDisplayMode === 'tradingview_widget' && tvSymbol) {
-    return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
-  }
-  return <SparklineChart tone={market === 'CRYPTO' ? 'orange' : 'blue'} />;
+  return <div className="grid min-h-[220px] place-items-center rounded-3xl border border-slate-200 bg-white text-sm font-bold text-slate-500">차트 데이터 준비중</div>;
 }

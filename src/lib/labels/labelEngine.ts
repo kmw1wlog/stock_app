@@ -1,7 +1,7 @@
 import type { MarketType } from '@/lib/display/displayPolicy';
 import type { NormalizedQuote } from '@/lib/providers/types';
 
-export type LabelGrade = '강함' | '보통' | '약함' | '낮음' | '중간' | '높음' | '주의' | '경고' | '증가' | '감소' | '없음';
+export type LabelGrade = 'strong' | 'normal' | 'weak' | 'low' | 'medium' | 'high' | 'caution' | 'pending' | 'increase' | 'decrease' | 'none' | 'hot' | 'cold';
 
 export type AssetLabelView = {
   labelType: string;
@@ -21,53 +21,38 @@ export type LabelInput = {
 };
 
 export function buildCommonLabels(input: LabelInput): AssetLabelView[] {
-  const changePct = input.quote?.changePct ?? 0;
-  const volumeRatio = input.volumeRatio ?? (input.quote?.volume ? 1.6 : 1);
-  const basis = input.quote?.basis ?? 'mock label basis';
+  const changePct = input.quote?.changePct;
+  const basis = input.quote?.basis ?? '공식 데이터 기준';
+  const labels: AssetLabelView[] = [];
 
-  return [
-    {
-      labelType: 'momentum',
-      labelKey: 'upward_pressure',
-      displayText: changePct > 8 ? '상승압력 강함' : changePct < -3 ? '상승압력 약함' : '상승압력 보통',
-      grade: changePct > 8 ? '강함' : changePct < -3 ? '약함' : '보통',
+  if (changePct !== undefined && changePct !== null) {
+    labels.push({
+      labelType: 'price',
+      labelKey: 'change',
+      displayText: changePct >= 0 ? '전일/24h 대비 상승' : '전일/24h 대비 하락',
+      grade: Math.abs(changePct) >= 8 ? 'strong' : 'normal',
       score: Math.max(0, Math.min(100, 50 + changePct * 4)),
       basis,
-    },
-    {
-      labelType: 'trend',
-      labelKey: 'short_trend',
-      displayText: changePct > 3 ? '추세 상승 지속' : changePct < -2 ? '추세 약세 전환' : '추세 횡보',
-      grade: changePct > 3 ? '강함' : changePct < -2 ? '약함' : '보통',
-      basis,
-    },
-    {
-      labelType: 'volume',
-      labelKey: 'volume_attention',
-      displayText: volumeRatio > 1.5 ? '거래량 관심 증가' : '거래량 보통',
-      grade: volumeRatio > 1.5 ? '증가' : '보통',
-      basis,
-    },
-    {
-      labelType: 'risk',
-      labelKey: 'risk_level',
-      displayText: Math.abs(changePct) > 10 ? '위험도 높음' : Math.abs(changePct) > 5 ? '위험도 중간' : '위험도 낮음',
-      grade: Math.abs(changePct) > 10 ? '높음' : Math.abs(changePct) > 5 ? '중간' : '낮음',
-      basis,
-    },
-    {
+    });
+  }
+
+  labels.push({
+    labelType: 'volume',
+    labelKey: 'volume_attention',
+    displayText: input.quote?.amount || input.quote?.volume ? '거래량·거래대금 데이터 확인' : '거래량 자료 준비중',
+    grade: input.quote?.amount || input.quote?.volume ? 'normal' : 'pending',
+    basis,
+  });
+
+  if ((input.newsCount ?? 0) > 0) {
+    labels.push({
       labelType: 'news',
       labelKey: 'news_attention',
-      displayText: (input.newsCount ?? 0) > 2 ? '뉴스 관심 증가' : '뉴스 관심 보통',
-      grade: (input.newsCount ?? 0) > 2 ? '증가' : '보통',
+      displayText: '뉴스 검색 결과 있음',
+      grade: (input.newsCount ?? 0) > 2 ? 'strong' : 'normal',
       basis: '뉴스 제목/키워드 기준',
-    },
-    {
-      labelType: 'community',
-      labelKey: 'community_attention',
-      displayText: (input.communityScore ?? 0) > 60 ? '커뮤니티 관심 증가' : '커뮤니티 관심 보통',
-      grade: (input.communityScore ?? 0) > 60 ? '증가' : '보통',
-      basis: '커뮤니티 링크/의견 확인 기준',
-    },
-  ];
+    });
+  }
+
+  return labels;
 }

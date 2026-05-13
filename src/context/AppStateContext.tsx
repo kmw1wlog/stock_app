@@ -45,6 +45,7 @@ const defaultState: UserState = {
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
 const storageKey = 'stock-app-user-state';
+const appVersion = '0.4.0-data-mvp';
 
 function normalizeEventPayload(payload?: Record<string, unknown>, anonymousId?: string | null) {
   const cardKey = typeof payload?.cardKey === 'string' ? payload.cardKey : typeof payload?.cardId === 'string' ? payload.cardId : undefined;
@@ -62,9 +63,8 @@ function normalizeEventPayload(payload?: Record<string, unknown>, anonymousId?: 
     filter_intent: typeof payload?.filterIntent === 'string' ? payload.filterIntent : undefined,
     source_label: typeof payload?.sourceLabel === 'string' ? payload.sourceLabel : undefined,
     data_basis: typeof payload?.dataBasis === 'string' ? payload.dataBasis : typeof payload?.dataBasisLabel === 'string' ? payload.dataBasisLabel : undefined,
-    is_mock: payload?.isMock ?? true,
+    is_mock: payload?.isMock ?? false,
     is_widget: payload?.isWidget ?? false,
-    is_premium: payload?.isPremium ?? false,
     platform: typeof payload?.platform === 'string' ? payload.platform : undefined,
     position_index: typeof payload?.positionIndex === 'number' ? payload.positionIndex : undefined,
     preferred_markets: payload?.preferredMarkets,
@@ -92,7 +92,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
     registerAnonymousUser({
       deviceType: window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop',
-      appVersion: 'phase1-vnext',
+      appVersion,
       preferredMarkets: parsed.preferredMarkets,
     }).catch(() => undefined);
     flushPendingSyncQueue().catch(() => undefined);
@@ -188,7 +188,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     (markets: string[]) => {
       setState((current) => ({ ...current, preferredMarkets: markets }));
       setMixpanelSuperProperties({ preferred_markets: markets });
-      registerAnonymousUser({ preferredMarkets: markets, appVersion: 'phase1-vnext' }).catch(() => undefined);
+      registerAnonymousUser({ preferredMarkets: markets, appVersion }).catch(() => undefined);
       logEvent('market_filter_change', { preferredMarkets: markets, source: 'market_preference_sheet' });
     },
     [logEvent],
@@ -199,11 +199,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       state,
       toast,
       anonymousId,
-      saveCard: (id, metadata) => addUnique('savedCardIds', id, '보관함에 저장했습니다. 이후 움직임은 리포트에서 다시 확인할 수 있습니다.', 'card_save', 'saved', metadata),
+      saveCard: (id, metadata) => addUnique('savedCardIds', id, '보관함에 저장했습니다. 현재 데이터 기준으로 다시 확인할 수 있습니다.', 'card_save', 'saved', metadata),
       likeCard: (id, metadata) => addUnique('likedCardIds', id, '관심 카드로 표시했습니다.', 'card_like', 'liked', metadata),
-      hideCard: (id, metadata) => addUnique('hiddenCardIds', id, '넘긴 카드로 기록했습니다. 다시 조건을 충족하면 리포트에서 확인됩니다.', 'card_skip', 'hidden', metadata),
-      copyFormula: (id, metadata) => addUnique('copiedFormulaIds', id, '조건식이 복사되었습니다.', 'formula_copy', 'formula_copy', metadata),
-      trackCard: (id, metadata) => addUnique('trackingCardIds', id, '결과 추적에 담았습니다.', 'result_track_add', 'result_tracking', metadata),
+      hideCard: (id, metadata) => addUnique('hiddenCardIds', id, '숨김 카드로 기록했습니다.', 'card_skip', 'hidden', metadata),
+      copyFormula: (id, metadata) => addUnique('copiedFormulaIds', id, '지표식이 복사되었습니다.', 'formula_copy', 'formula_copy', metadata),
+      trackCard: (id, metadata) => addUnique('trackingCardIds', id, '현재 데이터 기준 확인 목록에 추가했습니다.', 'result_track_add', 'result_tracking', metadata),
       setPreferredMarkets,
       showToast,
       logEvent,

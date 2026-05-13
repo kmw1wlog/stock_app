@@ -10,7 +10,6 @@ const eventMap = {
   formula_view: 'formulaViews',
   formula_copy: 'formulaCopies',
   comment_view: 'commentViews',
-  premium_lock_click: 'premiumClicks',
 } as const;
 
 export async function GET(request: Request) {
@@ -54,7 +53,7 @@ export async function GET(request: Request) {
           formulaViews: metrics.formulaViews ?? 0,
           formulaCopies: metrics.formulaCopies ?? 0,
           commentViews: metrics.commentViews ?? 0,
-          premiumClicks: metrics.premiumClicks ?? 0,
+          premiumClicks: 0,
         },
         update: {
           impressions: metrics.impressions ?? 0,
@@ -65,7 +64,7 @@ export async function GET(request: Request) {
           formulaViews: metrics.formulaViews ?? 0,
           formulaCopies: metrics.formulaCopies ?? 0,
           commentViews: metrics.commentViews ?? 0,
-          premiumClicks: metrics.premiumClicks ?? 0,
+          premiumClicks: 0,
         },
       });
       saved += 1;

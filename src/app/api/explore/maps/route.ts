@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { exploreConfig, getExploreCards } from '@/lib/explore/exploreData';
+import { exploreMeta, getExplorePayload } from '@/lib/exploreLive';
 
 export async function GET() {
-  return NextResponse.json({ ok: true, fallback: true, config: exploreConfig.maps, cards: getExploreCards('maps') });
+  const payload = await getExplorePayload('maps');
+  return NextResponse.json({ ...payload, config: exploreMeta.maps, cards: payload.items });
 }

@@ -2,19 +2,16 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '급등주 For You',
-    short_name: 'For You',
-    description: '틴더식 추천주 피드 모바일 앱',
+    name: 'Stock App Data MVP',
+    short_name: 'Stock Data',
+    description: '공식 API와 위젯 기준으로 시장 데이터를 표시합니다.',
     start_url: '/',
     display: 'standalone',
     background_color: '#F8FAFC',
     theme_color: '#0B63F6',
     icons: [
-      {
-        src: '/favicon.ico',
-        sizes: 'any',
-        type: 'image/x-icon',
-      },
+      { src: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
+      { src: '/icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml' },
     ],
   };
 }

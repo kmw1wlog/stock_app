@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
 import type { AssetLabelView } from '@/lib/labels/labelEngine';
-import type { NormalizedQuote } from '@/lib/providers/types';
+import type { NormalizedCandle, NormalizedQuote } from '@/lib/providers/types';
 
 export async function ensureAsset(input: {
   market: string;
@@ -11,6 +11,10 @@ export async function ensureAsset(input: {
   tvSymbol?: string;
   coingeckoId?: string;
   binanceSymbol?: string;
+  upbitMarket?: string;
+  dataGoKrCode?: string;
+  dartCorpCode?: string;
+  cik?: string;
 }) {
   if (!hasDatabaseUrl()) {
     return { id: `${input.market}:${input.symbol}`, fallback: true };
@@ -26,6 +30,10 @@ export async function ensureAsset(input: {
       tvSymbol: input.tvSymbol,
       coingeckoId: input.coingeckoId,
       binanceSymbol: input.binanceSymbol,
+      upbitMarket: input.upbitMarket,
+      dataGoKrCode: input.dataGoKrCode,
+      dartCorpCode: input.dartCorpCode,
+      cik: input.cik,
     },
     update: {
       name: input.name ?? input.symbol,
@@ -33,9 +41,48 @@ export async function ensureAsset(input: {
       tvSymbol: input.tvSymbol,
       coingeckoId: input.coingeckoId,
       binanceSymbol: input.binanceSymbol,
+      upbitMarket: input.upbitMarket,
+      dataGoKrCode: input.dataGoKrCode,
+      dartCorpCode: input.dartCorpCode,
+      cik: input.cik,
     },
   });
   return { id: asset.id, fallback: false };
+}
+
+export async function saveIntradayQuote(input: { assetId: string; quote: NormalizedQuote; interval?: string }) {
+  if (!hasDatabaseUrl()) {
+    return { saved: false, fallback: true };
+  }
+
+  const time = new Date(new Date().toISOString().slice(0, 13) + ':00:00.000Z');
+  await prisma.assetPriceIntraday.upsert({
+    where: {
+      assetId_interval_time_source: {
+        assetId: input.assetId,
+        interval: input.interval ?? '24h',
+        time,
+        source: input.quote.source,
+      },
+    },
+    create: {
+      assetId: input.assetId,
+      interval: input.interval ?? '24h',
+      time,
+      close: input.quote.price,
+      volume: input.quote.volume,
+      amount: input.quote.amount,
+      source: input.quote.source,
+      raw: input.quote as unknown as Prisma.InputJsonValue,
+    },
+    update: {
+      close: input.quote.price,
+      volume: input.quote.volume,
+      amount: input.quote.amount,
+      raw: input.quote as unknown as Prisma.InputJsonValue,
+    },
+  });
+  return { saved: true, fallback: false };
 }
 
 export async function saveDailyQuote(input: { assetId: string; quote: NormalizedQuote }) {
@@ -130,4 +177,94 @@ export async function saveProviderPayload(input: { provider: string; cacheKey: s
     },
   });
   return { saved: true, fallback: false };
+}
+
+export async function saveDailyCandles(input: { assetId: string; candles: NormalizedCandle[]; basis: string }) {
+  if (!hasDatabaseUrl()) {
+    return { saved: 0, fallback: true };
+  }
+
+  let saved = 0;
+  for (const candle of input.candles) {
+    if (!candle.close) continue;
+    await prisma.assetPriceDaily.upsert({
+      where: {
+        assetId_date_source: {
+          assetId: input.assetId,
+          date: new Date(candle.time),
+          source: candle.source,
+        },
+      },
+      create: {
+        assetId: input.assetId,
+        date: new Date(candle.time),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+        amount: candle.amount,
+        source: candle.source,
+        basis: input.basis,
+        raw: candle as unknown as Prisma.InputJsonValue,
+      },
+      update: {
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+        amount: candle.amount,
+        basis: input.basis,
+        raw: candle as unknown as Prisma.InputJsonValue,
+      },
+    });
+    saved += 1;
+  }
+  return { saved, fallback: false };
+}
+
+export async function saveIntradayCandles(input: { assetId: string; candles: NormalizedCandle[]; interval: string }) {
+  if (!hasDatabaseUrl()) {
+    return { saved: 0, fallback: true };
+  }
+
+  let saved = 0;
+  for (const candle of input.candles) {
+    if (!candle.close) continue;
+    await prisma.assetPriceIntraday.upsert({
+      where: {
+        assetId_interval_time_source: {
+          assetId: input.assetId,
+          interval: input.interval,
+          time: new Date(candle.time),
+          source: candle.source,
+        },
+      },
+      create: {
+        assetId: input.assetId,
+        interval: input.interval,
+        time: new Date(candle.time),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+        amount: candle.amount,
+        source: candle.source,
+        raw: candle as unknown as Prisma.InputJsonValue,
+      },
+      update: {
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+        amount: candle.amount,
+        raw: candle as unknown as Prisma.InputJsonValue,
+      },
+    });
+    saved += 1;
+  }
+  return { saved, fallback: false };
 }

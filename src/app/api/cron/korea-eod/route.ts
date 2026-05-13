@@ -1,22 +1,36 @@
 import { runCronJob } from '@/lib/cron/cronRoute';
+import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
 import { buildKoreaLabels } from '@/lib/labels/koreaLabels';
-import { fetchKoreaEodQuote } from '@/lib/providers/korea/dataGoKr';
-import { ensureAsset, saveDailyQuote, saveLabels, saveProviderPayload } from '@/lib/providers/pipeline';
+import { fetchKoreaDailyCandles, fetchKoreaEodQuote } from '@/lib/providers/korea/dataGoKr';
+import { saveDailyCandles, saveDailyQuote, saveLabels, saveProviderPayload } from '@/lib/providers/pipeline';
 
 export async function GET(request: Request) {
   return runCronJob(request, 'korea-eod', async () => {
-    const result = await fetchKoreaEodQuote('277810');
-    const asset = await ensureAsset({ market: 'KR', symbol: '277810', name: '레인보우로보틱스', theme: '로봇', tvSymbol: 'KRX:277810' });
-    await saveProviderPayload({ provider: result.source, cacheKey: 'KR:277810:eod', payload: result });
+    if (!hasDatabaseUrl()) return { source: 'data.go.kr', saved: 0, skipped: 'DATABASE_URL missing' };
+    const assets = await prisma.asset.findMany({ where: { market: 'KR', isActive: true }, take: 300 });
+    let quoteSaved = 0;
+    let candleSaved = 0;
+    const failures: string[] = [];
 
-    let priceSaved = { saved: false, fallback: true };
-    if (!asset.fallback && result.data) {
-      priceSaved = await saveDailyQuote({ assetId: asset.id, quote: result.data });
+    for (const asset of assets) {
+      const symbol = asset.dataGoKrCode ?? asset.symbol;
+      const quote = await fetchKoreaEodQuote(symbol);
+      await saveProviderPayload({ provider: quote.source, cacheKey: `KR:${symbol}:eod`, payload: quote, ttlMinutes: 1440 });
+      if (quote.data) {
+        const saved = await saveDailyQuote({ assetId: asset.id, quote: quote.data });
+        quoteSaved += saved.saved ? 1 : 0;
+        await saveLabels({ assetId: asset.id, labels: buildKoreaLabels({ market: 'KR', quote: quote.data }), source: quote.source });
+      } else {
+        failures.push(symbol);
+      }
+
+      const candles = await fetchKoreaDailyCandles(symbol, 120);
+      if (candles.data.length) {
+        const saved = await saveDailyCandles({ assetId: asset.id, candles: candles.data, basis: candles.basis });
+        candleSaved += saved.saved;
+      }
     }
 
-    const labels = buildKoreaLabels({ market: 'KR', quote: result.data, newsCount: 3, communityScore: 70, volumeRatio: 2 });
-    const labelSaved = asset.fallback ? { saved: 0, fallback: true } : await saveLabels({ assetId: asset.id, labels, source: result.source });
-
-    return { source: result.source, basis: result.basis, hasData: Boolean(result.data), asset, priceSaved, labelSaved };
+    return { source: 'data.go.kr', assets: assets.length, quoteSaved, candleSaved, failures };
   });
 }

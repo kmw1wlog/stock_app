@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getStockCard } from '@/data/mockStocks';
-import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
+import { emptyDataMessage } from '@/lib/dataMode';
+import { envelope, getDisplayCard } from '@/lib/marketData';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ cardKey: string }> }) {
   const { cardKey } = await params;
-
-  if (!hasDatabaseUrl()) {
-    return NextResponse.json({ ok: true, fallback: true, card: getStockCard(cardKey) });
-  }
-
-  const card = await prisma.recommendationCard.findUnique({
-    where: { id: cardKey },
-    include: { asset: true, formulas: true, snapshots: { orderBy: { calculatedAt: 'desc' }, take: 5 } },
+  const card = await getDisplayCard(cardKey);
+  const items = card ? [card] : [];
+  return NextResponse.json({
+    ...envelope(items, card?.source ?? 'provider', card?.dataBasisLabel ?? '공식 API/DB/위젯 기준', {
+      message: card ? undefined : emptyDataMessage(),
+      fallback: false,
+    }),
+    card,
   });
-
-  return NextResponse.json({ ok: true, fallback: !card, card: card ?? getStockCard(cardKey) });
 }

@@ -4,49 +4,23 @@ import { useEffect, useRef } from 'react';
 import { createChart, ColorType, CandlestickSeries, type IChartApi } from 'lightweight-charts';
 import type { Candle } from '@/lib/chart/candleService';
 
-export function NativePriceChart({
-  candles,
-  compact,
-  fallback,
-}: {
-  candles: Candle[];
-  markers?: Array<{ time: string; text: string }>;
-  compact?: boolean;
-  fallback?: boolean;
-}) {
+export function NativePriceChart({ candles, compact }: { candles: Candle[]; markers?: Array<{ time: string; text: string }>; compact?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current || !candles.length) {
-      return;
-    }
+    if (!ref.current || !candles.length) return;
     const chart: IChartApi = createChart(ref.current, {
       height: compact ? 150 : 220,
-      layout: {
-        background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#64748B',
-      },
-      grid: {
-        vertLines: { color: '#EFF6FF' },
-        horzLines: { color: '#EFF6FF' },
-      },
+      layout: { background: { type: ColorType.Solid, color: '#ffffff' }, textColor: '#64748B' },
+      grid: { vertLines: { color: '#EFF6FF' }, horzLines: { color: '#EFF6FF' } },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false },
     });
-    const series = chart.addSeries(CandlestickSeries, {
-      upColor: '#0B63F6',
-      downColor: '#EF4444',
-      borderVisible: false,
-      wickUpColor: '#0B63F6',
-      wickDownColor: '#EF4444',
-    });
+    const series = chart.addSeries(CandlestickSeries, { upColor: '#0B63F6', downColor: '#EF4444', borderVisible: false, wickUpColor: '#0B63F6', wickDownColor: '#EF4444' });
     series.setData(candles);
     chart.timeScale().fitContent();
-
     const handleResize = () => {
-      if (ref.current) {
-        chart.applyOptions({ width: ref.current.clientWidth });
-      }
+      if (ref.current) chart.applyOptions({ width: ref.current.clientWidth });
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -59,11 +33,6 @@ export function NativePriceChart({
   return (
     <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-slate-200 bg-white">
       <div ref={ref} className="min-h-[220px]" />
-      {fallback ? (
-        <div className="absolute left-3 top-3 rounded-full bg-slate-950/80 px-3 py-1 text-[11px] font-black text-white">
-          자료 준비중 · fallback
-        </div>
-      ) : null}
     </div>
   );
 }
