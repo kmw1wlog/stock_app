@@ -32,7 +32,7 @@ export function CardHero({ card }: { card: StockCard }) {
         <p className="mt-3 text-xl font-black text-blue-100">{card.titleReason}</p>
         <p className="mt-2 text-sm font-semibold text-white/80">{card.subReason}</p>
         <div className="mt-5 overflow-hidden rounded-2xl bg-white p-1">
-          <AssetChart market={card.marketType} tvSymbol={card.tvSymbol} coingeckoId={card.coingeckoId} />
+          <AssetChart market={card.marketType} assetKey={card.id} tvSymbol={card.tvSymbol} coingeckoId={card.coingeckoId} />
         </div>
         <p className="mt-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-black text-blue-100">{card.dataBasisLabel}</p>
       </section>

@@ -4,20 +4,20 @@ import type { StockCard } from '@/data/mockStocks';
 export function DiagnosisGrid({ card }: { card: StockCard }) {
   const items = [
     ['종목진단점수', `${card.diagnosis.score}/100`],
-    ['전월대비', card.diagnosis.monthChange],
+    ['최근 1개월', card.diagnosis.monthChange],
     ['주도주체', card.diagnosis.leader],
     ['수급별점', '★'.repeat(card.diagnosis.supplyStars) + '☆'.repeat(5 - card.diagnosis.supplyStars)],
     ['재무', card.diagnosis.finance],
-    ['현재가치', card.diagnosis.valuation],
-    ['업종모멘텀', card.diagnosis.sectorMomentum],
+    ['밸류에이션', card.diagnosis.valuation],
+    ['섹터 모멘텀', card.diagnosis.sectorMomentum],
     ['변동성 ATR', card.diagnosis.atr],
     ['거래량', card.diagnosis.volume],
-    ['공매도', card.diagnosis.shortSelling],
+    ['숏/공매도', card.diagnosis.shortSelling],
   ];
 
   return (
     <section className="px-5">
-      <h2 className="mb-3 text-xl font-black">종목 진단</h2>
+      <h2 className="mb-3 text-xl font-black">종목 진단 요약</h2>
       <div className="grid grid-cols-2 gap-3">
         {items.map(([label, value], index) => (
           <div key={label} className={index === 0 ? 'col-span-2 rounded-3xl bg-[#0B63F6] p-5 text-white shadow-lg shadow-blue-500/25' : 'rounded-2xl border border-slate-200 bg-white p-4'}>

@@ -17,6 +17,7 @@
     "autoprefixer": "10.5.0",
     "lightweight-charts": "5.2.0",
     "lucide-react": "1.14.0",
+    "mixpanel-browser": "2.78.0",
     "next": "16.2.6",
     "pg": "8.20.0",
     "postcss": "8.5.14",

@@ -3,7 +3,7 @@ export const resultByCardId: Record<string, { mine: number; similar: number; sta
     mine: 1.2,
     similar: 1.6,
     status: '추적 중',
-    note: '이 카드를 저장한 상위 사용자는 손절 기준을 함께 확인했습니다.',
+    note: '이 카드를 저장한 사용자 중 조건식까지 확인한 사람들은 손절 기준도 함께 봤습니다.',
   },
   isupetasys: {
     mine: 4.8,

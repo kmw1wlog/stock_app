@@ -128,6 +128,61 @@ model RecommendationCard {
   @@index([detectedAt])
 }
 
+model AnonymousUser {
+  id             String   @id
+  firstSeenAt    DateTime @default(now())
+  lastSeenAt     DateTime @updatedAt
+  mixpanelId     String?
+  deviceType     String?
+  appVersion     String?
+  consentVersion String?
+}
+
+model UserCardState {
+  id          String   @id @default(cuid())
+  anonUserId  String
+  cardKey     String
+  assetKey    String?
+  state       String
+  source      String?
+  market      String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([anonUserId, cardKey, state])
+  @@index([anonUserId])
+  @@index([cardKey])
+  @@index([state])
+}
+
+model UserFormulaState {
+  id          String   @id @default(cuid())
+  anonUserId  String
+  cardKey     String
+  platform    String
+  action      String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([anonUserId])
+  @@index([cardKey])
+  @@index([platform])
+}
+
+model UserSyncQueue {
+  id          String   @id @default(cuid())
+  anonUserId  String
+  eventType   String
+  payload     Json
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([anonUserId])
+  @@index([status])
+}
+
 model CardPriceSnapshot {
   id                String   @id @default(cuid())
   cardId             String
@@ -150,21 +205,23 @@ model CardPriceSnapshot {
 }
 
 model UserEvent {
-  id          String   @id @default(cuid())
-  anonUserId  String
-  cardId      String?
-  assetId     String?
-  eventType   String
-  market      String?
-  metadata    Json?
-  createdAt   DateTime @default(now())
+  id                    String   @id @default(cuid())
+  anonUserId             String
+  cardKey                String?
+  recommendationCardId   String?
+  assetId                String?
+  eventType              String
+  market                 String?
+  metadata               Json?
+  createdAt              DateTime @default(now())
 
-  card        RecommendationCard? @relation(fields: [cardId], references: [id])
+  recommendationCard     RecommendationCard? @relation(fields: [recommendationCardId], references: [id])
 
   @@index([anonUserId])
   @@index([eventType])
   @@index([createdAt])
-  @@index([cardId])
+  @@index([cardKey])
+  @@index([recommendationCardId])
 }
 
 model CardMetricRollup {

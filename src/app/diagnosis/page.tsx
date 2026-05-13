@@ -11,12 +11,12 @@ export default function DiagnosisPage() {
   const { showToast, logEvent } = useAppState();
 
   useEffect(() => {
-    logEvent('opportunity_report_open');
+    logEvent('result_view', { source: 'opportunity_report' });
   }, [logEvent]);
 
   const handleAction = (eventName: string, cta: string) => {
     logEvent(eventName, { source: 'opportunity_report', cta });
-    showToast(`${cta} 요청이 기록되었습니다.`);
+    showToast(`${cta} 요청을 기록했습니다.`);
   };
 
   return (
@@ -24,8 +24,8 @@ export default function DiagnosisPage() {
       <div className="space-y-5 py-6">
         <header className="flex items-start justify-between px-5">
           <div>
-            <h1 className="text-4xl font-black tracking-[-0.03em]">내 기회 리포트</h1>
-            <p className="mt-2 max-w-[300px] text-sm font-semibold leading-6 text-slate-500">내가 넘기고 저장한 카드가 이후 어떻게 움직였는지 정리했어요.</p>
+            <h1 className="text-4xl font-black tracking-normal">기회 리포트</h1>
+            <p className="mt-2 max-w-[300px] text-sm font-semibold leading-6 text-slate-500">저장하거나 넘긴 카드가 이후 어떻게 다시 확인됐는지 정리합니다.</p>
           </div>
           <div className="w-20 rounded-2xl border border-blue-200 bg-white p-2 text-center">
             <p className="text-[11px] font-black text-slate-500">놓친 카드</p>
@@ -49,7 +49,7 @@ export default function DiagnosisPage() {
             ))}
           </div>
           <button
-            onClick={() => handleAction('saved_missed_card_click', '놓친 카드 다시 보기')}
+            onClick={() => handleAction('missed_card_click', '놓친 카드 다시 보기')}
             className="mt-5 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-black text-[#0B63F6]"
           >
             놓친 카드 다시 보기
@@ -100,6 +100,9 @@ export default function DiagnosisPage() {
         <div className="px-5">
           <PremiumLockCard source="opportunity_report_bottom" />
         </div>
+        <p className="px-6 text-xs font-semibold leading-5 text-slate-500">
+          가상추적 결과는 기준 시점 이후 가격 변화를 단순 계산한 참고 정보입니다. 실제 체결, 수수료, 슬리피지에 따라 달라질 수 있습니다.
+        </p>
       </div>
     </MobileShell>
   );

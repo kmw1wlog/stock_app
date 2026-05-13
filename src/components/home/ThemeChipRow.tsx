@@ -2,7 +2,7 @@
 
 import { Chip } from '@/components/common/Chip';
 
-const defaultChips = ['전체', '급등', '상한가', '반도체', '로봇', '바이오', 'AI', '시간외'];
+const defaultChips = ['오늘 급등', '저장 급증', '놓친 카드', '차트자리', '조건식 인기'];
 
 export function ThemeChipRow({ active, onChange, filters = defaultChips }: { active: string; onChange: (value: string) => void; filters?: string[] }) {
   return (

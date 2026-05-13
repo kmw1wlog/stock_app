@@ -17,7 +17,9 @@ export default async function FormulaPage({ params }: { params: Promise<{ id: st
           </Link>
           <div>
             <h1 className="text-3xl font-black">조건식 보기</h1>
-            <p className="mt-1 text-sm font-semibold text-slate-500">{card.name} · {card.theme}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-500">
+              {card.name} · {card.chartSetupType}
+            </p>
           </div>
         </header>
         <FormulaPanel card={card} />

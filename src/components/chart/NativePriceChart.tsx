@@ -2,26 +2,26 @@
 
 import { useEffect, useRef } from 'react';
 import { createChart, ColorType, CandlestickSeries, type IChartApi } from 'lightweight-charts';
+import type { Candle } from '@/lib/chart/candleService';
 
-const fallbackCandles = [
-  { time: '2026-05-01', open: 100, high: 108, low: 96, close: 104 },
-  { time: '2026-05-02', open: 104, high: 112, low: 101, close: 110 },
-  { time: '2026-05-03', open: 109, high: 118, low: 106, close: 114 },
-  { time: '2026-05-07', open: 114, high: 121, low: 111, close: 119 },
-  { time: '2026-05-08', open: 118, high: 132, low: 116, close: 129 },
-  { time: '2026-05-11', open: 130, high: 144, low: 126, close: 141 },
-  { time: '2026-05-12', open: 140, high: 151, low: 137, close: 148 },
-];
-
-export function NativePriceChart() {
+export function NativePriceChart({
+  candles,
+  compact,
+  fallback,
+}: {
+  candles: Candle[];
+  markers?: Array<{ time: string; text: string }>;
+  compact?: boolean;
+  fallback?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!ref.current) {
+    if (!ref.current || !candles.length) {
       return;
     }
     const chart: IChartApi = createChart(ref.current, {
-      height: 220,
+      height: compact ? 150 : 220,
       layout: {
         background: { type: ColorType.Solid, color: '#ffffff' },
         textColor: '#64748B',
@@ -40,7 +40,7 @@ export function NativePriceChart() {
       wickUpColor: '#0B63F6',
       wickDownColor: '#EF4444',
     });
-    series.setData(fallbackCandles);
+    series.setData(candles);
     chart.timeScale().fitContent();
 
     const handleResize = () => {
@@ -54,7 +54,16 @@ export function NativePriceChart() {
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, []);
+  }, [candles, compact]);
 
-  return <div ref={ref} className="min-h-[220px] overflow-hidden rounded-3xl border border-slate-200 bg-white" />;
+  return (
+    <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-slate-200 bg-white">
+      <div ref={ref} className="min-h-[220px]" />
+      {fallback ? (
+        <div className="absolute left-3 top-3 rounded-full bg-slate-950/80 px-3 py-1 text-[11px] font-black text-white">
+          자료 준비중 · fallback
+        </div>
+      ) : null}
+    </div>
+  );
 }

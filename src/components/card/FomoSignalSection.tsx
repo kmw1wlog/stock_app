@@ -1,12 +1,12 @@
-import { Copy, MousePointerClick, Timer } from 'lucide-react';
+import { Copy, MousePointerClick, RotateCcw } from 'lucide-react';
 import type { StockCard } from '@/data/mockStocks';
 
-const icons = [Timer, MousePointerClick, Copy];
+const icons = [RotateCcw, MousePointerClick, Copy];
 
 export function FomoSignalSection({ card }: { card: StockCard }) {
   return (
     <section className="px-5">
-      <h2 className="mb-3 text-xl font-black">사람들이 왜 눌렀나요?</h2>
+      <h2 className="mb-3 text-xl font-black">투자자 반응</h2>
       <div className="grid gap-3">
         {card.fomoSignals.map((signal, index) => {
           const Icon = icons[index] ?? MousePointerClick;

@@ -10,7 +10,7 @@ export type GeneratedCardType =
   | 'upper_limit'
   | 'loser'
   | 'after_hours'
-  | 'reaction_zone'
+  | 'chart_setup'
   | 'copy_popular_formula'
   | 'news_momentum'
   | 'community_attention'
@@ -35,7 +35,7 @@ export function generateCardFromLabels(input: {
         ? 'us_earnings_event'
         : input.returnToHighPct
           ? 'missed_opportunity'
-          : 'reaction_zone';
+          : 'chart_setup';
 
   return {
     market: input.market,

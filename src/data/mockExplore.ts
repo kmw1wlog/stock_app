@@ -9,7 +9,7 @@ export const marketMovers = [
 export const losers = [
   { label: '하락', value: '-4.21%', hint: '반등 후보로 저장 증가' },
   { label: '급락', value: '-6.17%', hint: '위험도 확인 클릭 증가' },
-  { label: '눌림목 후보', value: '관심 283', hint: '비슷한 반응 구간 관심 증가' },
+  { label: '눌림목 후보', value: '관심 283', hint: '같은 차트자리 관심 증가' },
 ];
 
 export const afterHours = [

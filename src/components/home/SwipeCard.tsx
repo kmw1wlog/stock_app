@@ -16,7 +16,7 @@ const fomoTone: Record<StockCard['fomoType'], 'blue' | 'green' | 'orange' | 'red
   missed_profit: 'orange',
   save_spike: 'blue',
   formula_copy: 'violet',
-  chart_seat: 'green',
+  chart_setup: 'green',
   community_heat: 'red',
   after_hours: 'orange',
   best_reaction: 'blue',
@@ -32,15 +32,15 @@ export function SwipeCard({ card, index, total }: SwipeCardProps) {
             <Badge tone="gray">{card.market}</Badge>
             <Badge tone="violet">{card.style}</Badge>
           </div>
-          <h2 className="text-[30px] font-black leading-tight tracking-[-0.02em]">{card.name}</h2>
+          <h2 className="text-[30px] font-black leading-tight tracking-normal">{card.name}</h2>
           <p className="mt-3 text-lg font-black text-blue-100">{card.titleReason}</p>
           <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-white/85">{card.subReason}</p>
           <div className="mt-4 overflow-hidden rounded-3xl bg-white">
-            <AssetChart market={card.marketType} tvSymbol={card.tvSymbol} coingeckoId={card.coingeckoId} compact />
+            <AssetChart market={card.marketType} assetKey={card.id} tvSymbol={card.tvSymbol} coingeckoId={card.coingeckoId} compact />
           </div>
           <div className="mt-4 grid grid-cols-3 overflow-hidden rounded-2xl border border-white/15 bg-white/12 backdrop-blur-xl">
             <div className="border-r border-white/15 p-3">
-              <p className="text-[11px] text-blue-100">{card.marketType === 'US' ? '가격/차트' : '거래대금'}</p>
+              <p className="text-[11px] text-blue-100">{card.marketType === 'US' ? '가격·차트' : '거래대금'}</p>
               <p className="text-lg font-black">{card.volumeAmountText}</p>
             </div>
             <div className="border-r border-white/15 p-3">
@@ -70,8 +70,8 @@ export function SwipeCard({ card, index, total }: SwipeCardProps) {
           </div>
           <h3 className="text-lg font-black leading-6">{card.fomoHeadline}</h3>
           <p className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-slate-600">{card.fomoSubtext}</p>
-          {card.sourceLabel ? <p className="mt-2 text-[11px] font-bold text-slate-400">기준: {card.sourceLabel}</p> : null}
-          <p className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black text-slate-500">{card.dataBasisLabel}</p>
+          <p className="mt-2 text-[11px] font-bold text-slate-400">기준: {card.sourceLabel ?? card.dataBasisLabel}</p>
+          <p className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black text-slate-500">{card.chartSetupType}</p>
           <div className="mt-3 flex items-center justify-between">
             <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-black text-[#0B63F6]">{card.fomoCta ?? '지금 확인'}</span>
             <ChevronRight className="h-5 w-5 text-slate-400" />
@@ -80,7 +80,7 @@ export function SwipeCard({ card, index, total }: SwipeCardProps) {
         <Link href={`/cards/${card.id}`} className="mt-4 flex items-center justify-between border-t border-white/15 pt-4 text-sm font-bold text-blue-100">
           <span className="flex items-center gap-2">
             <Info className="h-4 w-4" />
-            조건식 복사 · 상세 보기에서 가능
+            진단 · 차트자리 · 조건식 보기
           </span>
           <ChevronRight className="h-5 w-5" />
         </Link>

@@ -1,4 +1,4 @@
-import { BarChart3, LineChart, Users } from 'lucide-react';
+import { BarChart3, FileText, LineChart } from 'lucide-react';
 import type { StockCard } from '@/data/mockStocks';
 
 export function WhyCardAppeared({ card }: { card: StockCard }) {
@@ -6,17 +6,17 @@ export function WhyCardAppeared({ card }: { card: StockCard }) {
     {
       title: '시장 데이터',
       icon: BarChart3,
-      items: ['거래대금 급증', '20일선 돌파', '뉴스 빈도 증가', '변동성 증가'],
+      items: [card.titleReason, card.chartSetupType, card.dataBasisLabel],
     },
     {
       title: '앱 내부 데이터',
       icon: LineChart,
-      items: ['최근 7일 저장률 상승', '관심 등록 증가', '의견 증가', '조건식 복사 인기'],
+      items: [card.fomoHeadline, card.sourceLabel ?? '앱 내 저장/복사 이벤트 기준'],
     },
     {
-      title: '비슷한 사용자',
-      icon: Users,
-      items: [card.fomoHeadline, card.fomoSubtext],
+      title: '뉴스·공시·커뮤니티',
+      icon: FileText,
+      items: ['제목 일부, 키워드, 링크, 자체 라벨 중심으로 제공합니다.', card.subReason],
     },
   ];
 
@@ -36,7 +36,7 @@ export function WhyCardAppeared({ card }: { card: StockCard }) {
               </div>
               <ul className="space-y-2 text-sm font-semibold leading-6 text-slate-600">
                 {block.items.map((item) => (
-                  <li key={item}>· {item}</li>
+                  <li key={item}>• {item}</li>
                 ))}
               </ul>
             </div>

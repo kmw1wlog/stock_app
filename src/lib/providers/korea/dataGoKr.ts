@@ -14,6 +14,11 @@ type DataGoKrResponse = {
   };
 };
 
+function numberFrom(value: string | undefined) {
+  const normalized = Number(String(value ?? '').replaceAll(',', ''));
+  return Number.isFinite(normalized) ? normalized : undefined;
+}
+
 export async function fetchKoreaEodQuote(symbol: string): Promise<ProviderResult<NormalizedQuote | null>> {
   const key = process.env.DATA_GO_KR_SERVICE_KEY;
   if (!key) {
@@ -29,8 +34,8 @@ export async function fetchKoreaEodQuote(symbol: string): Promise<ProviderResult
   if (!item) {
     return emptyProviderResult('data.go.kr', '전일 기준 · 공공데이터 empty', null);
   }
-  const price = Number(item.clpr ?? item.closePrice);
-  const changePct = Number(item.fltRt ?? item.changeRate);
+  const price = numberFrom(item.clpr ?? item.closePrice);
+  const changePct = numberFrom(item.fltRt ?? item.changeRate);
   return {
     source: 'data.go.kr',
     basis: '전일 기준 · 공공데이터',
@@ -39,10 +44,10 @@ export async function fetchKoreaEodQuote(symbol: string): Promise<ProviderResult
     data: {
       symbol,
       market: 'KR',
-      price: Number.isFinite(price) ? price : undefined,
-      changePct: Number.isFinite(changePct) ? changePct : undefined,
-      volume: Number(item.trqu),
-      amount: Number(item.trPrc),
+      price,
+      changePct,
+      volume: numberFrom(item.trqu),
+      amount: numberFrom(item.trPrc),
       basis: '전일 기준 · 공공데이터',
       source: 'data.go.kr',
     },

@@ -6,7 +6,9 @@ export async function POST(request: Request) {
     | {
         anonUserId?: string;
         eventType?: string;
+        cardKey?: string;
         cardId?: string;
+        recommendationCardId?: string;
         assetId?: string;
         market?: string;
         metadata?: Record<string, unknown>;
@@ -20,7 +22,8 @@ export async function POST(request: Request) {
   const result = await logServerEvent({
     anonUserId: body.anonUserId ?? 'anonymous',
     eventType: body.eventType,
-    cardId: body.cardId,
+    cardKey: body.cardKey ?? body.cardId,
+    recommendationCardId: body.recommendationCardId,
     assetId: body.assetId,
     market: body.market,
     metadata: body.metadata,

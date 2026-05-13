@@ -1,6 +1,9 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { setMixpanelSuperProperties, trackMixpanelEvent } from '@/lib/analytics/mixpanelClient';
+import { flushPendingSyncQueue, getAnonymousId, queuePendingSync, registerAnonymousUser } from '@/lib/user/anonymousUser';
+import { syncUserCardState, syncUserFormulaState, type UserCardStateAction } from '@/lib/user/userCardState';
 
 export type UserState = {
   savedCardIds: string[];
@@ -18,47 +21,74 @@ export type UserState = {
 type AppStateContextValue = {
   state: UserState;
   toast: string | null;
-  saveCard: (id: string) => void;
-  likeCard: (id: string) => void;
-  hideCard: (id: string) => void;
-  copyFormula: (id: string) => void;
-  trackCard: (id: string) => void;
+  anonymousId: string | null;
+  saveCard: (id: string, metadata?: Record<string, unknown>) => void;
+  likeCard: (id: string, metadata?: Record<string, unknown>) => void;
+  hideCard: (id: string, metadata?: Record<string, unknown>) => void;
+  copyFormula: (id: string, metadata?: Record<string, unknown>) => void;
+  trackCard: (id: string, metadata?: Record<string, unknown>) => void;
   showToast: (message: string) => void;
   logEvent: (eventName: string, payload?: Record<string, unknown>) => void;
 };
 
 const defaultState: UserState = {
-  savedCardIds: ['rainbow-robotics', 'isupetasys', 'alteogen'],
-  likedCardIds: ['isupetasys'],
+  savedCardIds: [],
+  likedCardIds: [],
   hiddenCardIds: [],
-  copiedFormulaIds: ['rainbow-robotics-yesTrader'],
-  trackingCardIds: ['rainbow-robotics', 'isupetasys', 'alteogen'],
+  copiedFormulaIds: [],
+  trackingCardIds: [],
   eventLog: [],
 };
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
-const storageKey = 'surge-for-you-state';
-const anonUserKey = 'surge-for-you-anon-id';
+const storageKey = 'stock-app-user-state';
 
-function getAnonUserId() {
-  const existing = window.localStorage.getItem(anonUserKey);
-  if (existing) {
-    return existing;
-  }
-  const anonUserId = `anon_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  window.localStorage.setItem(anonUserKey, anonUserId);
-  return anonUserId;
+function normalizeEventPayload(payload?: Record<string, unknown>, anonymousId?: string | null) {
+  const cardKey = typeof payload?.cardKey === 'string' ? payload.cardKey : typeof payload?.cardId === 'string' ? payload.cardId : undefined;
+  return {
+    anon_user_id: anonymousId,
+    card_key: cardKey,
+    asset_key: typeof payload?.assetKey === 'string' ? payload.assetKey : undefined,
+    symbol: typeof payload?.symbol === 'string' ? payload.symbol : undefined,
+    market: typeof payload?.market === 'string' ? payload.market : undefined,
+    card_type: typeof payload?.cardType === 'string' ? payload.cardType : undefined,
+    theme: typeof payload?.theme === 'string' ? payload.theme : undefined,
+    chart_seat_type: typeof payload?.chartSetupType === 'string' ? payload.chartSetupType : undefined,
+    filter_market: typeof payload?.filterMarket === 'string' ? payload.filterMarket : undefined,
+    filter_intent: typeof payload?.filterIntent === 'string' ? payload.filterIntent : undefined,
+    source_label: typeof payload?.sourceLabel === 'string' ? payload.sourceLabel : undefined,
+    data_basis: typeof payload?.dataBasis === 'string' ? payload.dataBasis : typeof payload?.dataBasisLabel === 'string' ? payload.dataBasisLabel : undefined,
+    is_mock: payload?.isMock ?? true,
+    is_widget: payload?.isWidget ?? false,
+    is_premium: payload?.isPremium ?? false,
+    platform: typeof payload?.platform === 'string' ? payload.platform : undefined,
+    ...payload,
+  };
 }
 
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<UserState>(defaultState);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [anonymousId, setAnonymousId] = useState<string | null>(null);
 
   useEffect(() => {
+    const anonUserId = getAnonymousId();
+    setAnonymousId(anonUserId);
+    setMixpanelSuperProperties({ anon_user_id: anonUserId });
+    registerAnonymousUser({
+      deviceType: window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop',
+      appVersion: 'phase1',
+    }).catch(() => undefined);
+    flushPendingSyncQueue().catch(() => undefined);
+
     const raw = window.localStorage.getItem(storageKey);
     if (raw) {
-      setState({ ...defaultState, ...JSON.parse(raw) });
+      try {
+        setState({ ...defaultState, ...JSON.parse(raw) });
+      } catch {
+        setState(defaultState);
+      }
     }
     setHydrated(true);
   }, []);
@@ -74,50 +104,94 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     window.setTimeout(() => setToast(null), 1800);
   }, []);
 
-  const logEvent = useCallback((eventName: string, payload?: Record<string, unknown>) => {
-    const entry = { eventName, payload, createdAt: new Date().toISOString() };
-    console.log('[event]', eventName, payload);
-    setState((current) => ({
-      ...current,
-      eventLog: [entry, ...(current.eventLog ?? [])].slice(0, 200),
-    }));
-    const anonUserId = getAnonUserId();
-    fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+  const logEvent = useCallback(
+    (eventName: string, payload?: Record<string, unknown>) => {
+      const anonUserId = anonymousId ?? getAnonymousId();
+      const normalized = normalizeEventPayload(payload, anonUserId);
+      const entry = { eventName, payload: normalized, createdAt: new Date().toISOString() };
+
+      setState((current) => ({
+        ...current,
+        eventLog: [entry, ...(current.eventLog ?? [])].slice(0, 200),
+      }));
+      trackMixpanelEvent(eventName, normalized);
+
+      const body = {
         anonUserId,
         eventType: eventName,
-        cardId: typeof payload?.cardId === 'string' ? payload.cardId : undefined,
+        cardKey: typeof normalized.card_key === 'string' ? normalized.card_key : undefined,
         assetId: typeof payload?.assetId === 'string' ? payload.assetId : undefined,
-        market: typeof payload?.market === 'string' ? payload.market : undefined,
-        metadata: payload,
-      }),
-    }).catch(() => undefined);
-  }, []);
+        market: typeof normalized.market === 'string' ? normalized.market : undefined,
+        metadata: normalized,
+      };
 
-  const addUnique = useCallback((key: keyof Omit<UserState, 'eventLog'>, id: string, message: string, eventName: string) => {
-    setState((current) => ({
-      ...current,
-      [key]: current[key].includes(id) ? current[key] : [id, ...current[key]],
-    }));
-    logEvent(eventName, { cardId: id });
-    showToast(message);
-  }, [logEvent, showToast]);
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            queuePendingSync({ url: '/api/events', method: 'POST', payload: body });
+          }
+        })
+        .catch(() => queuePendingSync({ url: '/api/events', method: 'POST', payload: body }));
+    },
+    [anonymousId],
+  );
+
+  const addUnique = useCallback(
+    (
+      key: keyof Omit<UserState, 'eventLog'>,
+      id: string,
+      message: string,
+      eventName: string,
+      stateName: UserCardStateAction | 'formula_copy',
+      metadata?: Record<string, unknown>,
+    ) => {
+      setState((current) => ({
+        ...current,
+        [key]: current[key].includes(id) ? current[key] : [id, ...current[key]],
+      }));
+
+      const eventPayload = { ...metadata, cardKey: id, cardId: id };
+      if (stateName === 'formula_copy') {
+        void syncUserFormulaState({
+          cardKey: typeof metadata?.cardKey === 'string' ? metadata.cardKey : id.split('-')[0] ?? id,
+          platform: typeof metadata?.platform === 'string' ? metadata.platform : 'unknown',
+          action: 'copy',
+          metadata,
+        });
+      } else {
+        void syncUserCardState({
+          cardKey: id,
+          state: stateName,
+          assetKey: typeof metadata?.assetKey === 'string' ? metadata.assetKey : undefined,
+          market: typeof metadata?.market === 'string' ? metadata.market : undefined,
+          source: typeof metadata?.source === 'string' ? metadata.source : eventName,
+          metadata,
+        });
+      }
+      logEvent(eventName, eventPayload);
+      showToast(message);
+    },
+    [logEvent, showToast],
+  );
 
   const value = useMemo<AppStateContextValue>(
     () => ({
       state,
       toast,
-      saveCard: (id) => addUnique('savedCardIds', id, '저장 완료. 이 카드가 이후 어떻게 움직이는지 결과에서 확인할 수 있어요.', 'card_save'),
-      likeCard: (id) => addUnique('likedCardIds', id, '관심 카드로 저장했어요. 비슷한 사용자들이 함께 본 종목을 더 보여드릴게요.', 'card_like'),
-      hideCard: (id) => addUnique('hiddenCardIds', id, '넘긴 카드로 기록했어요. 나중에 다시 반응하면 알려드릴게요.', 'card_skip'),
-      copyFormula: (id) => addUnique('copiedFormulaIds', id, '조건식이 복사되었습니다.', 'formula_copy'),
-      trackCard: (id) => addUnique('trackingCardIds', id, '결과 추적에 추가했습니다.', 'result_track_add'),
+      anonymousId,
+      saveCard: (id, metadata) => addUnique('savedCardIds', id, '보관함에 저장했습니다. 이후 움직임은 결과 탭에서 다시 확인할 수 있습니다.', 'card_save', 'saved', metadata),
+      likeCard: (id, metadata) => addUnique('likedCardIds', id, '관심 카드로 표시했습니다.', 'card_like', 'liked', metadata),
+      hideCard: (id, metadata) => addUnique('hiddenCardIds', id, '넘긴 카드로 기록했습니다. 다시 조건을 충족하면 결과 탭에서 확인됩니다.', 'card_skip', 'hidden', metadata),
+      copyFormula: (id, metadata) => addUnique('copiedFormulaIds', id, '조건식이 복사되었습니다.', 'formula_copy', 'formula_copy', metadata),
+      trackCard: (id, metadata) => addUnique('trackingCardIds', id, '결과 추적에 담았습니다.', 'result_track_add', 'result_tracking', metadata),
       showToast,
       logEvent,
     }),
-    [addUnique, logEvent, showToast, state, toast],
+    [addUnique, anonymousId, logEvent, showToast, state, toast],
   );
 
   return (
