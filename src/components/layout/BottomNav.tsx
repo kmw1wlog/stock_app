@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Folder, Home, Radar, Search } from 'lucide-react';
+import { BarChart3, Folder, Home, Search, Trophy } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: '홈', icon: Home },
   { href: '/explore', label: '탐색', icon: Search },
+  { href: '/rankings', label: '랭킹', icon: Trophy },
   { href: '/saved', label: '보관함', icon: Folder },
-  { href: '/results', label: '결과', icon: BarChart3 },
-  { href: '/diagnosis', label: '기회', icon: Radar },
+  { href: '/report', label: '리포트', icon: BarChart3 },
 ];
 
 export function BottomNav() {

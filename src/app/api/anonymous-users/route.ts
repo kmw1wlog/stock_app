@@ -10,6 +10,7 @@ export async function POST(request: Request) {
         deviceType?: string;
         appVersion?: string;
         consentVersion?: string;
+        preferredMarkets?: string[];
       }
     | null;
 
@@ -29,12 +30,14 @@ export async function POST(request: Request) {
       deviceType: body.deviceType,
       appVersion: body.appVersion,
       consentVersion: body.consentVersion,
+      preferredMarkets: body.preferredMarkets,
     },
     update: {
       mixpanelId: body.mixpanelId,
       deviceType: body.deviceType,
       appVersion: body.appVersion,
       consentVersion: body.consentVersion,
+      preferredMarkets: body.preferredMarkets,
     } satisfies Prisma.AnonymousUserUpdateInput,
   });
 

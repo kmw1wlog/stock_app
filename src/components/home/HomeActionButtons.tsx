@@ -25,11 +25,11 @@ export function HomeActionButtons({ onSkip, onLike, onSave, onOpinion, onMore }:
       {actions.map((action, index) => {
         const Icon = action.icon;
         return (
-          <button key={action.label} type="button" onClick={handlers[index]} className="flex flex-col items-center gap-2">
-            <span className={`grid h-[52px] w-[52px] place-items-center rounded-full border bg-white shadow-lg shadow-slate-200/70 ${action.ring}`}>
-              <Icon className={`h-6 w-6 ${action.tone}`} strokeWidth={2.6} />
+          <button key={action.label} type="button" onClick={handlers[index]} className="flex flex-col items-center gap-1.5">
+            <span className={`grid h-[46px] w-[46px] place-items-center rounded-full border bg-white shadow-lg shadow-slate-200/70 ${action.ring}`}>
+              <Icon className={`h-5 w-5 ${action.tone}`} strokeWidth={2.6} />
             </span>
-            <span className="text-xs font-bold text-slate-700">{action.label}</span>
+            <span className="text-[11px] font-bold text-slate-700">{action.label}</span>
           </button>
         );
       })}

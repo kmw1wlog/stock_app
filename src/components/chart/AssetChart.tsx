@@ -8,7 +8,7 @@ import { getDisplayPolicy } from '@/lib/display/displayPolicy';
 import { SparklineChart } from './SparklineChart';
 
 const NativePriceChart = dynamic(() => import('./NativePriceChart').then((mod) => mod.NativePriceChart), { ssr: false });
-const TradingViewChartWidget = dynamic(() => import('@/components/widgets/TradingViewChartWidget').then((mod) => mod.TradingViewChartWidget), { ssr: false });
+const TradingViewAdvancedChartWidget = dynamic(() => import('@/components/widgets/TradingViewChartWidget').then((mod) => mod.TradingViewAdvancedChartWidget), { ssr: false });
 const CoinGeckoPriceWidget = dynamic(() => import('@/components/widgets/CoinGeckoPriceWidget').then((mod) => mod.CoinGeckoPriceWidget), { ssr: false });
 
 export function AssetChart({
@@ -51,7 +51,7 @@ export function AssetChart({
     return <CoinGeckoPriceWidget coinId={coingeckoId} />;
   }
   if (policy.chartDisplayMode === 'tradingview_widget' && tvSymbol) {
-    return <TradingViewChartWidget symbol={tvSymbol} advanced />;
+    return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
   }
   return <SparklineChart tone={market === 'CRYPTO' ? 'orange' : 'blue'} />;
 }

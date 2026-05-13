@@ -136,6 +136,7 @@ model AnonymousUser {
   deviceType     String?
   appVersion     String?
   consentVersion String?
+  preferredMarkets Json?
 }
 
 model UserCardState {

@@ -4,6 +4,8 @@ import { Badge } from '@/components/common/Badge';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { exploreConfig, getExploreCards, type ExploreSlug } from '@/lib/explore/exploreData';
 
+const marketFilters = ['전체', '국장', '미장', '코인'];
+
 export function ExploreDetailPage({ slug }: { slug: ExploreSlug }) {
   const config = exploreConfig[slug];
   const cards = getExploreCards(slug);
@@ -30,13 +32,22 @@ export function ExploreDetailPage({ slug }: { slug: ExploreSlug }) {
               </Badge>
             ))}
           </div>
+          <div className="mt-3 flex gap-2 overflow-x-auto">
+            {marketFilters.map((filter, index) => (
+              <span key={filter} className={index === 0 ? 'shrink-0 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-black text-white' : 'shrink-0 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-black text-slate-500'}>
+                {filter}
+              </span>
+            ))}
+          </div>
         </section>
         <section className="space-y-3 px-5">
           {cards.map((card) => (
             <Link key={card.id} href={`/cards/${card.id}`} className="block rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-black text-[#0B63F6]">{card.market} · {card.theme}</p>
+                  <p className="text-xs font-black text-[#0B63F6]">
+                    {card.market} · {card.theme}
+                  </p>
                   <h2 className="mt-1 truncate text-xl font-black">{card.name}</h2>
                   <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{card.chartSetupType}</p>
                 </div>
