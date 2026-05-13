@@ -13,6 +13,8 @@
 
 - 국장: `DATA_GO_KR_SERVICE_KEY`, `OPENDART_API_KEY`, `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET`
 - 미장: `SEC_USER_AGENT`, `NEXT_PUBLIC_ENABLE_TRADINGVIEW_WIDGETS=true`
+- 미장 직접 가격 선택: `US_DIRECT_PRICE_PROVIDER=alpaca|fmp|alphaVantage|twelveData`, 선택 provider 키
+- 미장 뉴스 선택: `MARKETAUX_API_TOKEN`
 - 코인: `NEXT_PUBLIC_ENABLE_COINGECKO_WIDGETS=true`
 - 선택: KRX, Twelve Data, Polygon, Alpaca 관련 env
 
@@ -32,4 +34,3 @@
 ## 스토어 래핑
 
 Play Store TWA 또는 Capacitor 래핑은 이번 버전에서 구현하지 않았습니다. 우선 Vercel 배포 가능한 PWA 상태를 목표로 합니다.
-

@@ -10,3 +10,9 @@
 - `/api/provider-status`, `/api/admin/refresh-all`, `/data-status`를 추가했습니다.
 - PWA manifest와 기본 아이콘을 추가했습니다.
 
+## Unreleased
+
+- Alpaca/FMP/Alpha Vantage/Twelve Data 미장 직접 가격 provider 후보와 `/api/cron/us-direct-quotes`를 추가했습니다.
+- Marketaux 뉴스 provider와 `/api/cron/marketaux-news`를 추가했습니다.
+- API 수집 데이터와 공식 위젯/사이트 표시 데이터를 분리한 `docs/DATA_SOURCE_STRATEGY.md`를 추가했습니다.
+- seed 데이터의 깨진 한글 문구를 정리했습니다.

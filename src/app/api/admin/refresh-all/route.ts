@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { assertCronAuth } from '@/lib/cron/cronRoute';
 
-const jobs = ['korea-eod', 'dart', 'naver-news', 'us-sec', 'crypto-quotes', 'fear-greed', 'generate-cards'];
+const jobs = ['korea-eod', 'dart', 'naver-news', 'us-sec', 'us-direct-quotes', 'marketaux-news', 'crypto-quotes', 'fear-greed', 'generate-cards'];
 
 export async function POST(request: Request) {
   if (!assertCronAuth(request)) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });

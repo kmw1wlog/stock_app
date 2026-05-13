@@ -1,8 +1,8 @@
 import type { Prisma } from '@prisma/client';
 import { runCronJob } from '@/lib/cron/cronRoute';
 import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
-import { fetchSecCompanySubmissions } from '@/lib/providers/us/secEdgar';
 import { saveLabels, saveProviderPayload } from '@/lib/providers/pipeline';
+import { fetchSecCompanySubmissions } from '@/lib/providers/us/secEdgar';
 
 type SecRecent = {
   filings?: { recent?: { form?: string[]; filingDate?: string[]; accessionNumber?: string[]; primaryDocument?: string[] } };
@@ -37,7 +37,11 @@ export async function GET(request: Request) {
         saved += 1;
       }
       if (forms.length) {
-        const labelSaved = await saveLabels({ assetId: asset.id, source: result.source, labels: [{ labelType: 'sec', labelKey: 'recent-sec-filing', displayText: `최근 ${forms[0]} 공시`, grade: ['8-K', '10-Q', '10-K'].includes(forms[0]) ? 'strong' : 'normal', basis: 'SEC EDGAR metadata 기준' }] });
+        const labelSaved = await saveLabels({
+          assetId: asset.id,
+          source: result.source,
+          labels: [{ labelType: 'sec', labelKey: 'recent-sec-filing', displayText: `최근 ${forms[0]} 공시`, grade: ['8-K', '10-Q', '10-K'].includes(forms[0]) ? 'strong' : 'normal', basis: 'SEC EDGAR metadata 기준' }],
+        });
         labels += labelSaved.saved;
       }
     }

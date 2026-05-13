@@ -11,6 +11,8 @@ export type DisplayPolicy = {
   dataBasisLabel: string;
 };
 
+const directPriceProviders = new Set(['alpaca', 'fmp', 'alphaVantage', 'twelveData']);
+
 export function getDisplayPolicy(market: MarketType): DisplayPolicy {
   if (market === 'KR') {
     return {
@@ -24,7 +26,7 @@ export function getDisplayPolicy(market: MarketType): DisplayPolicy {
 
   if (market === 'US') {
     const directProvider = process.env.US_DIRECT_PRICE_PROVIDER;
-    const canComputeDirectReturn = directProvider === 'alpaca' || directProvider === 'polygon' || directProvider === 'twelveData';
+    const canComputeDirectReturn = Boolean(directProvider && directPriceProviders.has(directProvider));
     return {
       market,
       priceDisplayMode: canComputeDirectReturn ? 'internal_public' : 'widget',

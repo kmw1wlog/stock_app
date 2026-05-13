@@ -31,11 +31,13 @@ export async function GET(request: Request) {
       const hasEvent = asset.labels.some((label) => ['disclosure', 'sec', 'news'].includes(label.labelType));
       const cardType = cardTypeFor(asset.market, daily?.changePct, hasEvent);
       const basis = asset.market === 'US'
-        ? 'TradingView 위젯 기준 · SEC EDGAR metadata'
+        ? daily?.basis ?? 'TradingView 위젯 기준 · SEC EDGAR metadata'
         : intraday?.source
           ? `${intraday.interval} 기준 · ${intraday.source}`
           : daily?.basis ?? '공식 데이터 기준';
       const id = `${asset.market.toLowerCase()}-${asset.symbol.toLowerCase()}-${cardType}`;
+      const title = asset.market === 'US' ? `${asset.name} 공식 위젯/SEC 데이터` : `${asset.name} 공식 데이터 기준`;
+      const primaryReason = asset.labels[0]?.displayText ?? (daily?.changePct === undefined || daily?.changePct === null ? '공식 데이터가 저장된 종목입니다.' : `전일 대비 ${daily.changePct >= 0 ? '상승' : '하락'}`);
 
       await prisma.recommendationCard.upsert({
         where: { id },
@@ -44,25 +46,25 @@ export async function GET(request: Request) {
           assetId: asset.id,
           market: asset.market,
           cardType,
-          title: asset.market === 'US' ? `${asset.name} 공식 위젯/SEC 데이터` : `${asset.name} 공식 데이터 기준`,
+          title,
           subtitle: asset.theme ?? undefined,
-          primaryReason: asset.labels[0]?.displayText ?? (daily?.changePct === undefined || daily?.changePct === null ? '공식 데이터가 저장된 종목입니다.' : `전일 대비 ${daily.changePct >= 0 ? '상승' : '하락'}`),
+          primaryReason,
           secondaryReason: asset.labels[1]?.displayText,
           fomoText: null,
           dataBasisLabel: basis,
-          priceDisplayMode: asset.market === 'US' ? 'widget' : 'native',
+          priceDisplayMode: asset.market === 'US' && !daily?.close ? 'widget' : 'native',
           chartDisplayMode: asset.market === 'US' ? 'tradingview_widget' : 'native_lightweight',
           isPremium: false,
         },
         update: {
           cardType,
-          title: asset.market === 'US' ? `${asset.name} 공식 위젯/SEC 데이터` : `${asset.name} 공식 데이터 기준`,
+          title,
           subtitle: asset.theme ?? undefined,
-          primaryReason: asset.labels[0]?.displayText ?? (daily?.changePct === undefined || daily?.changePct === null ? '공식 데이터가 저장된 종목입니다.' : `전일 대비 ${daily.changePct >= 0 ? '상승' : '하락'}`),
+          primaryReason,
           secondaryReason: asset.labels[1]?.displayText,
           fomoText: null,
           dataBasisLabel: basis,
-          priceDisplayMode: asset.market === 'US' ? 'widget' : 'native',
+          priceDisplayMode: asset.market === 'US' && !daily?.close ? 'widget' : 'native',
           chartDisplayMode: asset.market === 'US' ? 'tradingview_widget' : 'native_lightweight',
           isPremium: false,
           status: 'active',

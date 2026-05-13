@@ -73,14 +73,34 @@ const cryptoAssets = [
 
 async function main() {
   for (const [symbol, name, theme, tvSymbol, dartCorpCode] of krAssets) {
-    await prisma.asset.upsert({ where: { market_symbol: { market: 'KR', symbol } }, update: { name, exchange: 'KRX', theme, tvSymbol, dataGoKrCode: symbol, dartCorpCode }, create: { market: 'KR', symbol, name, exchange: 'KRX', theme, tvSymbol, dataGoKrCode: symbol, dartCorpCode } });
+    await prisma.asset.upsert({
+      where: { market_symbol: { market: 'KR', symbol } },
+      update: { name, exchange: 'KRX', theme, tvSymbol, dataGoKrCode: symbol, dartCorpCode },
+      create: { market: 'KR', symbol, name, exchange: 'KRX', theme, tvSymbol, dataGoKrCode: symbol, dartCorpCode },
+    });
   }
+
   for (const [symbol, name, theme, tvSymbol, cik] of usAssets) {
-    await prisma.asset.upsert({ where: { market_symbol: { market: 'US', symbol } }, update: { name, exchange: tvSymbol.split(':')[0], theme, tvSymbol, cik }, create: { market: 'US', symbol, name, exchange: tvSymbol.split(':')[0], theme, tvSymbol, cik } });
+    await prisma.asset.upsert({
+      where: { market_symbol: { market: 'US', symbol } },
+      update: { name, exchange: tvSymbol.split(':')[0], theme, tvSymbol, cik },
+      create: { market: 'US', symbol, name, exchange: tvSymbol.split(':')[0], theme, tvSymbol, cik },
+    });
   }
+
   for (const [symbol, name, theme, tvSymbol, coingeckoId, cmcId, binanceSymbol, upbitMarket] of cryptoAssets) {
-    await prisma.asset.upsert({ where: { market_symbol: { market: 'CRYPTO', symbol } }, update: { name, exchange: 'Binance/Upbit', theme, tvSymbol, coingeckoId, cmcId, binanceSymbol, upbitMarket }, create: { market: 'CRYPTO', symbol, name, exchange: 'Binance/Upbit', theme, tvSymbol, coingeckoId, cmcId, binanceSymbol, upbitMarket } });
+    await prisma.asset.upsert({
+      where: { market_symbol: { market: 'CRYPTO', symbol } },
+      update: { name, exchange: 'Binance/Upbit', theme, tvSymbol, coingeckoId, cmcId, binanceSymbol, upbitMarket },
+      create: { market: 'CRYPTO', symbol, name, exchange: 'Binance/Upbit', theme, tvSymbol, coingeckoId, cmcId, binanceSymbol, upbitMarket },
+    });
   }
 }
 
-main().finally(async () => prisma.$disconnect()).catch(async (error) => { console.error(error); await prisma.$disconnect(); process.exit(1); });
+main()
+  .catch(async (error) => {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  })
+  .finally(async () => prisma.$disconnect());

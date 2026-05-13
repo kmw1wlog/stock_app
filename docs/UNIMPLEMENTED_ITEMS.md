@@ -27,14 +27,32 @@
 - 현재 앱에서의 fallback 처리: `수급 자료 준비중`
 - 향후 구현 방법: KRX/KIS provider를 통해 기관/외국인 순매수 데이터를 저장하고 라벨을 생성합니다.
 
-## 미장 직접 가격 API
+## 미장 직접 가격 API 운영 검증
 
 - 기능명: 미장 직접 가격/등락률 계산
+- 구현 상태: 부분 구현
+- 구현하지 못한 이유: provider 코드는 추가했지만, 운영 DB와 env가 없는 현재 로컬에서는 실제 적재를 검증하지 못했습니다.
+- 필요한 API 키 또는 외부 권한: `US_DIRECT_PRICE_PROVIDER=alpaca|fmp|alphaVantage|twelveData`, provider별 API 키
+- 현재 앱에서의 fallback 처리: 직접 가격 데이터가 없으면 TradingView 위젯으로 가격/차트를 표시하고 자체 등락률은 표시하지 않습니다.
+- 향후 구현 방법: 운영 env 설정 후 `/api/cron/us-direct-quotes`를 실행하고 `AssetPriceDaily` 적재를 확인합니다.
+
+## FRED/BLS 매크로 라벨
+
+- 기능명: 미장 매크로 환경 라벨
 - 구현 상태: 미구현
-- 구현하지 못한 이유: 운영 가능한 Twelve Data/Polygon/Alpaca provider 키와 rate limit 정책을 확정하지 않았습니다.
-- 필요한 API 키 또는 외부 권한: `TWELVE_DATA_API_KEY`, `POLYGON_API_KEY`, `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY`
-- 현재 앱에서의 fallback 처리: TradingView 위젯으로 가격/차트를 표시하고 자체 등락률은 표시하지 않습니다.
-- 향후 구현 방법: `US_DIRECT_PRICE_PROVIDER`별 provider를 추가하고 AssetPriceDaily/Intraday에 저장합니다.
+- 구현하지 못한 이유: 이번 턴에서는 가격/뉴스/provider 상태 보강을 우선했습니다.
+- 필요한 API 키 또는 외부 권한: `FRED_API_KEY`, `BLS_API_KEY`
+- 현재 앱에서의 fallback 처리: 매크로 라벨 미노출
+- 향후 구현 방법: CPI, 실업률, 금리 시계열을 저장하고 시장 환경 라벨을 생성합니다.
+
+## Coinalyze funding/OI
+
+- 기능명: 코인 funding rate/OI 라벨
+- 구현 상태: 미구현
+- 구현하지 못한 이유: 거래소 가격/캔들 pipeline이 우선이며, Coinalyze 응답과 상업 노출 정책 검증이 필요합니다.
+- 필요한 API 키 또는 외부 권한: `COINALYZE_API_KEY`
+- 현재 앱에서의 fallback 처리: 레버리지/미결제약정 라벨 미노출 또는 자료 준비중
+- 향후 구현 방법: funding/OI provider를 추가하고 원시값 대신 롱 과열/숏 과열/중립 라벨을 저장합니다.
 
 ## Play Store/App Store 네이티브 래핑
 
@@ -44,4 +62,3 @@
 - 필요한 API 키 또는 외부 권한: 스토어 개발자 계정, 패키지 서명, TWA 또는 Capacitor 설정
 - 현재 앱에서의 fallback 처리: PWA manifest를 제공합니다.
 - 향후 구현 방법: TWA 또는 Capacitor 프로젝트를 별도 생성하고 웹 앱 URL을 래핑합니다.
-
