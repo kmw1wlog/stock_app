@@ -1,0 +1,275 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Asset {
+  id              String   @id @default(cuid())
+  market          String
+  symbol          String
+  name            String
+  exchange        String?
+  theme           String?
+  tvSymbol        String?
+  coingeckoId     String?
+  cmcId           String?
+  binanceSymbol   String?
+  upbitMarket     String?
+  dataGoKrCode    String?
+  dartCorpCode    String?
+  cik             String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  dailyPrices     AssetPriceDaily[]
+  intradayPrices  AssetPriceIntraday[]
+  labels          AssetLabel[]
+  cards           RecommendationCard[]
+
+  @@unique([market, symbol])
+  @@index([market])
+  @@index([theme])
+}
+
+model AssetPriceDaily {
+  id          String   @id @default(cuid())
+  assetId     String
+  date        DateTime
+  open        Float?
+  high        Float?
+  low         Float?
+  close       Float?
+  volume      Float?
+  amount      Float?
+  changePct   Float?
+  source      String
+  basis       String
+  raw         Json?
+  createdAt   DateTime @default(now())
+
+  asset       Asset    @relation(fields: [assetId], references: [id])
+
+  @@unique([assetId, date, source])
+  @@index([date])
+}
+
+model AssetPriceIntraday {
+  id          String   @id @default(cuid())
+  assetId     String
+  interval    String
+  time        DateTime
+  open        Float?
+  high        Float?
+  low         Float?
+  close       Float?
+  volume      Float?
+  amount      Float?
+  source      String
+  raw         Json?
+  createdAt   DateTime @default(now())
+
+  asset       Asset    @relation(fields: [assetId], references: [id])
+
+  @@unique([assetId, interval, time, source])
+  @@index([time])
+}
+
+model AssetLabel {
+  id          String   @id @default(cuid())
+  assetId     String
+  labelType   String
+  labelKey    String
+  displayText String
+  grade       String?
+  score       Float?
+  source      String
+  basis       String
+  basisJson   Json?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  asset       Asset    @relation(fields: [assetId], references: [id])
+
+  @@index([assetId])
+  @@index([labelType])
+  @@unique([assetId, labelType, labelKey])
+}
+
+model RecommendationCard {
+  id              String   @id @default(cuid())
+  assetId          String
+  market           String
+  cardType         String
+  title            String
+  subtitle         String?
+  primaryReason    String
+  secondaryReason  String?
+  fomoText         String?
+  dataBasisLabel   String?
+  priceDisplayMode String?
+  chartDisplayMode String?
+  isPremium        Boolean  @default(false)
+  status           String   @default("active")
+  detectedAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  asset            Asset    @relation(fields: [assetId], references: [id])
+  snapshots        CardPriceSnapshot[]
+  events           UserEvent[]
+  formulas         CardFormula[]
+
+  @@index([market])
+  @@index([cardType])
+  @@index([detectedAt])
+}
+
+model CardPriceSnapshot {
+  id                String   @id @default(cuid())
+  cardId             String
+  snapshotType        String
+  price               Float?
+  highAfter1h         Float?
+  highAfter24h        Float?
+  highAfter3d         Float?
+  closeAfter1d        Float?
+  returnToHighPct     Float?
+  returnToClosePct    Float?
+  source              String
+  basis               String
+  calculatedAt        DateTime @default(now())
+
+  card                RecommendationCard @relation(fields: [cardId], references: [id])
+
+  @@index([cardId])
+  @@index([snapshotType])
+}
+
+model UserEvent {
+  id          String   @id @default(cuid())
+  anonUserId  String
+  cardId      String?
+  assetId     String?
+  eventType   String
+  market      String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  card        RecommendationCard? @relation(fields: [cardId], references: [id])
+
+  @@index([anonUserId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([cardId])
+}
+
+model CardMetricRollup {
+  id              String   @id @default(cuid())
+  cardId           String
+  period           String
+  impressions      Int      @default(0)
+  saves            Int      @default(0)
+  likes            Int      @default(0)
+  skips            Int      @default(0)
+  detailViews      Int      @default(0)
+  formulaViews     Int      @default(0)
+  formulaCopies    Int      @default(0)
+  commentViews     Int      @default(0)
+  premiumClicks    Int      @default(0)
+  saveRate         Float?
+  copyRate         Float?
+  detailRate       Float?
+  updatedAt        DateTime @updatedAt
+
+  @@unique([cardId, period])
+  @@index([period])
+}
+
+model FormulaTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  platform    String
+  market      String?
+  formulaType String
+  content     String
+  description String?
+  tags        String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cards       CardFormula[]
+}
+
+model CardFormula {
+  id          String @id @default(cuid())
+  cardId      String
+  formulaId   String
+
+  card        RecommendationCard @relation(fields: [cardId], references: [id])
+  formula     FormulaTemplate    @relation(fields: [formulaId], references: [id])
+
+  @@unique([cardId, formulaId])
+}
+
+model NewsMention {
+  id          String   @id @default(cuid())
+  assetId     String?
+  market      String
+  keyword     String
+  title       String?
+  outlet      String?
+  link        String?
+  publishedAt DateTime?
+  mentionScore Float?
+  source      String
+  raw         Json?
+  createdAt   DateTime @default(now())
+
+  @@index([assetId])
+  @@index([keyword])
+  @@index([publishedAt])
+}
+
+model CommunityLink {
+  id          String   @id @default(cuid())
+  assetId     String?
+  market      String
+  source      String
+  title       String
+  link        String
+  displayLabel String?
+  mentionScore Float?
+  createdAt   DateTime @default(now())
+
+  @@index([assetId])
+  @@index([source])
+}
+
+model CronRun {
+  id          String   @id @default(cuid())
+  jobName     String
+  status      String
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+  message     String?
+  metadata    Json?
+
+  @@index([jobName])
+  @@index([startedAt])
+}
+
+model ProviderPayloadCache {
+  id          String   @id @default(cuid())
+  provider    String
+  cacheKey    String
+  payload     Json
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@unique([provider, cacheKey])
+  @@index([expiresAt])
+}

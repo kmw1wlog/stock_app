@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  --primary-blue: #0b63f6;
+  --deep-navy: #081a3a;
+  --soft-blue: #eef5ff;
+  --profit: #00a676;
+  --loss: #ef4444;
+  --warning: #f59e0b;
+  --gray-text: #64748b;
+  --border: #e2e8f0;
+  --card: #ffffff;
+  --background: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(11, 99, 246, 0.12), transparent 34rem),
+    linear-gradient(180deg, #f8fbff 0%, #eef3f9 100%);
+  color: #0f172a;
+}
+
+body {
+  margin: 0;
+  font-family:
+    "SF Pro Display",
+    "Apple SD Gothic Neo",
+    "Pretendard",
+    "Noto Sans KR",
+    system-ui,
+    sans-serif;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 16px 40px rgba(8, 26, 58, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.deep-card {
+  background:
+    radial-gradient(circle at 78% 18%, rgba(61, 137, 255, 0.44), transparent 16rem),
+    linear-gradient(145deg, #08235a 0%, #03142e 68%, #031026 100%);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
