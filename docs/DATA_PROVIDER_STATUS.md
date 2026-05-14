@@ -23,8 +23,9 @@ Runtime status is exposed through `/api/provider-status` and `/data-status`. Whe
 | Marketaux | US/global news title/link | `MARKETAUX_API_TOKEN` | smoke-tested | 2026-05-14, HTTP 200 | Explore/Report | Title/link only. |
 | Massive/Polygon | US aggregate quote | `POLYGON_API_KEY` | smoke-tested, not app-wired | 2026-05-14, HTTP 200 | Future | AAPL previous aggregate returned. |
 | KRX Open API | short selling/investor flow | `KRX_OPENAPI_AUTH_KEY`, `KRX_SHORT_SELLING_API_ID`, `KRX_INVESTOR_FLOW_API_ID` | blocked until API IDs supplied | 2026-05-14 | Explore flows | Auth key exists; API IDs are missing. No fake short/flow labels. |
+| Kiwoom REST | KR short selling/lending/investor flow | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET` | implemented and smoke-tested | 2026-05-14, HTTP 200 | Home/Explore flows | `ka10014`, `ka20068`, and `ka10059` returned Samsung Electronics rows. Refresh cadence: market hours 15m, after close hourly, holidays daily. |
 | FRED | macro data | `FRED_API_KEY` | smoke-tested, not app-wired | 2026-05-14, HTTP 200 | Future | DGS10 returned. |
 | BLS | labor/macro data | `BLS_API_KEY` | smoke-tested, not app-wired | 2026-05-14, HTTP 200 | Future | Unemployment series returned. |
 | Coinalyze | funding/OI | `COINALYZE_API_KEY` | smoke-tested, not app-wired | 2026-05-14, HTTP 200 | Future | BTCUSDT open interest returned. |
 | KIS Open API | auth token | `KIS_API_KEY`, `KIS_API_SECRET` | smoke-tested auth only | 2026-05-14, HTTP 200 | Future | Token issued; repeated issue can hit official 1/min throttle. |
-| Kiwoom REST | auth token | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET` | smoke-tested auth only | 2026-05-14, HTTP 200 | Future | Token issued; no trading/order use. |
+| Kiwoom REST auth | auth token | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET` | smoke-tested auth | 2026-05-14, HTTP 200 | Provider auth | Token issued; no trading/order use. |

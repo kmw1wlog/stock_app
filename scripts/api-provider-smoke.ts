@@ -325,6 +325,56 @@ async function kiwoomToken(): Promise<SmokeResult> {
   });
 }
 
+async function kiwoomKrShortFlow(): Promise<SmokeResult> {
+  const missing = missingEnv(['KIWOOM_REST_API_KEY', 'KIWOOM_REST_API_SECRET']);
+  const endpoint = 'https://api.kiwoom.com/api/dostk/shsa';
+  if (missing.length) return skipped('kiwoom-kr-short-flow', endpoint, missing);
+  return safe('kiwoom-kr-short-flow', endpoint, async () => {
+    const tokenResult = await fetchJson('https://api.kiwoom.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+      body: JSON.stringify({ grant_type: 'client_credentials', appkey: process.env.KIWOOM_REST_API_KEY, secretkey: process.env.KIWOOM_REST_API_SECRET }),
+    });
+    const tokenData = tokenResult.data as { token?: string; return_msg?: string } | null;
+    if (!tokenData?.token) {
+      return { provider: 'kiwoom-kr-short-flow', ok: false, status: tokenResult.status, endpoint, summary: tokenData?.return_msg ?? 'token failed', rawTextSnippet: tokenResult.rawTextSnippet };
+    }
+    const end = new Date();
+    const start = new Date(end.getTime() - 20 * 24 * 60 * 60 * 1000);
+    const ymd = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, '');
+    async function call(name: string, apiId: string, path: string, body: Record<string, string>) {
+      const result = await fetchJson(`https://api.kiwoom.com${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;charset=UTF-8',
+          authorization: `Bearer ${tokenData.token}`,
+          'api-id': apiId,
+          'cont-yn': 'N',
+          'next-key': '',
+        },
+        body: JSON.stringify(body),
+      });
+      const data = result.data as { return_code?: number; return_msg?: string; [key: string]: unknown } | null;
+      return { name, status: result.status, ok: result.ok && data?.return_code === 0, data, snippet: result.rawTextSnippet };
+    }
+    const short = await call('short', 'ka10014', '/api/dostk/shsa', { stk_cd: '005930', strt_dt: ymd(start), end_dt: ymd(end) });
+    const lending = await call('lending', 'ka20068', '/api/dostk/slb', { stk_cd: '005930' });
+    const investor = await call('investor', 'ka10059', '/api/dostk/stkinfo', { stk_cd: '005930', dt: ymd(new Date(end.getTime() - 24 * 60 * 60 * 1000)), amt_qty_tp: '1', trde_tp: '0', unit_tp: '1' });
+    const shortRows = Array.isArray(short.data?.shrts_trnsn) ? short.data.shrts_trnsn.length : 0;
+    const lendingRows = Array.isArray(lending.data?.dbrt_trde_trnsn) ? lending.data.dbrt_trde_trnsn.length : 0;
+    const investorRows = Array.isArray(investor.data?.stk_invsr_orgn) ? investor.data.stk_invsr_orgn.length : 0;
+    const ok = short.ok && lending.ok && investor.ok && shortRows > 0 && lendingRows > 0 && investorRows > 0;
+    return {
+      provider: 'kiwoom-kr-short-flow',
+      ok,
+      status: short.status,
+      endpoint,
+      summary: `short ${shortRows}, lending ${lendingRows}, investor ${investorRows}`,
+      rawTextSnippet: sanitizeSnippet(JSON.stringify({ short: short.data, lending: lending.data, investor: investor.data }).slice(0, 500)),
+    };
+  });
+}
+
 function krx(): SmokeResult {
   const missing = missingEnv(['KRX_OPENAPI_AUTH_KEY']);
   const apiIds = missingEnv(['KRX_SHORT_SELLING_API_ID', 'KRX_INVESTOR_FLOW_API_ID']);
@@ -351,6 +401,7 @@ async function main() {
     coinalyze(),
     kisToken(),
     kiwoomToken(),
+    kiwoomKrShortFlow(),
     Promise.resolve(krx()),
   ];
   const results = await Promise.all(checks);

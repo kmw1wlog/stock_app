@@ -3,7 +3,7 @@
 ## Environment
 
 - Date: 2026-05-14
-- Branch: `feature/api-key-runtime-verification`
+- Branch: `feature/krx-alternative-short-flow`
 - DATA_MODE: `live`
 - Local env: `.env` populated from user-provided API list. `.env` is gitignored and must not be committed.
 - Database: not configured locally for this run, so DB persistence jobs were not migrated/seeded here.
@@ -29,27 +29,32 @@
 | Coinalyze | `COINALYZE_API_KEY` | success | BTCUSDT perpetual open interest endpoint returned data. |
 | KIS | `KIS_API_KEY`, `KIS_API_SECRET` | success | Token endpoint issued token. Note: official endpoint may rate-limit token issue to 1/min. |
 | Kiwoom REST | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET` | success | OAuth token endpoint issued token. |
+| Kiwoom KR short/flow | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET` | success | `ka10014`, `ka20068`, and `ka10059` returned Samsung Electronics short selling, lending, and investor rows. |
 | KRX Open API | `KRX_OPENAPI_AUTH_KEY`, `KRX_SHORT_SELLING_API_ID`, `KRX_INVESTOR_FLOW_API_ID` | blocked | Auth key exists, but short selling/investor flow API IDs are missing. |
 
 ## Rendering Verification
 
 `npm run data:verify-render` passed against `http://localhost:3000`.
 
-`/api/cards/feed` returned 7 live cards:
+`/api/cards/feed` returned 8 live cards:
 
 - Data.go.kr KR stock card: Samsung Electronics EOD price/change/volume/amount.
 - Alpaca US card: Apple daily snapshot.
 - Naver News card: Samsung Electronics news title/link basis.
+- Kiwoom REST card: Samsung Electronics short selling/lending/investor flow basis.
 - Binance crypto cards: BTC, ETH, SOL 24h data.
 - Alternative Fear & Greed card.
 
 No returned card had `isMock: true`.
 
+- `/api/korea/short-flow?symbol=005930` returned Kiwoom summary and rows.
+- `/api/explore/flows` returned the Kiwoom short/flow card.
+
 `POST /api/admin/refresh-all` was called locally with `Authorization: Bearer CRON_SECRET`; it returned `ok: true`, app version `0.5.0-live-data`, and 10 job results.
 
 ## Commands Run
 
-- `npm run api:smoke`: passed with 15 successes, 0 failed, 1 missing/blocked provider group (KRX API IDs).
+- `npm run api:smoke`: passed with 16 successes, 0 failed, 1 missing/blocked provider group (KRX API IDs).
 - `npm run data:smoke`: passed.
 - `npm run data:verify-render`: passed.
 - `npm run check:banned-copy`: passed.
@@ -63,4 +68,4 @@ No returned card had `isMock: true`.
 
 - KRX Open API cannot be called until `KRX_SHORT_SELLING_API_ID` and `KRX_INVESTOR_FLOW_API_ID` are known.
 - Local DB is not configured, so provider jobs could not persist rows locally in this run.
-- KIS and Kiwoom are authentication-only checks for now. They are not used for order placement or app rendering.
+- KIS is authentication-only for now. Kiwoom is used for read-only KR short selling/lending/investor-flow rendering; no order placement is used.

@@ -47,7 +47,7 @@ This version targets Vercel/PWA deployment. Play Store/App Store native wrapping
 - `npm run check:banned-copy`: passed.
 - `npm run data:verify-render`: passed against `http://localhost:3000`.
 - `npm run test:ui`: passed.
-- `npm run api:smoke`: passed with 15 successful API groups and 1 blocked KRX API-ID group.
+- `npm run api:smoke`: passed with 16 successful API groups and 1 blocked KRX API-ID group.
 
 ## Native Store Wrapping
 

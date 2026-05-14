@@ -20,7 +20,7 @@ Secrets are stored only in local `.env` or deployment env. This document records
 | KRX Open API | `KRX_OPENAPI_AUTH_KEY`, `KRX_SHORT_SELLING_API_ID`, `KRX_INVESTOR_FLOW_API_ID` | KR short selling and investor flow labels | KRX Open API service endpoint depends on API ID | blocked until API IDs are supplied |
 | Coinalyze | `COINALYZE_API_KEY` | Crypto funding/OI/leverage labels | `https://api.coinalyze.net/v1/open-interest` | smoke-tested by `api:smoke`; app provider not yet wired |
 | Naver Search API | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | KR news title/link search | `https://openapi.naver.com/v1/search/news.json` | smoke-tested by `api:smoke`; app provider exists |
-| Kiwoom REST | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET`, `KIWOOM_ACCOUNT_NO`, `KIWOOM_ALLOWED_IP` | Future KR direct quote/trading API candidate | `https://api.kiwoom.com/oauth2/token` | token smoke-tested by `api:smoke`; app provider not wired |
+| Kiwoom REST | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET`, `KIWOOM_ACCOUNT_NO`, `KIWOOM_ALLOWED_IP` | KR short selling, stock lending, investor flow fallback for blocked KRX direct API | `https://api.kiwoom.com/oauth2/token`, `/api/dostk/shsa`, `/api/dostk/slb`, `/api/dostk/stkinfo` | token and KR short/flow smoke-tested by `api:smoke`; rendered through `/api/korea/short-flow` and home feed |
 | KIS Open API | `KIS_API_KEY`, `KIS_API_SECRET` | Future KR/US quote provider candidate | `https://openapi.koreainvestment.com:9443/oauth2/tokenP` | token smoke-tested by `api:smoke`; app provider not wired |
 | FRED | `FRED_API_KEY` | US macro labels | `https://api.stlouisfed.org/fred/series/observations` | smoke-tested by `api:smoke`; app provider not wired |
 | BLS | `BLS_API_KEY` | US labor/macro labels | `https://api.bls.gov/publicAPI/v2/timeseries/data/` | smoke-tested by `api:smoke`; app provider not wired |
@@ -32,4 +32,4 @@ Secrets are stored only in local `.env` or deployment env. This document records
 - Naver Search API uses `X-Naver-Client-Id` and `X-Naver-Client-Secret` headers.
 - SEC EDGAR remains part of the app provider set and requires a compliant `SEC_USER_AGENT`.
 - Alpaca market data uses `APCA-API-KEY-ID` and `APCA-API-SECRET-KEY` headers against `data.alpaca.markets`.
-- Kiwoom and KIS token checks are authentication-only. They are not used for order placement.
+- KIS token check is authentication-only. Kiwoom is used only for read-only short selling/lending/investor-flow data, not for order placement.
