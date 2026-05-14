@@ -1,9 +1,23 @@
 import 'server-only';
+import { safeProviderFetch } from '@/lib/providers/http';
 import { emptyProviderResult, type NormalizedCandle, type NormalizedQuote, type ProviderResult } from '@/lib/providers/types';
-import { safeFetchJson } from '@/lib/providers/http';
+
+const hosts = ['https://api.binance.com', 'https://data-api.binance.vision'];
+
+async function fetchFromBinance<T>(path: string, basis: string) {
+  let last = null;
+  for (const host of hosts) {
+    const outcome = await safeProviderFetch<T>({ provider: 'binance', url: `${host}${path}`, basis, retries: 1 });
+    if (outcome.ok) return outcome;
+    last = outcome;
+  }
+  return last;
+}
 
 export async function fetchBinance24hTicker(symbol: string): Promise<ProviderResult<NormalizedQuote | null>> {
-  const raw = await safeFetchJson<Record<string, string>>(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
+  const basis = '24h 기준 · Binance public API';
+  const outcome = await fetchFromBinance<Record<string, string>>(`/api/v3/ticker/24hr?symbol=${symbol}`, basis);
+  const raw = outcome?.data;
   const quote: NormalizedQuote | null = raw
     ? {
         symbol,
@@ -12,16 +26,17 @@ export async function fetchBinance24hTicker(symbol: string): Promise<ProviderRes
         changePct: Number(raw.priceChangePercent),
         volume: Number(raw.volume),
         amount: Number(raw.quoteVolume),
-        basis: '24h 기준 · Binance public API',
+        basis,
         source: 'binance',
       }
     : null;
-  return emptyProviderResult('binance', '24h 기준 · Binance public API', quote);
+  return { ...emptyProviderResult('binance', basis, quote), raw: outcome };
 }
 
 export async function fetchBinanceKlines(symbol: string, interval = '1d', limit = 120): Promise<ProviderResult<NormalizedCandle[]>> {
-  const raw = await safeFetchJson<Array<Array<number | string>>>(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
-  const candles = (raw ?? []).map((item) => ({
+  const basis = `${interval} candles · Binance public API`;
+  const outcome = await fetchFromBinance<Array<Array<number | string>>>(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`, basis);
+  const candles = (outcome?.data ?? []).map((item) => ({
     symbol,
     market: 'CRYPTO' as const,
     time: new Date(Number(item[0])).toISOString(),
@@ -33,5 +48,5 @@ export async function fetchBinanceKlines(symbol: string, interval = '1d', limit 
     amount: Number(item[7]),
     source: 'binance',
   }));
-  return emptyProviderResult('binance', `${interval} 캔들 · Binance public API`, candles);
+  return { ...emptyProviderResult('binance', basis, candles), raw: outcome };
 }

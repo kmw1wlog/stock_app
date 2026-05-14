@@ -5,6 +5,8 @@ import { emptyDataMessage, getDataMode, isMockAllowed } from '@/lib/dataMode';
 import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
 import type { MarketType } from '@/lib/display/displayPolicy';
 import type { DataEnvelope, DisplayCard } from '@/lib/marketDataTypes';
+import { fetchAlternativeFearGreed } from '@/lib/providers/crypto/alternativeFearGreed';
+import { fetchBinance24hTicker } from '@/lib/providers/crypto/binance';
 
 const nowIso = () => new Date().toISOString();
 
@@ -61,6 +63,73 @@ function mockCards(limit: number): DisplayCard[] {
     isWidget: card.marketType === 'US',
     isMock: true,
   }));
+}
+
+async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
+  const symbols = [
+    { symbol: 'BTC', binanceSymbol: 'BTCUSDT', name: 'Bitcoin', theme: '대형코인', coingeckoId: 'bitcoin', tvSymbol: 'BINANCE:BTCUSDT' },
+    { symbol: 'ETH', binanceSymbol: 'ETHUSDT', name: 'Ethereum', theme: '대형코인', coingeckoId: 'ethereum', tvSymbol: 'BINANCE:ETHUSDT' },
+    { symbol: 'SOL', binanceSymbol: 'SOLUSDT', name: 'Solana', theme: 'L1', coingeckoId: 'solana', tvSymbol: 'BINANCE:SOLUSDT' },
+  ];
+  const cards: DisplayCard[] = [];
+
+  for (const asset of symbols) {
+    const result = await fetchBinance24hTicker(asset.binanceSymbol);
+    if (!result.data?.price) continue;
+    cards.push({
+      id: `public-crypto-${asset.symbol.toLowerCase()}`,
+      assetKey: asset.symbol,
+      symbol: asset.symbol,
+      name: asset.name,
+      market: 'CRYPTO',
+      marketLabel: '코인',
+      theme: asset.theme,
+      cardType: (result.data.changePct ?? 0) >= 0 ? 'crypto_gainer_24h' : 'crypto_loser_24h',
+      title: `${asset.name} 24h public API`,
+      primaryReason: `24h 기준 ${(result.data.changePct ?? 0) >= 0 ? '상승' : '하락'} 데이터가 확인되었습니다.`,
+      secondaryReason: 'DB가 없을 때도 keyless public API 데이터만 표시합니다.',
+      price: result.data.price,
+      changePct: result.data.changePct,
+      volume: result.data.volume,
+      amount: result.data.amount,
+      labels: ['24h 가격 데이터', '거래량 데이터 확인'],
+      dataBasisLabel: result.data.basis,
+      source: result.source,
+      updatedAt: result.fetchedAt,
+      tvSymbol: asset.tvSymbol,
+      coingeckoId: asset.coingeckoId,
+      binanceSymbol: asset.binanceSymbol,
+      chartSetupType: '24h 가격·거래량 확인',
+      isWidget: false,
+      isMock: false,
+    });
+  }
+
+  const fearGreed = await fetchAlternativeFearGreed();
+  if (fearGreed.data) {
+    cards.push({
+      id: 'public-crypto-fear-greed',
+      assetKey: 'crypto-market-sentiment',
+      symbol: 'FNG',
+      name: 'Crypto Fear & Greed',
+      market: 'CRYPTO',
+      marketLabel: '코인',
+      theme: '시장심리',
+      cardType: 'crypto_fear_greed',
+      title: '공포탐욕 지수',
+      primaryReason: `시장심리 ${fearGreed.data.value_classification ?? '자료 확인'} · ${fearGreed.data.value ?? 'N/A'}`,
+      price: Number(fearGreed.data.value),
+      changePct: null,
+      labels: ['공포탐욕 지수'],
+      dataBasisLabel: fearGreed.basis,
+      source: fearGreed.source,
+      updatedAt: fearGreed.fetchedAt,
+      isWidget: false,
+      isMock: false,
+    });
+  }
+
+  return cards.slice(0, limit);
 }
 
 function cardTypeFrom(market: string, changePct?: number | null, labels: string[] = []) {
@@ -155,7 +224,10 @@ function fromAsset(asset: {
 }
 
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
-  if (!hasDatabaseUrl()) return mockCards(limit);
+  if (!hasDatabaseUrl()) {
+    const liveCards = await publicCryptoCards(limit);
+    return liveCards.length ? liveCards : mockCards(limit);
+  }
 
   const cards = await prisma.recommendationCard.findMany({
     where: { status: 'active' },
@@ -211,7 +283,10 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
     take: limit * 3,
   });
 
-  return assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
+  const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
+  if (dbCards.length) return dbCards;
+  const liveCards = await publicCryptoCards(limit);
+  return liveCards.length ? liveCards : mockCards(limit);
 }
 
 export async function getDisplayCard(cardKey: string) {
