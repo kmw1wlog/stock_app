@@ -11,15 +11,15 @@
 ## KRX 공매도
 
 - 구현 상태: 차단/부분 구현.
-- 구현하지 못한 이유: KRX Open API 인증키 외에 정확한 API ID, 권한, 응답 포맷 검증이 필요하다.
-- 필요한 API 키 또는 권한: `KRX_OPENAPI_AUTH_KEY`, `KRX_SHORT_SELLING_API_ID`.
+- 구현하지 못한 이유: `KRX_OPENAPI_AUTH_KEY`는 로컬 `.env`에 있으나, 공매도 API 호출에 필요한 `KRX_SHORT_SELLING_API_ID`가 비어 있다.
+- 필요한 API 키 또는 권한: `KRX_SHORT_SELLING_API_ID`.
 - 현재 앱 fallback: `공매도 자료 준비중`, `KRX 조회 불가 · 라벨 비활성`.
 - 다음 단계: 운영 키로 실제 응답을 받아 normalize/save/label 로직을 완성한다.
 
 ## KRX 투자자별 수급
 
 - 구현 상태: 차단/부분 구현.
-- 구현하지 못한 이유: 투자자별 순매수 조회 API ID와 권한이 확정되지 않았다.
+- 구현하지 못한 이유: `KRX_OPENAPI_AUTH_KEY`는 있으나, 투자자별 순매수 조회 API ID인 `KRX_INVESTOR_FLOW_API_ID`가 비어 있다.
 - 필요한 API 키 또는 권한: `KRX_INVESTOR_FLOW_API_ID` 또는 KIS/키움/대신 API 권한.
 - 현재 앱 fallback: `수급 자료 준비중`.
 - 다음 단계: 공식 provider 응답 포맷 확인 후 기관/외국인 수급 라벨을 저장한다.
@@ -42,19 +42,35 @@
 
 ## FRED/BLS 매크로 라벨
 
-- 구현 상태: 미구현.
-- 구현하지 못한 이유: 이번 버전은 가격/공시/뉴스/코인 public provider 렌더링을 우선했다.
+- 구현 상태: API smoke 성공, 앱 라벨 미연결.
+- 구현하지 못한 이유: 이번 변경에서는 API 수신 검증까지 완료했고, 시장 매크로 라벨 모델/화면 연결은 아직 하지 않았다.
 - 필요한 API 키 또는 권한: `FRED_API_KEY`, `BLS_API_KEY`.
 - 현재 앱 fallback: 매크로 라벨 비노출.
 - 다음 단계: CPI, 고용, 금리 시계열을 저장하고 시장 환경 라벨을 만든다.
 
 ## Coinalyze funding/OI
 
-- 구현 상태: 미구현.
-- 구현하지 못한 이유: 이번 버전은 Binance/Upbit 가격/캔들 및 Alternative Fear & Greed를 우선했다.
+- 구현 상태: API smoke 성공, 앱 라벨 미연결.
+- 구현하지 못한 이유: open interest 응답 수신은 성공했지만, funding/OI 저장 모델과 레버리지 라벨 생성은 아직 연결하지 않았다.
 - 필요한 API 키 또는 권한: `COINALYZE_API_KEY`.
 - 현재 앱 fallback: funding/OI 라벨 비노출 또는 자료 준비중.
 - 다음 단계: funding/OI provider를 추가하고 롱 과열/숏 과열/중립 라벨을 저장한다.
+
+## Massive/Polygon Flat Files
+
+- 구현 상태: REST aggregate API smoke 성공, S3 flat files 미연결.
+- 구현하지 못한 이유: S3-compatible flat file 연동은 AWS 서명/파일 경로/배치 처리 설계가 필요하다.
+- 필요한 API 키 또는 권한: `MASSIVE_S3_ACCESS_KEY_ID`, `MASSIVE_S3_SECRET_ACCESS_KEY`, `MASSIVE_S3_ENDPOINT`, `MASSIVE_S3_BUCKET`.
+- 현재 앱 fallback: Polygon/Massive REST aggregate smoke만 문서화.
+- 다음 단계: 일봉/분봉 bulk ingest job을 별도 설계한다.
+
+## KIS/키움 실시간 시세 앱 연결
+
+- 구현 상태: 인증 토큰 smoke 성공, 시세 provider 미연결.
+- 구현하지 못한 이유: 토큰 발급은 확인했지만, 시세 TR/endpoint별 rate limit, 국내/해외 구분, 계좌 권한 검증이 필요하다.
+- 필요한 API 키 또는 권한: `KIS_API_KEY`, `KIS_API_SECRET`, `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET`, 계좌 권한.
+- 현재 앱 fallback: Data.go.kr EOD와 공식 위젯/공개 API를 사용.
+- 다음 단계: 주문 기능 없이 quote-only endpoint부터 별도 provider로 연결한다.
 
 ## Play Store/App Store 네이티브 래핑
 

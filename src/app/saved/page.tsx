@@ -46,20 +46,34 @@ export default function SavedPage() {
             <h1 className="text-3xl font-black tracking-normal">보관함</h1>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">내가 저장한 종목의 현재 공식 데이터만 표시합니다.</p>
           </div>
-          <Link href="/data-status" className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-[#0B63F6]"><Search className="h-6 w-6" /></Link>
+          <Link href="/data-status" className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-[#0B63F6]" aria-label="데이터 상태">
+            <Search className="h-6 w-6" />
+          </Link>
         </header>
         <div className="hide-scrollbar flex gap-2 overflow-x-auto px-5">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            return <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={activeTab === tab.key ? 'flex shrink-0 items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white' : 'flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-600'}><Icon className="h-4 w-4" />{tab.label}</button>;
+            return (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={activeTab === tab.key ? 'flex shrink-0 items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white' : 'flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-600'}>
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
           })}
         </div>
         <section className="mx-5 rounded-3xl border border-blue-200 bg-blue-50 p-5">
-          <p className="text-xl font-black">현재 데이터가 있는 보관 종목 <span className="text-[#0B63F6]">{visibleCards.length}개</span></p>
+          <p className="text-xl font-black">
+            현재 데이터가 있는 보관 종목 <span className="text-[#0B63F6]">{visibleCards.length}개</span>
+          </p>
           <p className="mt-1 text-sm font-semibold text-slate-600">가격, 등락률, 뉴스/공시, 차트 데이터가 없으면 준비중으로 표시합니다.</p>
         </section>
         <section className="space-y-3 px-5">
-          {visibleCards.length ? visibleCards.map((card) => <SavedManagementCard key={card.id} card={card} />) : <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center"><Database className="mx-auto h-8 w-8 text-slate-400" /><p className="mt-3 text-sm font-bold text-slate-500">저장된 종목의 live 데이터가 아직 없습니다.</p></div>}
+          {visibleCards.length ? visibleCards.map((card) => <SavedManagementCard key={card.id} card={card} />) : (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center">
+              <Database className="mx-auto h-8 w-8 text-slate-400" />
+              <p className="mt-3 text-sm font-bold text-slate-500">저장된 종목에 live 데이터가 아직 없습니다.</p>
+            </div>
+          )}
         </section>
       </div>
     </MobileShell>
@@ -89,5 +103,10 @@ function SavedManagementCard({ card }: { card: DisplayCard }) {
 }
 
 function InfoPill({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl bg-slate-50 p-3"><p className="text-xs font-bold text-slate-500">{label}</p><p className="mt-1 truncate text-sm font-black text-slate-900">{value}</p></div>;
+  return (
+    <div className="rounded-2xl bg-slate-50 p-3">
+      <p className="text-xs font-bold text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-sm font-black text-slate-900">{value}</p>
+    </div>
+  );
 }

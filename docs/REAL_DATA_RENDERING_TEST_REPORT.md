@@ -3,7 +3,7 @@
 ## Environment
 
 - Date: 2026-05-14
-- Branch: `feature/v0.5.0-live-data`
+- Branch: `feature/api-key-runtime-verification`
 - App version: `0.5.0-live-data`
 - Database: not configured locally for this run
 
@@ -31,7 +31,15 @@
 | Data status | `/api/provider-status` | implemented | Shows provider state and missing env. |
 | Rankings/report | DB/provider APIs | implemented policy | Uses data APIs and no premium/user-behavior copy. |
 
-`npm run data:verify-render` passed against `http://localhost:3000`; the feed returned 4 live public crypto cards with `isMock: false`.
+`npm run data:verify-render` passed against `http://localhost:3000`; the feed returned 7 live cards with `isMock: false`.
+
+`POST /api/admin/refresh-all` was also called locally with `Authorization: Bearer CRON_SECRET`; it returned `ok: true` and 10 job results.
+
+Additional cards now render from configured API keys:
+
+- Data.go.kr: Samsung Electronics EOD price/change/volume/amount.
+- Alpaca: Apple daily snapshot.
+- Naver News: Samsung Electronics news title/link basis.
 
 ## Banned Copy Verification
 

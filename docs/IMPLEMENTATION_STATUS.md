@@ -5,20 +5,21 @@ Last updated: 2026-05-14
 | Area | Status | Notes |
 |---|---|---|
 | Versioning | Implemented | `package.json` is `0.5.0`; `src/lib/version.ts` is `0.5.0-live-data`. |
-| Branch workflow | Implemented | Work is on `feature/v0.5.0-live-data`; main is not edited directly. |
+| Branch workflow | Implemented | Current API-key verification/rendering work is on `feature/api-key-runtime-verification`; main is not edited directly. |
 | DATA_MODE policy | Implemented | `DATA_MODE=live` blocks mock card fallback unless `DATA_MODE=mock` or `NEXT_PUBLIC_ALLOW_MOCK_DATA=true`. |
 | Provider fetch outcome | Implemented | `safeProviderFetch` keeps status, raw text snippet, parse errors, and missing env. |
 | Provider status persistence | Implemented | `DataProviderStatus` model and status helpers are present. |
 | Provider status API/UI | Implemented | `/api/provider-status` and `/data-status` expose env, status, counts, last run, and errors. |
 | Admin refresh | Implemented | `/api/admin/refresh-all` calls job functions directly. |
 | Public crypto runtime data | Implemented and smoke-tested | Binance, Upbit, and Alternative Fear & Greed returned live data on 2026-05-14. |
-| Home feed live fallback | Implemented | `/api/cards/feed` can render real public crypto cards without DB; mock remains disabled in live. |
-| KR EOD pipeline | Partial | Asset-wide job exists, but actual Data.go.kr persistence requires `DATA_GO_KR_SERVICE_KEY` and a database. |
-| OpenDART pipeline | Partial | Job exists; complete coverage requires corp code mapping and `OPENDART_API_KEY`. |
-| Naver News pipeline | Partial | Job exists; requires Naver API env. Title/link only, no article body repost. |
+| Home feed live fallback | Implemented | `/api/cards/feed` renders real Data.go.kr, Alpaca, Naver, Binance, and Alternative Fear & Greed cards without DB; mock remains disabled in live. |
+| KR EOD pipeline | Partial | Data.go.kr key was smoke-tested successfully. DB persistence still requires database env. |
+| OpenDART pipeline | Partial | OpenDART key was smoke-tested successfully with Samsung Electronics corp code. Broader coverage requires corp code mapping. |
+| Naver News pipeline | Partial | Naver Search API was smoke-tested successfully. Title/link only, no article body repost. |
 | SEC EDGAR pipeline | Partial | Job exists and skips CIK-missing assets. Requires proper `SEC_USER_AGENT`. |
 | US direct price | Partial | Optional provider job exists. If `US_DIRECT_PRICE_PROVIDER=none`, US price/rate is shown only through TradingView widgets. |
 | KRX short/flow | Blocked | Env and provider status surface exist. API ID/permission and response format must be verified before labels are enabled. |
+| Full API inventory | Implemented | `docs/API_KEY_INVENTORY.md` maps every user-provided key to env, endpoint, app use, and status. |
 | Chart policy | Implemented policy | Native chart requires real candles. US uses TradingView widgets when direct price provider is not configured. |
 | Premium/user behavior UI | Removed from UI | Banned UI copy script passes. |
 | PWA | Partial | Manifest exists; native store wrapping is not included in this version. |
@@ -31,5 +32,7 @@ Last updated: 2026-05-14
 - `npm run prisma:generate`: passed.
 - `npm run data:smoke`: passed with Binance, Upbit, and Alternative Fear & Greed.
 - `npm run check:banned-copy`: passed.
-- `npm run data:verify-render`: passed against `http://localhost:3000`; `/api/cards/feed` returned 4 live cards with `isMock: false`.
+- `npm run data:verify-render`: passed against `http://localhost:3000`; `/api/cards/feed` returned 7 live cards with `isMock: false`.
 - `npm run test:ui`: passed.
+- `npm run api:smoke`: passed with 15 successful providers and 1 blocked KRX API-ID group.
+- `POST /api/admin/refresh-all`: passed locally with 10 job results using `CRON_SECRET`.

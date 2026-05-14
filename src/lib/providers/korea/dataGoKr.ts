@@ -6,13 +6,20 @@ const endpoint = 'https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfo
 
 type DataGoKrResponse = {
   response?: {
+    header?: { resultCode?: string; resultMsg?: string };
     body?: {
       items?: {
-        item?: Array<Record<string, string>>;
+        item?: Array<Record<string, string>> | Record<string, string>;
       };
     };
   };
 };
+
+function itemsFrom(raw: DataGoKrResponse | null | undefined) {
+  const item = raw?.response?.body?.items?.item;
+  if (!item) return [];
+  return Array.isArray(item) ? item : [item];
+}
 
 function numberFrom(value: string | undefined) {
   const normalized = Number(String(value ?? '').replaceAll(',', ''));
@@ -25,18 +32,24 @@ function dateFrom(item: Record<string, string>) {
   return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
 }
 
-export async function fetchKoreaEodQuote(symbol: string): Promise<ProviderResult<NormalizedQuote | null>> {
+function buildUrl(symbol: string, rows: number) {
   const key = process.env.DATA_GO_KR_SERVICE_KEY;
-  if (!key) {
-    return emptyProviderResult('data.go.kr', '전일 기준 · 공공데이터 · API 키 필요', null);
-  }
+  if (!key) return null;
   const url = new URL(endpoint);
   url.searchParams.set('serviceKey', key);
   url.searchParams.set('resultType', 'json');
-  url.searchParams.set('numOfRows', '1');
+  url.searchParams.set('numOfRows', String(rows));
   url.searchParams.set('likeSrtnCd', symbol);
+  return url;
+}
+
+export async function fetchKoreaEodQuote(symbol: string): Promise<ProviderResult<NormalizedQuote | null>> {
+  const url = buildUrl(symbol, 1);
+  if (!url) {
+    return emptyProviderResult('data.go.kr', '전일 기준 · 공공데이터 · API 키 필요', null);
+  }
   const raw = await safeFetchJson<DataGoKrResponse>(url.toString());
-  const item = raw?.response?.body?.items?.item?.[0];
+  const item = itemsFrom(raw)[0];
   if (!item) {
     return emptyProviderResult('data.go.kr', '전일 기준 · 공공데이터 · 데이터 없음', null);
   }
@@ -67,18 +80,12 @@ export async function fetchKoreaEodQuotes(symbols: string[]) {
 }
 
 export async function fetchKoreaDailyCandles(symbol: string, limit = 120): Promise<ProviderResult<NormalizedCandle[]>> {
-  const key = process.env.DATA_GO_KR_SERVICE_KEY;
-  if (!key) {
+  const url = buildUrl(symbol, limit);
+  if (!url) {
     return emptyProviderResult('data.go.kr', '일봉 기준 · 공공데이터 · API 키 필요', []);
   }
-  const url = new URL(endpoint);
-  url.searchParams.set('serviceKey', key);
-  url.searchParams.set('resultType', 'json');
-  url.searchParams.set('numOfRows', String(limit));
-  url.searchParams.set('likeSrtnCd', symbol);
   const raw = await safeFetchJson<DataGoKrResponse>(url.toString());
-  const items = raw?.response?.body?.items?.item ?? [];
-  const candles = items
+  const candles = itemsFrom(raw)
     .map((item) => ({
       symbol,
       market: 'KR' as const,

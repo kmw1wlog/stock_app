@@ -59,7 +59,7 @@ export async function fetchUsDirectQuote(symbol: string) {
           symbol,
           market: 'US',
           price: numberOrUndefined(item.price),
-          changePct: numberOrUndefined(item.changesPercentage),
+          changePct: numberOrUndefined(item.changePercentage ?? item.changesPercentage),
           volume: numberOrUndefined(item.volume),
           basis: 'FMP quote API',
           source: 'fmp',

@@ -64,7 +64,7 @@ export default function HomePage() {
             <h1 className="text-[22px] font-black leading-tight tracking-normal">오늘의 데이터 카드</h1>
             <p className="mt-1 text-xs font-semibold text-slate-500">공식 API, DB 저장 데이터, 공식 위젯 기준으로 표시합니다.</p>
           </div>
-          <Link href="/data-status" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-blue-200 bg-white text-[#0B63F6] shadow-sm">
+          <Link href="/data-status" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-blue-200 bg-white text-[#0B63F6] shadow-sm" aria-label="데이터 상태">
             <Bell className="h-5 w-5" />
           </Link>
         </header>
@@ -99,7 +99,9 @@ export default function HomePage() {
       <div className="space-y-5 px-5 py-6">
         <section className="rounded-3xl border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#0B63F6] text-white"><TrendingUp className="h-6 w-6" /></div>
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#0B63F6] text-white">
+              <TrendingUp className="h-6 w-6" />
+            </div>
             <div>
               <h2 className="text-lg font-black">오늘의 흐름</h2>
               <p className="text-xs font-bold text-slate-500">DATA_MODE={mode}. live에서는 임의 가격과 임의 차트를 표시하지 않습니다.</p>
@@ -189,11 +191,24 @@ function HeroDataCard({ card }: { card: DisplayCard }) {
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl bg-white/10 p-2"><p className="text-[10px] font-bold text-blue-100">{label}</p><p className="mt-1 truncate text-xs font-black text-white">{value}</p></div>;
+  return (
+    <div className="rounded-2xl bg-white/10 p-2">
+      <p className="text-[10px] font-bold text-blue-100">{label}</p>
+      <p className="mt-1 truncate text-xs font-black text-white">{value}</p>
+    </div>
+  );
 }
 
 function SectionTitle({ title, href }: { title: string; href: string }) {
-  return <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black">{title}</h2><Link href={href} className="flex items-center gap-1 text-sm font-black text-[#0B63F6]">더보기 <ChevronRight className="h-4 w-4" /></Link></div>;
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <h2 className="text-lg font-black">{title}</h2>
+      <Link href={href} className="flex items-center gap-1 text-sm font-black text-[#0B63F6]">
+        더보기
+        <ChevronRight className="h-4 w-4" />
+      </Link>
+    </div>
+  );
 }
 
 function TwoUpDataCard({ card }: { card: DisplayCard }) {
