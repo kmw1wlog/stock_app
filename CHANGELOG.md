@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 - Live Data Display MVP
+
+- 작업 브랜치: `feature/v0.5.0-live-data`
+- 목표: 실제 API, 공식 공개 조회, 공식 위젯 기반 데이터를 앱 화면에 렌더링.
+- `DATA_MODE=live`에서 mock 가격, 등락률, 차트를 표시하지 않는 정책을 유지한다.
+- provider 실행 결과, runtime smoke test, 미구현 항목을 문서화한다.
+
 ## 0.4.0 - Data Display MVP
 
 - 버전 상수를 `0.4.0-data-mvp`로 추가했습니다.
