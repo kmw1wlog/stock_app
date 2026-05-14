@@ -14,7 +14,7 @@ export const exploreMeta: Record<ExploreSlug, { title: string; basis: string; so
   },
   themes: {
     title: '인기테마',
-    basis: 'Asset theme와 뉴스/공시 metadata 기준',
+    basis: '종목 theme와 뉴스/공시 metadata 기준',
     sortOptions: ['종목 수', '뉴스/공시', '최신 데이터'],
     source: 'db/provider',
   },
@@ -26,9 +26,9 @@ export const exploreMeta: Record<ExploreSlug, { title: string; basis: string; so
   },
   flows: {
     title: '기관외인매집',
-    basis: 'KRX/KIS provider 준비중 · 데이터 없으면 자료 준비중',
+    basis: 'KRX/KIS/Kiwoom provider 기준 · 데이터가 없으면 자료 준비중',
     sortOptions: ['기관', '외국인', '자료 상태'],
-    source: 'krx',
+    source: 'kr-flow',
   },
   pullback: {
     title: '하락종목 / 눌림목 후보',
@@ -69,7 +69,7 @@ function filterCards(slug: ExploreSlug, cards: DisplayCard[]) {
     case 'news':
       return cards.filter(hasNewsOrDisclosure).slice(0, 20);
     case 'flows':
-      return cards.filter((card) => card.cardType.includes('flow') || card.labels.some((label) => label.includes('수급') || label.includes('기관') || label.includes('외국인') || label.includes('투자자별'))).slice(0, 20);
+      return cards.filter((card) => card.cardType.includes('flow') || card.labels.some((label) => label.includes('수급') || label.includes('기관') || label.includes('외국인') || label.includes('공매도'))).slice(0, 20);
     case 'pullback':
       return sortCards(cards.filter((card) => (card.changePct ?? 0) < 0 || card.labels.some((label) => label.includes('차트자리'))), 'loser').slice(0, 20);
     case 'after-hours':

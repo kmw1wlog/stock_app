@@ -184,6 +184,48 @@ model UserSyncQueue {
   @@index([status])
 }
 
+model UserConditionAlert {
+  id              String   @id @default(cuid())
+  anonUserId      String
+  cardKey         String
+  assetKey        String?
+  market          String?
+  symbol          String?
+  formulaKey      String
+  formulaName     String
+  alertScope      String   @default("asset_formula")
+  status          String   @default("active")
+  expiresAt       DateTime?
+  lastTriggeredAt DateTime?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([anonUserId])
+  @@index([cardKey])
+  @@index([assetKey])
+  @@index([formulaKey])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model ConditionAlertTrigger {
+  id           String   @id @default(cuid())
+  alertId      String
+  anonUserId   String
+  cardKey      String
+  assetKey     String?
+  formulaKey   String?
+  triggeredAt  DateTime @default(now())
+  triggerBasis Json?
+  metadata     Json?
+
+  @@index([alertId])
+  @@index([anonUserId])
+  @@index([cardKey])
+  @@index([triggeredAt])
+}
+
 model CardPriceSnapshot {
   id                String   @id @default(cuid())
   cardId             String

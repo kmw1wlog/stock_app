@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Bell, ChevronRight, Database, Search } from 'lucide-react';
+import { NativeAdCard } from '@/components/ads/NativeAdCard';
 import { Badge } from '@/components/common/Badge';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { exploreMeta, getExplorePayload, type ExploreSlug } from '@/lib/exploreLive';
@@ -22,18 +23,22 @@ export default async function ExplorePage() {
             <Bell className="h-6 w-6" />
           </div>
         </header>
-        {payloads.map(({ slug, payload }) => (
-          <SectionShell key={slug} slug={slug} title={exploreMeta[slug].title} hint={exploreMeta[slug].basis}>
-            {payload.items.length ? (
-              <div className={slug === 'themes' ? 'hide-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5' : 'space-y-2'}>
-                {payload.items.slice(0, slug === 'themes' ? 8 : 4).map((card) => (
-                  <ExploreCard key={`${slug}-${card.id}`} card={card} compact={slug === 'themes'} />
-                ))}
-              </div>
-            ) : (
-              <EmptyState message={payload.message ?? '데이터 준비중'} />
-            )}
-          </SectionShell>
+        {payloads.map(({ slug, payload }, index) => (
+          <div key={slug} className="space-y-6">
+            <SectionShell slug={slug} title={exploreMeta[slug].title} hint={exploreMeta[slug].basis}>
+              {payload.items.length ? (
+                <div className={slug === 'themes' ? 'hide-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5' : 'space-y-2'}>
+                  {payload.items.slice(0, slug === 'themes' ? 8 : 4).map((card) => (
+                    <ExploreCard key={`${slug}-${card.id}`} card={card} compact={slug === 'themes'} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState message={payload.message ?? '데이터 준비중'} />
+              )}
+            </SectionShell>
+            {index === 1 ? <NativeAdCard source="explore" slotName="explore_mid_1" /> : null}
+            {index === 3 ? <NativeAdCard source="explore" slotName="explore_mid_2" /> : null}
+          </div>
         ))}
       </div>
     </MobileShell>

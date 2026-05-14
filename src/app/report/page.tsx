@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarChart3, ChevronRight, Database, FileText, PieChart } from 'lucide-react';
+import { BarChart3, Bell, ChevronRight, Database, FileText, PieChart } from 'lucide-react';
 import { Badge } from '@/components/common/Badge';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { getDisplayCards, sortCards } from '@/lib/marketData';
@@ -24,7 +24,7 @@ export default async function ReportPage() {
       <div className="space-y-5 py-6">
         <header className="px-5">
           <h1 className="text-3xl font-black tracking-normal">리포트</h1>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">시장 데이터 요약입니다. 사용자 행동 기반 리포트와 과금 UI는 비활성화했습니다.</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">조건식 알림과 시장 데이터 요약입니다.</p>
         </header>
         <section className="mx-5 rounded-[28px] bg-slate-950 p-5 text-white shadow-xl shadow-slate-900/20">
           <div className="mb-4 flex items-center justify-between">
@@ -41,6 +41,14 @@ export default async function ReportPage() {
             <Metric label="코인" value={`${summary.cryptoCount}`} />
           </div>
         </section>
+
+        <ReportSection title="내 알림 요약" icon={<Bell className="h-5 w-5" />}>
+          <Link href="/alerts" className="flex items-center justify-between rounded-2xl bg-blue-50 p-3 text-sm font-black text-[#0B63F6]">
+            활성 알림과 만료 예정 알림 확인
+            <ChevronRight className="h-5 w-5" />
+          </Link>
+        </ReportSection>
+
         <ReportSection title="국장 급등/하락" icon={<BarChart3 className="h-5 w-5" />}>
           <CardList cards={[...sortCards(cards.filter((card) => card.market === 'KR' && (card.changePct ?? 0) > 0), 'gainer').slice(0, 4), ...sortCards(cards.filter((card) => card.market === 'KR' && (card.changePct ?? 0) < 0), 'loser').slice(0, 4)]} />
         </ReportSection>
@@ -69,7 +77,7 @@ export default async function ReportPage() {
             <ChevronRight className="h-5 w-5" />
           </Link>
         </ReportSection>
-        <p className="px-6 text-xs font-semibold leading-5 text-slate-500">본 정보는 투자 판단을 돕기 위한 지표 기반 참고 정보이며, 투자 권유나 수익 보장을 의미하지 않습니다.</p>
+        <p className="px-6 text-xs font-semibold leading-5 text-slate-500">본 정보는 투자 판단을 돕기 위한 지표 기반 참고 정보이며, 매수·매도 추천이나 투자 성과 약속을 의미하지 않습니다.</p>
       </div>
     </MobileShell>
   );

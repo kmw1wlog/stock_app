@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, ChevronRight, Database, TrendingUp } from 'lucide-react';
+import { ChevronRight, Database, TrendingUp } from 'lucide-react';
+import { NativeAdCard } from '@/components/ads/NativeAdCard';
+import { AlertSetupModal } from '@/components/alerts/AlertSetupModal';
 import { AssetChart } from '@/components/chart/AssetChart';
 import { Badge } from '@/components/common/Badge';
 import { HomeActionButtons } from '@/components/home/HomeActionButtons';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { useAppState } from '@/context/AppStateContext';
+import { getFormulaForCard } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 import { APP_RELEASE_NAME, APP_VERSION } from '@/lib/version';
 
@@ -30,7 +33,8 @@ export default function HomePage() {
   const [mode, setMode] = useState<'live' | 'mock'>('live');
   const [filter, setFilter] = useState<(typeof filters)[number]>('전체');
   const [index, setIndex] = useState(0);
-  const { saveCard, likeCard, hideCard, showToast, logEvent } = useAppState();
+  const [alertOpen, setAlertOpen] = useState(false);
+  const { saveCard, hideCard, logEvent } = useAppState();
 
   useEffect(() => {
     fetch('/api/cards/feed')
@@ -52,45 +56,45 @@ export default function HomePage() {
 
   const visible = filtered.length ? filtered : cards;
   const card = visible[index % Math.max(visible.length, 1)];
+  const formula = card ? getFormulaForCard(card) : null;
   const nextTwo = visible.filter((item) => item.id !== card?.id).slice(0, 2);
   const moveNext = () => visible.length && setIndex((current) => (current + 1) % visible.length);
 
   return (
     <MobileShell>
       <div className="px-5 pt-4">
-        <header className="mb-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[11px] font-black text-[#0B63F6]">{APP_VERSION} · {APP_RELEASE_NAME}</p>
-            <h1 className="text-[22px] font-black leading-tight tracking-normal">오늘의 데이터 카드</h1>
-            <p className="mt-1 text-xs font-semibold text-slate-500">공식 API, DB 저장 데이터, 공식 위젯 기준으로 표시합니다.</p>
-          </div>
-          <Link href="/data-status" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-blue-200 bg-white text-[#0B63F6] shadow-sm" aria-label="데이터 상태">
-            <Bell className="h-5 w-5" />
-          </Link>
+        <header className="mb-3">
+          <p className="text-[11px] font-black text-[#0B63F6]">{APP_VERSION} · {APP_RELEASE_NAME}</p>
+          <h1 className="mt-1 text-[24px] font-black leading-tight tracking-normal">오늘의 조건 포착</h1>
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">거래량·차트자리·뉴스 조건이 켜진 종목을 확인하세요.</p>
+          <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-400">본 정보는 매수·매도 추천이 아닌 조건식 기반 참고 정보입니다.</p>
         </header>
 
-        {card ? <HeroDataCard card={card} /> : <EmptyHero message={message} />}
+        {card ? <HeroDataCard card={card} formulaShortName={formula?.shortName ?? '조건 포착'} /> : <EmptyHero message={message} />}
 
         <div className="mt-3">
           <HomeActionButtons
             onSkip={() => {
-              if (card) hideCard(card.id, { source: 'home_data_card', market: card.market, symbol: card.symbol });
+              if (card) hideCard(card.id, { source: 'home_condition_card', market: card.market, symbol: card.symbol });
               moveNext();
             }}
-            onLike={() => {
-              if (card) likeCard(card.id, { source: 'home_data_card', market: card.market, symbol: card.symbol });
-              moveNext();
+            onAlert={() => {
+              if (!card || !formula) return;
+              logEvent('home_alert_click', { cardKey: card.id, assetKey: card.assetKey, symbol: card.symbol, market: card.market, formulaKey: formula.key });
+              setAlertOpen(true);
             }}
             onSave={() => {
-              if (card) saveCard(card.id, { source: 'home_data_card', market: card.market, symbol: card.symbol });
+              if (card) saveCard(card.id, { source: 'home_condition_card', market: card.market, symbol: card.symbol });
             }}
-            onOpinion={() => {
-              logEvent('comment_view', { source: 'home_news', cardKey: card?.id });
-              showToast('뉴스·공시 화면으로 이동합니다.');
-              window.location.href = '/explore/news';
+            onFormula={() => {
+              if (!card) return;
+              logEvent('home_formula_click', { cardKey: card.id, assetKey: card.assetKey, symbol: card.symbol, market: card.market });
+              window.setTimeout(() => window.location.assign(`/cards/${card.id}/formula`), 0);
             }}
             onMore={() => {
-              if (card) window.location.href = `/cards/${card.id}`;
+              if (!card) return;
+              logEvent('home_detail_click', { cardKey: card.id, assetKey: card.assetKey, symbol: card.symbol, market: card.market });
+              window.setTimeout(() => window.location.assign(`/cards/${card.id}`), 0);
             }}
           />
         </div>
@@ -109,14 +113,7 @@ export default function HomePage() {
           </div>
           <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
             {filters.map((item) => (
-              <button
-                key={item}
-                onClick={() => {
-                  setFilter(item);
-                  setIndex(0);
-                }}
-                className={filter === item ? 'rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white' : 'rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-600'}
-              >
+              <button key={item} onClick={() => { setFilter(item); setIndex(0); }} className={filter === item ? 'rounded-full bg-slate-950 px-4 py-2 text-sm font-black text-white' : 'rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-600'}>
                 {item}
               </button>
             ))}
@@ -131,17 +128,24 @@ export default function HomePage() {
           </div>
         </section>
 
-        <DataSection title="오늘 급등" href="/explore/movers" cards={visible.filter((item) => (item.changePct ?? 0) > 0).slice(0, 4)} />
-        <DataSection title="거래대금 증가" href="/rankings" cards={[...visible].sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0)).slice(0, 4)} />
-        <DataSection title="뉴스·공시" href="/explore/news" cards={visible.filter((item) => item.source.includes('naver') || item.source.includes('sec') || item.source.includes('dart') || item.cardType.includes('disclosure')).slice(0, 4)} />
-        <DataSection title="차트자리" href="/explore/pullback" cards={visible.filter((item) => item.chartSetupType || item.labels.some((label) => label.includes('차트자리'))).slice(0, 4)} />
-        <DataSection title="인기테마" href="/explore/themes" cards={visible.filter((item) => item.theme).slice(0, 4)} />
-        <DataSection title="코인 24h" href="/explore/maps" cards={visible.filter((item) => item.market === 'CRYPTO').slice(0, 4)} />
-        <DataSection title="미장 이벤트" href="/explore/news" cards={visible.filter((item) => item.market === 'US').slice(0, 4)} />
-        <DataSection title="시간외 자료" href="/explore/after-hours" cards={[]} />
+        <NativeAdCard source="home" slotName="home_after_next_candidates" title="관심 종목을 MTS에서 확인하세요." />
 
-        <p className="px-1 text-xs font-semibold leading-5 text-slate-500">본 정보는 투자 판단을 돕기 위한 지표 기반 참고 정보이며, 투자 권유나 수익 보장을 의미하지 않습니다.</p>
+        <DataSection title="오늘 급등 조건" href="/explore/movers" cards={visible.filter((item) => (item.changePct ?? 0) > 0).slice(0, 4)} />
+        <DataSection title="거래대금 증가 조건" href="/rankings" cards={[...visible].sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0)).slice(0, 4)} />
+        <DataSection title="뉴스·공시 조건" href="/explore/news" cards={visible.filter((item) => item.source.includes('naver') || item.source.includes('sec') || item.source.includes('dart') || item.cardType.includes('disclosure')).slice(0, 4)} />
+
+        <NativeAdCard source="home" slotName="home_between_news_chart" title="제휴 콘텐츠" />
+
+        <DataSection title="차트자리 조건" href="/explore/pullback" cards={visible.filter((item) => item.chartSetupType || item.labels.some((label) => label.includes('차트자리'))).slice(0, 4)} />
+        <DataSection title="인기테마" href="/explore/themes" cards={visible.filter((item) => item.theme).slice(0, 4)} />
+        <DataSection title="코인 24h 조건" href="/explore/maps" cards={visible.filter((item) => item.market === 'CRYPTO').slice(0, 4)} />
+        <DataSection title="미장 이벤트" href="/explore/news" cards={visible.filter((item) => item.market === 'US').slice(0, 4)} />
+
+        <NativeAdCard source="home" slotName="home_bottom_banner" title="광고 콘텐츠" />
+
+        <p className="px-1 text-xs font-semibold leading-5 text-slate-500">본 정보는 조건 충족 사실을 보여주는 참고 정보이며, 매수·매도 추천이 아닙니다. 투자 판단은 이용자 본인에게 있습니다.</p>
       </div>
+      {card && formula ? <AlertSetupModal card={card} formula={formula} open={alertOpen} onClose={() => setAlertOpen(false)} /> : null}
     </MobileShell>
   );
 }
@@ -159,14 +163,14 @@ function EmptyHero({ message }: { message: string }) {
   );
 }
 
-function HeroDataCard({ card }: { card: DisplayCard }) {
+function HeroDataCard({ card, formulaShortName }: { card: DisplayCard; formulaShortName: string }) {
   return (
     <article className="relative overflow-hidden rounded-[24px] bg-[#061A3D] text-white shadow-2xl shadow-blue-950/20">
       <Link href={`/cards/${card.id}`} className="block p-5">
         <div className="mb-2 flex flex-wrap gap-2">
           <Badge>{card.marketLabel}</Badge>
           {card.theme ? <Badge tone="gray">{card.theme}</Badge> : null}
-          <Badge tone="violet">{card.source}</Badge>
+          <Badge tone="violet">{formulaShortName}</Badge>
         </div>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

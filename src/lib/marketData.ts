@@ -9,7 +9,6 @@ import { fetchAlternativeFearGreed } from '@/lib/providers/crypto/alternativeFea
 import { fetchBinance24hTicker } from '@/lib/providers/crypto/binance';
 import { fetchUpbitTicker } from '@/lib/providers/crypto/upbit';
 import { fetchKoreaEodQuote } from '@/lib/providers/korea/dataGoKr';
-import { fetchKiwoomKrFlow } from '@/lib/providers/korea/kiwoomKrData';
 import { fetchNaverNewsMentions } from '@/lib/providers/korea/naverNews';
 import { fetchUsDirectQuote } from '@/lib/providers/us/usDirectProvider';
 
@@ -28,11 +27,6 @@ function firstNumber(...values: Array<number | null | undefined>) {
 
 function labelTexts(labels: Array<{ displayText: string }> = []) {
   return labels.map((label) => label.displayText).filter(Boolean).slice(0, 5);
-}
-
-function compactAmount(value?: number) {
-  if (value === undefined) return '자료 확인';
-  return new Intl.NumberFormat('ko-KR', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
 
 export function envelope<T>(items: T[], source: string, basis: string, extra: Partial<DataEnvelope<T>> = {}): DataEnvelope<T> {
@@ -78,8 +72,7 @@ function mockCards(limit: number): DisplayCard[] {
 async function fetchPublicCryptoQuote(asset: { binanceSymbol: string; upbitMarket: string }) {
   const binance = await fetchBinance24hTicker(asset.binanceSymbol);
   if (binance.data?.price) return binance;
-  const upbit = await fetchUpbitTicker(asset.upbitMarket);
-  return upbit;
+  return fetchUpbitTicker(asset.upbitMarket);
 }
 
 async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
@@ -105,7 +98,7 @@ async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
       cardType: changePct >= 0 ? 'crypto_gainer_24h' : 'crypto_loser_24h',
       title: `${asset.name} 24h 공개 API`,
       primaryReason: `24h 기준 ${changePct >= 0 ? '상승' : '하락'} 데이터가 확인됐습니다.`,
-      secondaryReason: 'DB가 비어 있어도 keyless public API 데이터만 표시합니다.',
+      secondaryReason: 'DB 데이터가 비어 있을 때 keyless public API 데이터만 표시합니다.',
       price: result.data.price,
       changePct: result.data.changePct,
       volume: result.data.volume,
@@ -118,7 +111,7 @@ async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
       coingeckoId: asset.coingeckoId,
       binanceSymbol: asset.binanceSymbol,
       upbitMarket: asset.upbitMarket,
-      chartSetupType: '24h 가격/거래량 확인',
+      chartSetupType: '24h 가격·거래량 확인',
       isWidget: false,
       isMock: false,
     });
@@ -172,7 +165,7 @@ async function publicConfiguredApiCards(limit: number): Promise<DisplayCard[]> {
         cardType: (samsung.data.changePct ?? 0) >= 0 ? 'kr_gainer' : 'kr_loser',
         title: '삼성전자 전일 공공데이터',
         primaryReason: `전일 기준 ${samsung.data.changePct !== undefined ? `${samsung.data.changePct.toFixed(2)}%` : '등락률'} 데이터가 수신됐습니다.`,
-        secondaryReason: '금융위원회 주식시세정보 API에서 받은 가격/거래량/거래대금입니다.',
+        secondaryReason: '금융위원회 주식시세정보 API에서 받은 가격, 거래량, 거래대금입니다.',
         price: samsung.data.price,
         changePct: samsung.data.changePct,
         volume: samsung.data.volume,
@@ -181,43 +174,9 @@ async function publicConfiguredApiCards(limit: number): Promise<DisplayCard[]> {
         dataBasisLabel: samsung.data.basis,
         source: samsung.source,
         updatedAt: samsung.fetchedAt,
-        chartSetupType: '전일 가격/거래량 확인',
+        chartSetupType: '전일 가격·거래량 확인',
         isMock: false,
       });
-    }
-  }
-
-  if (process.env.KIWOOM_REST_API_KEY && process.env.KIWOOM_REST_API_SECRET) {
-    try {
-      const flow = await fetchKiwoomKrFlow('005930');
-      const shortWeight = flow.data.latestShortSelling?.shortWeightPct;
-      const lendingBalance = flow.data.latestLending?.balance;
-      const foreigner = flow.data.latestInvestor?.foreigner;
-      const institution = flow.data.latestInvestor?.institution;
-      cards.push({
-        id: 'api-kr-005930-kiwoom-flow',
-        assetKey: '005930-kiwoom-flow',
-        symbol: '005930',
-        name: '삼성전자 공매도·수급',
-        market: 'KR',
-        marketLabel: '국장',
-        theme: '수급',
-        cardType: 'kr_short_flow',
-        title: '삼성전자 공매도·대차·투자자별 데이터',
-        primaryReason: `공매도 비중 ${shortWeight !== undefined ? `${shortWeight.toFixed(2)}%` : '자료 확인'} · 외국인 ${compactAmount(foreigner)} · 기관 ${compactAmount(institution)}`,
-        secondaryReason: `대차잔고 ${compactAmount(lendingBalance)} · ${flow.data.refreshCadence}`,
-        price: null,
-        changePct: null,
-        amount: flow.data.latestShortSelling?.shortTradeValue,
-        labels: ['공매도 데이터 확인', '대차거래 데이터 확인', '투자자별 수급 데이터 확인'],
-        dataBasisLabel: flow.basis,
-        source: flow.source,
-        updatedAt: flow.fetchedAt,
-        chartSetupType: '공매도/수급 확인',
-        isMock: false,
-      });
-    } catch {
-      // Kiwoom can rate-limit token/API calls. The status route and docs expose failures separately.
     }
   }
 
@@ -234,8 +193,8 @@ async function publicConfiguredApiCards(limit: number): Promise<DisplayCard[]> {
         theme: '대형기술주',
         cardType: (apple.data.changePct ?? 0) >= 0 ? 'us_direct_gainer' : 'us_direct_loser',
         title: 'Apple 직접 가격 API',
-        primaryReason: `선택된 미장 가격 provider에서 ${apple.data.changePct !== undefined ? `${apple.data.changePct.toFixed(2)}%` : '가격'} 데이터가 수신됐습니다.`,
-        secondaryReason: '직접 가격 API가 실패하면 TradingView 위젯만 표시합니다.',
+        primaryReason: `선택한 미장 가격 provider에서 ${apple.data.changePct !== undefined ? `${apple.data.changePct.toFixed(2)}%` : '가격'} 데이터가 수신됐습니다.`,
+        secondaryReason: '직접 가격 API가 실패하면 TradingView 위젯 기준으로만 표시합니다.',
         price: apple.data.price,
         changePct: apple.data.changePct,
         volume: apple.data.volume,
@@ -311,6 +270,7 @@ function fromAsset(asset: {
   const changePct = daily?.changePct;
 
   if (asset.market === 'US' && asset.tvSymbol) {
+    const hasSec = labels.some((label) => label.includes('SEC'));
     return {
       id: asset.id,
       assetKey: asset.id,
@@ -321,13 +281,13 @@ function fromAsset(asset: {
       theme: asset.theme,
       cardType: cardTypeFrom(asset.market, changePct, labels),
       title: `${asset.name} 공식 위젯/SEC 데이터`,
-      primaryReason: labels[0] ?? 'TradingView 위젯 기준 가격·차트를 확인할 수 있습니다.',
+      primaryReason: labels[0] ?? 'TradingView 위젯 기준 가격과 차트를 확인할 수 있습니다.',
       secondaryReason: '직접 가격 API가 없으면 자체 등락률은 표시하지 않습니다.',
       price: null,
       changePct: null,
       labels,
-      dataBasisLabel: labels.some((label) => label.includes('SEC')) ? 'SEC EDGAR 기준 · TradingView 위젯 가격' : 'TradingView 위젯 기준',
-      source: labels.some((label) => label.includes('SEC')) ? 'sec-edgar/tradingview' : 'tradingview',
+      dataBasisLabel: hasSec ? 'SEC EDGAR 기준 · TradingView 위젯 가격' : 'TradingView 위젯 기준',
+      source: hasSec ? 'sec-edgar/tradingview' : 'tradingview',
       updatedAt: asset.updatedAt.toISOString(),
       tvSymbol: asset.tvSymbol,
       coingeckoId: asset.coingeckoId,
@@ -343,6 +303,7 @@ function fromAsset(asset: {
   const basis = intraday?.source
     ? `${intraday.interval} 기준 · ${intraday.source}`
     : daily?.basis ?? (market === 'CRYPTO' ? '24h 기준 · public API' : '전일 기준 · 공공데이터');
+
   return {
     id: asset.id,
     assetKey: asset.id,
@@ -376,7 +337,7 @@ function fromAsset(asset: {
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   if (!hasDatabaseUrl()) {
     const liveCards = [...await publicConfiguredApiCards(limit), ...await publicCryptoCards(limit)];
-    return liveCards.length ? liveCards : mockCards(limit);
+    return liveCards.length ? liveCards.slice(0, limit) : mockCards(limit);
   }
 
   const cards = await prisma.recommendationCard.findMany({
@@ -438,7 +399,7 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
   if (dbCards.length) return dbCards;
   const liveCards = [...await publicConfiguredApiCards(limit), ...await publicCryptoCards(limit)];
-  return liveCards.length ? liveCards : mockCards(limit);
+  return liveCards.length ? liveCards.slice(0, limit) : mockCards(limit);
 }
 
 export async function getDisplayCard(cardKey: string) {

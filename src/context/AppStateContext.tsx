@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { setMixpanelSuperProperties, trackMixpanelEvent } from '@/lib/analytics/mixpanelClient';
+import { APP_VERSION } from '@/lib/version';
 import { flushPendingSyncQueue, getAnonymousId, queuePendingSync, registerAnonymousUser } from '@/lib/user/anonymousUser';
 import { syncUserCardState, syncUserFormulaState, type UserCardStateAction } from '@/lib/user/userCardState';
 
@@ -45,13 +46,11 @@ const defaultState: UserState = {
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
 const storageKey = 'stock-app-user-state';
-const appVersion = '0.4.0-data-mvp';
 
 function normalizeEventPayload(payload?: Record<string, unknown>, anonymousId?: string | null) {
   const cardKey = typeof payload?.cardKey === 'string' ? payload.cardKey : typeof payload?.cardId === 'string' ? payload.cardId : undefined;
   return {
     anon_user_id: anonymousId,
-    home_variant: typeof payload?.homeVariant === 'string' ? payload.homeVariant : undefined,
     card_key: cardKey,
     asset_key: typeof payload?.assetKey === 'string' ? payload.assetKey : undefined,
     symbol: typeof payload?.symbol === 'string' ? payload.symbol : undefined,
@@ -92,7 +91,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
     registerAnonymousUser({
       deviceType: window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop',
-      appVersion,
+      appVersion: APP_VERSION,
       preferredMarkets: parsed.preferredMarkets,
     }).catch(() => undefined);
     flushPendingSyncQueue().catch(() => undefined);
@@ -100,9 +99,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated) {
-      window.localStorage.setItem(storageKey, JSON.stringify(state));
-    }
+    if (hydrated) window.localStorage.setItem(storageKey, JSON.stringify(state));
   }, [hydrated, state]);
 
   const showToast = useCallback((message: string) => {
@@ -137,9 +134,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(body),
       })
         .then((response) => {
-          if (!response.ok) {
-            queuePendingSync({ url: '/api/events', method: 'POST', payload: body });
-          }
+          if (!response.ok) queuePendingSync({ url: '/api/events', method: 'POST', payload: body });
         })
         .catch(() => queuePendingSync({ url: '/api/events', method: 'POST', payload: body }));
     },
@@ -188,7 +183,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     (markets: string[]) => {
       setState((current) => ({ ...current, preferredMarkets: markets }));
       setMixpanelSuperProperties({ preferred_markets: markets });
-      registerAnonymousUser({ preferredMarkets: markets, appVersion }).catch(() => undefined);
+      registerAnonymousUser({ preferredMarkets: markets, appVersion: APP_VERSION }).catch(() => undefined);
       logEvent('market_filter_change', { preferredMarkets: markets, source: 'market_preference_sheet' });
     },
     [logEvent],
@@ -201,8 +196,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       anonymousId,
       saveCard: (id, metadata) => addUnique('savedCardIds', id, '보관함에 저장했습니다. 현재 데이터 기준으로 다시 확인할 수 있습니다.', 'card_save', 'saved', metadata),
       likeCard: (id, metadata) => addUnique('likedCardIds', id, '관심 카드로 표시했습니다.', 'card_like', 'liked', metadata),
-      hideCard: (id, metadata) => addUnique('hiddenCardIds', id, '숨김 카드로 기록했습니다.', 'card_skip', 'hidden', metadata),
-      copyFormula: (id, metadata) => addUnique('copiedFormulaIds', id, '지표식이 복사되었습니다.', 'formula_copy', 'formula_copy', metadata),
+      hideCard: (id, metadata) => addUnique('hiddenCardIds', id, '넘긴 카드로 기록했습니다.', 'card_skip', 'hidden', metadata),
+      copyFormula: (id, metadata) => addUnique('copiedFormulaIds', id, '지표식 설명을 복사했습니다.', 'formula_copy', 'formula_copy', metadata),
       trackCard: (id, metadata) => addUnique('trackingCardIds', id, '현재 데이터 기준 확인 목록에 추가했습니다.', 'result_track_add', 'result_tracking', metadata),
       setPreferredMarkets,
       showToast,
@@ -225,8 +220,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
 export function useAppState() {
   const value = useContext(AppStateContext);
-  if (!value) {
-    throw new Error('useAppState must be used within AppStateProvider');
-  }
+  if (!value) throw new Error('useAppState must be used within AppStateProvider');
   return value;
 }

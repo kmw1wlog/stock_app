@@ -1,25 +1,25 @@
 'use client';
 
-import { Bookmark, Heart, MessageCircle, MoreHorizontal, X } from 'lucide-react';
+import { Bell, Bookmark, MoreHorizontal, ScrollText, X } from 'lucide-react';
 
 type HomeActionButtonsProps = {
   onSkip: () => void;
-  onLike: () => void;
+  onAlert: () => void;
   onSave: () => void;
-  onOpinion: () => void;
+  onFormula: () => void;
   onMore: () => void;
 };
 
 const actions = [
   { label: '넘기기', icon: X, tone: 'text-slate-500', ring: 'border-slate-200' },
-  { label: '관심', icon: Heart, tone: 'text-rose-500', ring: 'border-rose-100' },
+  { label: '알림', icon: Bell, tone: 'text-amber-500', ring: 'border-amber-100' },
   { label: '저장', icon: Bookmark, tone: 'text-[#0B63F6]', ring: 'border-blue-100' },
-  { label: '뉴스', icon: MessageCircle, tone: 'text-violet-500', ring: 'border-violet-100' },
-  { label: '더보기', icon: MoreHorizontal, tone: 'text-slate-500', ring: 'border-slate-200' },
+  { label: '조건식', icon: ScrollText, tone: 'text-violet-500', ring: 'border-violet-100' },
+  { label: '상세', icon: MoreHorizontal, tone: 'text-slate-500', ring: 'border-slate-200' },
 ];
 
-export function HomeActionButtons({ onSkip, onLike, onSave, onOpinion, onMore }: HomeActionButtonsProps) {
-  const handlers = [onSkip, onLike, onSave, onOpinion, onMore];
+export function HomeActionButtons({ onSkip, onAlert, onSave, onFormula, onMore }: HomeActionButtonsProps) {
+  const handlers = [onSkip, onAlert, onSave, onFormula, onMore];
   return (
     <div className="grid grid-cols-5 gap-2 px-1">
       {actions.map((action, index) => {
