@@ -2,6 +2,9 @@
 
 ## 0.5.0 - Live Data Display MVP
 
+- Added `api:smoke` for user-provided API key verification across KR, US, crypto, macro, and broker-auth providers.
+- Added `docs/API_KEY_INVENTORY.md` and updated runtime provider documentation with actual smoke results.
+- Connected configured Data.go.kr, Alpaca, and Naver API data to live feed fallback rendering.
 - Work branch: `feature/v0.5.0-live-data`.
 - Set `package.json` version to `0.5.0` and app version to `0.5.0-live-data`.
 - Added structured provider fetch outcomes and persistent `DataProviderStatus`.

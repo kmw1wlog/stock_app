@@ -11,6 +11,7 @@
     "prisma:generate": "prisma generate",
     "db:seed": "prisma db seed",
     "data:smoke": "tsx scripts/data-smoke.ts",
+    "api:smoke": "tsx scripts/api-provider-smoke.ts",
     "data:verify-render": "tsx scripts/verify-render-data.ts",
     "check:banned-copy": "tsx scripts/check-banned-copy.ts"
   },

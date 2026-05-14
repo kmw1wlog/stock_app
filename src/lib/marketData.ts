@@ -8,6 +8,9 @@ import type { DataEnvelope, DisplayCard } from '@/lib/marketDataTypes';
 import { fetchAlternativeFearGreed } from '@/lib/providers/crypto/alternativeFearGreed';
 import { fetchBinance24hTicker } from '@/lib/providers/crypto/binance';
 import { fetchUpbitTicker } from '@/lib/providers/crypto/upbit';
+import { fetchKoreaEodQuote } from '@/lib/providers/korea/dataGoKr';
+import { fetchNaverNewsMentions } from '@/lib/providers/korea/naverNews';
+import { fetchUsDirectQuote } from '@/lib/providers/us/usDirectProvider';
 
 const nowIso = () => new Date().toISOString();
 
@@ -142,6 +145,101 @@ async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
   return cards.slice(0, limit);
 }
 
+function stripHtml(value = '') {
+  return value.replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
+}
+
+async function publicConfiguredApiCards(limit: number): Promise<DisplayCard[]> {
+  const cards: DisplayCard[] = [];
+
+  if (process.env.DATA_GO_KR_SERVICE_KEY) {
+    const samsung = await fetchKoreaEodQuote('005930');
+    if (samsung.data?.price) {
+      cards.push({
+        id: 'api-kr-005930',
+        assetKey: '005930',
+        symbol: '005930',
+        name: '삼성전자',
+        market: 'KR',
+        marketLabel: '국장',
+        theme: '반도체',
+        cardType: (samsung.data.changePct ?? 0) >= 0 ? 'kr_gainer' : 'kr_loser',
+        title: '삼성전자 전일 공공데이터',
+        primaryReason: `전일 기준 ${samsung.data.changePct !== undefined ? `${samsung.data.changePct.toFixed(2)}%` : '등락률'} 데이터가 수신됐습니다.`,
+        secondaryReason: '금융위원회 주식시세정보 API에서 받은 가격/거래량/거래대금입니다.',
+        price: samsung.data.price,
+        changePct: samsung.data.changePct,
+        volume: samsung.data.volume,
+        amount: samsung.data.amount,
+        labels: ['전일 가격 데이터', '거래량 데이터 확인'],
+        dataBasisLabel: samsung.data.basis,
+        source: samsung.source,
+        updatedAt: samsung.fetchedAt,
+        chartSetupType: '전일 가격/거래량 확인',
+        isMock: false,
+      });
+    }
+  }
+
+  if (process.env.US_DIRECT_PRICE_PROVIDER && process.env.US_DIRECT_PRICE_PROVIDER !== 'none') {
+    const apple = await fetchUsDirectQuote('AAPL');
+    if (apple.data?.price) {
+      cards.push({
+        id: 'api-us-aapl',
+        assetKey: 'AAPL',
+        symbol: 'AAPL',
+        name: 'Apple',
+        market: 'US',
+        marketLabel: '미장',
+        theme: '대형기술주',
+        cardType: (apple.data.changePct ?? 0) >= 0 ? 'us_direct_gainer' : 'us_direct_loser',
+        title: 'Apple 직접 가격 API',
+        primaryReason: `선택된 미장 가격 provider에서 ${apple.data.changePct !== undefined ? `${apple.data.changePct.toFixed(2)}%` : '가격'} 데이터가 수신됐습니다.`,
+        secondaryReason: '직접 가격 API가 실패하면 TradingView 위젯만 표시합니다.',
+        price: apple.data.price,
+        changePct: apple.data.changePct,
+        volume: apple.data.volume,
+        labels: ['미장 직접 가격 데이터'],
+        dataBasisLabel: apple.data.basis,
+        source: apple.source,
+        updatedAt: apple.fetchedAt,
+        tvSymbol: 'NASDAQ:AAPL',
+        isWidget: false,
+        isMock: false,
+      });
+    }
+  }
+
+  if (process.env.NAVER_CLIENT_ID && process.env.NAVER_CLIENT_SECRET) {
+    const news = await fetchNaverNewsMentions('삼성전자');
+    const first = news.data[0];
+    if (first?.title) {
+      cards.push({
+        id: 'api-news-samsung',
+        assetKey: '005930-news',
+        symbol: '005930',
+        name: '삼성전자 뉴스',
+        market: 'KR',
+        marketLabel: '국장',
+        theme: '뉴스',
+        cardType: 'kr_news',
+        title: '삼성전자 뉴스 검색 결과',
+        primaryReason: stripHtml(first.title),
+        secondaryReason: 'Naver Search API 제목/링크 기준이며 본문은 재게시하지 않습니다.',
+        price: null,
+        changePct: null,
+        labels: ['뉴스 검색 결과 있음'],
+        dataBasisLabel: news.basis,
+        source: news.source,
+        updatedAt: news.fetchedAt,
+        isMock: false,
+      });
+    }
+  }
+
+  return cards.slice(0, limit);
+}
+
 function cardTypeFrom(market: string, changePct?: number | null, labels: string[] = []) {
   if (market === 'US') return labels.some((label) => label.includes('SEC') || label.includes('공시')) ? 'us_sec_event' : 'us_widget';
   if (market === 'CRYPTO') return changePct !== undefined && changePct !== null && changePct < 0 ? 'crypto_loser_24h' : 'crypto_gainer_24h';
@@ -237,7 +335,7 @@ function fromAsset(asset: {
 
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   if (!hasDatabaseUrl()) {
-    const liveCards = await publicCryptoCards(limit);
+    const liveCards = [...await publicConfiguredApiCards(limit), ...await publicCryptoCards(limit)];
     return liveCards.length ? liveCards : mockCards(limit);
   }
 
@@ -299,7 +397,7 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
 
   const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
   if (dbCards.length) return dbCards;
-  const liveCards = await publicCryptoCards(limit);
+  const liveCards = [...await publicConfiguredApiCards(limit), ...await publicCryptoCards(limit)];
   return liveCards.length ? liveCards : mockCards(limit);
 }
 

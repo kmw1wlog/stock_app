@@ -23,7 +23,9 @@ export default async function RankingsPage() {
       <div className="space-y-5 py-6">
         <header className="px-5">
           <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0B63F6] text-white shadow-lg shadow-blue-500/25"><Trophy className="h-7 w-7" /></span>
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0B63F6] text-white shadow-lg shadow-blue-500/25">
+              <Trophy className="h-7 w-7" />
+            </span>
             <div>
               <h1 className="text-3xl font-black tracking-normal">랭킹</h1>
               <p className="mt-1 text-sm font-semibold text-slate-500">사용자 행동이 아니라 공식 데이터 기준으로 정렬합니다.</p>
@@ -39,7 +41,9 @@ export default async function RankingsPage() {
               </div>
               <Badge tone="blue">live</Badge>
             </div>
-            <div className="space-y-3">{category.items.length ? category.items.slice(0, 10).map((card, index) => <RankingRow key={`${category.key}-${card.id}`} card={card} index={index} />) : <EmptyState />}</div>
+            <div className="space-y-3">
+              {category.items.length ? category.items.slice(0, 10).map((card, index) => <RankingRow key={`${category.key}-${card.id}`} card={card} index={index} />) : <EmptyState />}
+            </div>
           </section>
         ))}
         <p className="px-6 text-xs font-semibold leading-5 text-slate-500">본 정보는 투자 판단을 돕기 위한 지표 기반 참고 정보이며, 투자 권유나 수익 보장을 의미하지 않습니다.</p>
@@ -57,7 +61,7 @@ function RankingRow({ card, index }: { card: DisplayCard; index: number }) {
         <p className="mt-1 line-clamp-1 text-xs font-bold text-slate-500">{card.dataBasisLabel}</p>
       </div>
       <span className={(card.changePct ?? 0) < 0 ? 'text-sm font-black text-blue-500' : 'text-sm font-black text-red-500'}>
-        {card.changePct === undefined || card.changePct === null ? '위젯' : `${card.changePct > 0 ? '+' : ''}${card.changePct.toFixed(2)}%`}
+        {card.changePct === undefined || card.changePct === null ? '위젯/자료 기준' : `${card.changePct > 0 ? '+' : ''}${card.changePct.toFixed(2)}%`}
       </span>
       <ChevronRight className="h-5 w-5 text-slate-400" />
     </Link>
@@ -65,5 +69,10 @@ function RankingRow({ card, index }: { card: DisplayCard; index: number }) {
 }
 
 function EmptyState() {
-  return <div className="rounded-2xl bg-slate-50 p-5 text-center"><Database className="mx-auto h-7 w-7 text-slate-400" /><p className="mt-2 text-sm font-bold text-slate-500">데이터 준비중</p></div>;
+  return (
+    <div className="rounded-2xl bg-slate-50 p-5 text-center">
+      <Database className="mx-auto h-7 w-7 text-slate-400" />
+      <p className="mt-2 text-sm font-bold text-slate-500">데이터 준비중</p>
+    </div>
+  );
 }

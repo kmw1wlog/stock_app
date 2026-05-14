@@ -26,5 +26,5 @@ export async function fetchNaverNewsMentions(query: string) {
       'X-Naver-Client-Secret': secret,
     },
   });
-  return emptyProviderResult('naver-news', '뉴스 제목/링크 기준 · 원문 재게시 없음', raw?.items ?? []);
+  return emptyProviderResult('naver-news', '뉴스 제목/링크 기준 · 본문 재게시 없음', raw?.items ?? []);
 }

@@ -51,7 +51,13 @@ export const exploreMeta: Record<ExploreSlug, { title: string; basis: string; so
 };
 
 function hasNewsOrDisclosure(card: DisplayCard) {
-  return card.source.includes('naver') || card.source.includes('sec') || card.source.includes('dart') || card.cardType.includes('disclosure') || card.labels.some((label) => label.includes('뉴스') || label.includes('공시') || label.includes('SEC'));
+  return (
+    card.source.includes('naver') ||
+    card.source.includes('sec') ||
+    card.source.includes('dart') ||
+    card.cardType.includes('disclosure') ||
+    card.labels.some((label) => label.includes('뉴스') || label.includes('공시') || label.includes('SEC'))
+  );
 }
 
 function filterCards(slug: ExploreSlug, cards: DisplayCard[]) {
