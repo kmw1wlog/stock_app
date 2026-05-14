@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Predeploy Detail/MTS Diagnosis Finish
+
+- Rebuilt the card detail page order around hero, chart, stock diagnosis, MTS CTA, chart setup, why appeared, external research, formula/alert, and bottom sponsored slot.
+- Added rule-based `StockDiagnosisPanel` with score, supply stars, institution/foreigner accumulation label, volume, short-selling, ATR volatility, finance, valuation, sector momentum, and after-hours reaction labels.
+- Added `InvestorFlowDaily` and `AfterHoursQuoteDaily` Prisma models plus Kiwoom EOD cron routes for investor flow and after-hours collection.
+- Added Data.go.kr candle provider fallback in `getDailyCandles`; KR and crypto detail charts now try real provider candles when DB candles are missing.
+- Added external research links for OpenDART, YouTube, X, and Naver News with `external_research_click` logging.
+- Added detail MTS CTA panel with sponsored disclosure and MTS selection routing.
+- Repaired corrupted Korean UI copy in home, detail, formula, alert, ads, and MTS surfaces.
+
 ## 0.5.0 - Live Data Display MVP
 
 - Added condition alert MVP with anonymous-user alert persistence, `/alerts`, and `/api/condition-alerts`.

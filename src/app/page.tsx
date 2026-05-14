@@ -18,7 +18,7 @@ type FeedResponse = { mode: 'live' | 'mock'; cards?: DisplayCard[]; items?: Disp
 const filters = ['전체', '국장', '미장', '코인'] as const;
 
 function percent(value?: number | null) {
-  if (value === null || value === undefined) return '위젯/자료 기준';
+  if (value === null || value === undefined) return '자료 기준';
   return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
@@ -65,9 +65,10 @@ export default function HomePage() {
       <div className="px-5 pt-4">
         <header className="mb-3">
           <p className="text-[11px] font-black text-[#0B63F6]">{APP_VERSION} · {APP_RELEASE_NAME}</p>
-          <h1 className="mt-1 text-[24px] font-black leading-tight tracking-normal">오늘의 조건 포착</h1>
-          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">거래량·차트자리·뉴스 조건이 켜진 종목을 확인하세요.</p>
-          <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-400">본 정보는 매수·매도 추천이 아닌 조건식 기반 참고 정보입니다.</p>
+          <h1 className="mt-1 text-[24px] font-black leading-tight tracking-normal">오늘의 흐름 포착</h1>
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">거래량·차트자리·뉴스 흐름이 켜진 종목을 확인하세요.</p>
+          <p className="mt-1 text-[11px] font-black text-[#0B63F6]">급등주 for you</p>
+          <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-400">본 정보는 조건 충족 사실을 보여주는 참고 정보이며, 매수·매도 추천이 아닙니다.</p>
         </header>
 
         {card ? <HeroDataCard card={card} formulaShortName={formula?.shortName ?? '조건 포착'} /> : <EmptyHero message={message} />}
@@ -128,21 +129,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        <NativeAdCard source="home" slotName="home_after_next_candidates" title="관심 종목을 MTS에서 확인하세요." />
-
+        <NativeAdCard source="home" slotName="home_after_next_candidates" title="관심 종목을 MTS에서 확인하세요" />
         <DataSection title="오늘 급등 조건" href="/explore/movers" cards={visible.filter((item) => (item.changePct ?? 0) > 0).slice(0, 4)} />
         <DataSection title="거래대금 증가 조건" href="/rankings" cards={[...visible].sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0)).slice(0, 4)} />
         <DataSection title="뉴스·공시 조건" href="/explore/news" cards={visible.filter((item) => item.source.includes('naver') || item.source.includes('sec') || item.source.includes('dart') || item.cardType.includes('disclosure')).slice(0, 4)} />
-
         <NativeAdCard source="home" slotName="home_between_news_chart" title="제휴 콘텐츠" />
-
         <DataSection title="차트자리 조건" href="/explore/pullback" cards={visible.filter((item) => item.chartSetupType || item.labels.some((label) => label.includes('차트자리'))).slice(0, 4)} />
         <DataSection title="인기테마" href="/explore/themes" cards={visible.filter((item) => item.theme).slice(0, 4)} />
         <DataSection title="코인 24h 조건" href="/explore/maps" cards={visible.filter((item) => item.market === 'CRYPTO').slice(0, 4)} />
         <DataSection title="미장 이벤트" href="/explore/news" cards={visible.filter((item) => item.market === 'US').slice(0, 4)} />
-
         <NativeAdCard source="home" slotName="home_bottom_banner" title="광고 콘텐츠" />
-
         <p className="px-1 text-xs font-semibold leading-5 text-slate-500">본 정보는 조건 충족 사실을 보여주는 참고 정보이며, 매수·매도 추천이 아닙니다. 투자 판단은 이용자 본인에게 있습니다.</p>
       </div>
       {card && formula ? <AlertSetupModal card={card} formula={formula} open={alertOpen} onClose={() => setAlertOpen(false)} /> : null}

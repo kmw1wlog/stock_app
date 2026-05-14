@@ -29,6 +29,10 @@ function labelTexts(labels: Array<{ displayText: string }> = []) {
   return labels.map((label) => label.displayText).filter(Boolean).slice(0, 5);
 }
 
+function stripHtml(value = '') {
+  return value.replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
+}
+
 export function envelope<T>(items: T[], source: string, basis: string, extra: Partial<DataEnvelope<T>> = {}): DataEnvelope<T> {
   return {
     ok: true,
@@ -96,9 +100,9 @@ async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
       marketLabel: '코인',
       theme: asset.theme,
       cardType: changePct >= 0 ? 'crypto_gainer_24h' : 'crypto_loser_24h',
-      title: `${asset.name} 24h 공개 API`,
+      title: `${asset.name} 24h public API`,
       primaryReason: `24h 기준 ${changePct >= 0 ? '상승' : '하락'} 데이터가 확인됐습니다.`,
-      secondaryReason: 'DB 데이터가 비어 있을 때 keyless public API 데이터만 표시합니다.',
+      secondaryReason: 'DB 데이터가 비어 있으면 keyless public API 데이터만 표시합니다.',
       price: result.data.price,
       changePct: result.data.changePct,
       volume: result.data.volume,
@@ -142,10 +146,6 @@ async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
   }
 
   return cards.slice(0, limit);
-}
-
-function stripHtml(value = '') {
-  return value.replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
 }
 
 async function publicConfiguredApiCards(limit: number): Promise<DisplayCard[]> {
@@ -336,7 +336,7 @@ function fromAsset(asset: {
 
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   if (!hasDatabaseUrl()) {
-    const liveCards = [...await publicConfiguredApiCards(limit), ...await publicCryptoCards(limit)];
+    const liveCards = [...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))];
     return liveCards.length ? liveCards.slice(0, limit) : mockCards(limit);
   }
 
@@ -398,7 +398,7 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
 
   const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
   if (dbCards.length) return dbCards;
-  const liveCards = [...await publicConfiguredApiCards(limit), ...await publicCryptoCards(limit)];
+  const liveCards = [...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))];
   return liveCards.length ? liveCards.slice(0, limit) : mockCards(limit);
 }
 

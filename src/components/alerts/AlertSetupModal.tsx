@@ -36,7 +36,9 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
           <p className="mt-3 text-sm font-semibold text-slate-600">알림 유효기간: {formula.defaultExpiresInDays}일</p>
           <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">만료 전 다시 확인하고 연장할 수 있습니다.</p>
         </div>
-        <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">본 알림은 매수·매도 추천이 아닙니다. 조건 충족 사실을 알려주는 참고 기능입니다.</p>
+        <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
+          본 알림은 매수·매도 추천이 아닙니다. 조건 충족 사실을 알려주는 참고 기능입니다.
+        </p>
         <button
           type="button"
           className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] text-base font-black text-white shadow-lg shadow-blue-500/25"
