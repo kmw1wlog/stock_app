@@ -8,6 +8,19 @@ export type ProviderResult<T> = {
   raw?: unknown;
 };
 
+export type ProviderFetchOutcome<T> = {
+  ok: boolean;
+  provider: string;
+  url?: string;
+  status?: number;
+  basis: string;
+  fetchedAt: string;
+  data: T | null;
+  rawText?: string;
+  error?: string;
+  envMissing?: string[];
+};
+
 export type NormalizedQuote = {
   symbol: string;
   market: MarketType;
