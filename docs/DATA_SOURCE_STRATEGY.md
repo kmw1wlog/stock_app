@@ -2,38 +2,35 @@
 
 Last updated: 2026-05-14
 
-이 앱은 데이터 수집 방식을 두 갈래로 분리한다.
+The app separates data that can be fetched and stored from data that must remain inside official widgets.
 
-## 1. API로 받아와 DB에 저장하는 데이터
-
-API 키가 있거나 공개 API로 허용되는 데이터는 서버 cron에서 받아와 DB에 저장한다.
+## Stored API Data
 
 | Market | Provider | Data | Storage | UI |
 |---|---|---|---|---|
-| KR | Data.go.kr 금융위원회 주식시세정보 | EOD OHLCV, 등락률, 거래량, 거래대금 | `AssetPriceDaily` | 카드 숫자, EOD 차트 |
-| KR | OpenDART | 공시 metadata | `NewsMention`, `AssetLabel`, `ProviderPayloadCache` | 공시 라벨, 상세/리포트 |
-| KR | Naver Search API | 뉴스 제목/링크/키워드 | `NewsMention`, `AssetLabel` | 뉴스/공시 섹션 |
-| US | SEC EDGAR | 10-K, 10-Q, 8-K 등 filings | `NewsMention`, `AssetLabel` | 미장 이벤트 |
-| US | Alpaca/FMP/Alpha Vantage/Twelve Data | 직접 가격/등락률/캔들 | `AssetPriceDaily`, `AssetLabel` | `US_DIRECT_PRICE_PROVIDER` 설정 시 |
-| US | Marketaux | 뉴스 제목/링크 | `NewsMention`, `AssetLabel` | 미장 뉴스 |
-| Crypto | Binance/Upbit | 24h ticker, candles | `AssetPriceIntraday`, `AssetPriceDaily`, `AssetLabel` | 코인 카드/차트 |
-| Crypto | Alternative Fear & Greed | 시장 심리 | `ProviderPayloadCache`, `AssetLabel` | 공포탐욕 |
+| KR | Data.go.kr Financial Services Commission stock price API | EOD OHLCV, change rate, volume, amount | `AssetPriceDaily`, `AssetLabel`, `ProviderPayloadCache` | Cards, EOD chart |
+| KR | OpenDART | disclosure metadata | `NewsMention`/future disclosure table, `AssetLabel`, `ProviderPayloadCache` | Disclosure labels, detail/report |
+| KR | Naver Search API | news title/link/keyword | `NewsMention`, `AssetLabel` | News/disclosure sections |
+| US | SEC EDGAR | 10-K, 10-Q, 8-K filings | `NewsMention`/future disclosure table, `AssetLabel` | US event labels |
+| US | Alpaca/FMP/Alpha Vantage/Twelve Data | direct quote/candles when configured | `AssetPriceDaily`, `AssetLabel` | Optional US numeric cards |
+| US | Marketaux | news title/link | `NewsMention`, `AssetLabel` | US/global news |
+| Crypto | Binance/Upbit | 24h ticker, candles | `AssetPriceIntraday`, `AssetPriceDaily`, `AssetLabel` | Crypto cards/charts |
+| Crypto | Alternative Fear & Greed | market sentiment | `ProviderPayloadCache`, `AssetLabel` | Sentiment cards/report |
 
-## 2. 공식 사이트/위젯으로 조회해서 표시하는 데이터
+## Official Widget Data
 
-재배포 권리 이슈가 있거나 직접 API 권리가 불명확한 데이터는 위젯으로 표시한다. 위젯에서 데이터를 추출하지 않는다.
+Some market data is safer to display through official widgets because redistribution rights are unclear or exchange licensing is required.
 
 | Provider | Data | UI Policy |
 |---|---|---|
-| TradingView widgets | 미장 가격/등락률/차트, 일부 코인 차트 | 위젯 그대로 표시, 로고/출처 유지 |
-| CoinGecko widgets | 코인 가격/차트 | 위젯 그대로 표시 |
-| CoinMarketCap widgets | 코인 티커 | 필요 시 위젯 그대로 표시 |
+| TradingView widgets | US price, rate, chart; optional crypto chart | Display widget as-is and keep attribution/logo. Do not extract widget data. |
+| CoinGecko widgets | crypto price/chart | Display widget as-is. |
+| CoinMarketCap widgets | crypto ticker | Display widget as-is when enabled. |
 
-## 금지 원칙
+## Prohibited
 
-- Yahoo/Naver/TradingView 화면 크롤링 금지
-- 위젯 DOM에서 가격 추출 금지
-- live 모드에서 임의 가격, 임의 등락률, 임의 차트 표시 금지
-- API 키를 repo에 커밋 금지
-- 뉴스 원문 본문 재게시 금지
-
+- Yahoo/Naver/TradingView screen scraping.
+- Extracting price data from widget DOM.
+- Fake price, fake rate, or fake chart in `DATA_MODE=live`.
+- Committing API keys to the repository.
+- Reposting full news article bodies.

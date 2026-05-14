@@ -13,11 +13,11 @@ function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export async function getDailyCandles(assetKey: string): Promise<{ candles: Candle[]; fallback: boolean; basis: string; message?: string }> {
-  if (!hasDatabaseUrl()) return { candles: [], fallback: false, basis: 'AssetPriceDaily · DB 미연결', message: '차트 데이터 준비중' };
+export async function getDailyCandles(assetKey: string): Promise<{ candles: Candle[]; fallback: boolean; basis: string; source: string; updatedAt: string | null; message?: string }> {
+  if (!hasDatabaseUrl()) return { candles: [], fallback: false, basis: 'AssetPriceDaily · DB 미연결', source: 'db', updatedAt: null, message: '차트 데이터 준비중' };
 
   const asset = await prisma.asset.findFirst({ where: { OR: [{ id: assetKey }, { symbol: assetKey }] }, select: { id: true } });
-  if (!asset) return { candles: [], fallback: false, basis: 'AssetPriceDaily · asset 없음', message: '차트 데이터 준비중' };
+  if (!asset) return { candles: [], fallback: false, basis: 'AssetPriceDaily · asset 없음', source: 'db', updatedAt: null, message: '차트 데이터 준비중' };
 
   const prices = await prisma.assetPriceDaily.findMany({ where: { assetId: asset.id }, orderBy: { date: 'asc' }, take: 120 });
   const candles = prices
@@ -31,6 +31,6 @@ export async function getDailyCandles(assetKey: string): Promise<{ candles: Cand
       volume: price.volume ?? undefined,
     }));
 
-  if (!candles.length) return { candles: [], fallback: false, basis: 'AssetPriceDaily · DB 저장 데이터 없음', message: '차트 데이터 준비중' };
-  return { candles, fallback: false, basis: 'AssetPriceDaily · DB 저장 데이터' };
+  if (!candles.length) return { candles: [], fallback: false, basis: 'AssetPriceDaily · DB 저장 데이터 없음', source: 'db', updatedAt: null, message: '차트 데이터 준비중' };
+  return { candles, fallback: false, basis: 'AssetPriceDaily · DB 저장 데이터', source: 'db', updatedAt: prices.at(-1)?.createdAt.toISOString() ?? null };
 }

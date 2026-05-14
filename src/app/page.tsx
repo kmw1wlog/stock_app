@@ -193,7 +193,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 }
 
 function SectionTitle({ title, href }: { title: string; href: string }) {
-  return <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black">{title}</h2><Link href={href} className="flex items-center gap-1 text-sm font-black text-[#0B63F6]">더보기<ChevronRight className="h-4 w-4" /></Link></div>;
+  return <div className="flex items-center justify-between gap-3"><h2 className="text-lg font-black">{title}</h2><Link href={href} className="flex items-center gap-1 text-sm font-black text-[#0B63F6]">더보기 <ChevronRight className="h-4 w-4" /></Link></div>;
 }
 
 function TwoUpDataCard({ card }: { card: DisplayCard }) {

@@ -4,20 +4,32 @@ Last updated: 2026-05-14
 
 | Area | Status | Notes |
 |---|---|---|
-| Versioning | 구현됨 | `package.json` 0.4.0, `src/lib/version.ts` 추가 |
-| DATA_MODE policy | 구현됨 | live 모드에서는 mock 카드를 반환하지 않음 |
-| Home feed | 구현됨 | `/api/cards/feed` 기반. 데이터 없으면 준비중 |
-| Explore | 구현됨 | 더보기 라우트와 API가 DB 우선, 없으면 준비중 |
-| Rankings | 구현됨 | 사용자 행동 랭킹 대신 가격/거래대금/뉴스/공시/코인 기준 |
-| Report | 구현됨 | 시장 데이터 리포트로 재구성 |
-| Saved | 부분 구현 | localStorage 저장 종목에 대해 현재 feed 데이터 매칭 |
-| KR EOD pipeline | 부분 구현 | Asset 전체 순회 구조 구현. Data.go.kr 키와 실제 응답 검증 필요 |
-| OpenDART pipeline | 부분 구현 | `dartCorpCode` 있는 KR 자산 순회. corpCode 없는 자산은 skip |
-| Naver News pipeline | 부분 구현 | 제목/링크 저장. 본문 재게시 없음 |
-| US SEC pipeline | 부분 구현 | CIK 있는 US 자산 순회 |
-| US direct price | 부분 구현 | Alpaca/FMP/Alpha Vantage/Twelve Data provider와 cron 추가. env 없으면 TradingView 위젯 사용 |
-| US news API | 부분 구현 | Marketaux provider와 cron 추가. env 없으면 비활성 |
-| Crypto Binance/Upbit | 부분 구현 | public API provider와 저장 구조 구현. 운영 네트워크에서 실행 검증 필요 |
-| KRX short/flow | 부분 구현 | provider interface/env 기반. API ID와 권한 확정 필요 |
-| PWA | 부분 구현 | manifest와 기본 SVG 아이콘 추가. 스토어 래핑은 미구현 |
-| Premium/ads UI | 비활성화 | 화면에서 제거 |
+| Versioning | Implemented | `package.json` is `0.5.0`; `src/lib/version.ts` is `0.5.0-live-data`. |
+| Branch workflow | Implemented | Work is on `feature/v0.5.0-live-data`; main is not edited directly. |
+| DATA_MODE policy | Implemented | `DATA_MODE=live` blocks mock card fallback unless `DATA_MODE=mock` or `NEXT_PUBLIC_ALLOW_MOCK_DATA=true`. |
+| Provider fetch outcome | Implemented | `safeProviderFetch` keeps status, raw text snippet, parse errors, and missing env. |
+| Provider status persistence | Implemented | `DataProviderStatus` model and status helpers are present. |
+| Provider status API/UI | Implemented | `/api/provider-status` and `/data-status` expose env, status, counts, last run, and errors. |
+| Admin refresh | Implemented | `/api/admin/refresh-all` calls job functions directly. |
+| Public crypto runtime data | Implemented and smoke-tested | Binance, Upbit, and Alternative Fear & Greed returned live data on 2026-05-14. |
+| Home feed live fallback | Implemented | `/api/cards/feed` can render real public crypto cards without DB; mock remains disabled in live. |
+| KR EOD pipeline | Partial | Asset-wide job exists, but actual Data.go.kr persistence requires `DATA_GO_KR_SERVICE_KEY` and a database. |
+| OpenDART pipeline | Partial | Job exists; complete coverage requires corp code mapping and `OPENDART_API_KEY`. |
+| Naver News pipeline | Partial | Job exists; requires Naver API env. Title/link only, no article body repost. |
+| SEC EDGAR pipeline | Partial | Job exists and skips CIK-missing assets. Requires proper `SEC_USER_AGENT`. |
+| US direct price | Partial | Optional provider job exists. If `US_DIRECT_PRICE_PROVIDER=none`, US price/rate is shown only through TradingView widgets. |
+| KRX short/flow | Blocked | Env and provider status surface exist. API ID/permission and response format must be verified before labels are enabled. |
+| Chart policy | Implemented policy | Native chart requires real candles. US uses TradingView widgets when direct price provider is not configured. |
+| Premium/user behavior UI | Removed from UI | Banned UI copy script passes. |
+| PWA | Partial | Manifest exists; native store wrapping is not included in this version. |
+
+## Latest Local Verification
+
+- `npm run typecheck`: passed.
+- `npm run build`: passed.
+- `npm run prisma:validate`: passed.
+- `npm run prisma:generate`: passed.
+- `npm run data:smoke`: passed with Binance, Upbit, and Alternative Fear & Greed.
+- `npm run check:banned-copy`: passed.
+- `npm run data:verify-render`: passed against `http://localhost:3000`; `/api/cards/feed` returned 4 live cards with `isMock: false`.
+- `npm run test:ui`: passed.

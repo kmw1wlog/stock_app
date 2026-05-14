@@ -34,7 +34,7 @@ export async function fetchBinance24hTicker(symbol: string): Promise<ProviderRes
 }
 
 export async function fetchBinanceKlines(symbol: string, interval = '1d', limit = 120): Promise<ProviderResult<NormalizedCandle[]>> {
-  const basis = `${interval} candles · Binance public API`;
+  const basis = `${interval} 캔들 · Binance public API`;
   const outcome = await fetchFromBinance<Array<Array<number | string>>>(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`, basis);
   const candles = (outcome?.data ?? []).map((item) => ({
     symbol,

@@ -9,7 +9,10 @@
     "typecheck": "tsc --noEmit",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "data:smoke": "tsx scripts/data-smoke.ts",
+    "data:verify-render": "tsx scripts/verify-render-data.ts",
+    "check:banned-copy": "tsx scripts/check-banned-copy.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.8.0",

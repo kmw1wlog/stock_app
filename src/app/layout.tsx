@@ -5,7 +5,7 @@ import { APP_RELEASE_NAME, APP_VERSION } from '@/lib/version';
 
 export const metadata: Metadata = {
   title: 'Stock App Data MVP',
-  description: '공식 API와 위젯 기준으로 시장 데이터를 표시하는 모바일 웹앱',
+  description: '공식 API와 위젯 기준으로 시장 데이터를 표시하는 모바일 앱',
   manifest: '/manifest.webmanifest',
   appleWebApp: { capable: true, title: 'Stock Data', statusBarStyle: 'default' },
   applicationName: `Stock Data ${APP_VERSION}`,
