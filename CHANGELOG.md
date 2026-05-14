@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - X/Tinder Home Feed + Search Explore
+
+- Reworked the home screen into a vertical stock feed with horizontal panels for main info, daily chart/technical conditions, financial checks, and related stocks.
+- Added market session clock with auto/manual KR/CRYPTO/US selection and `급상승 / 거래대금` sort tabs.
+- Moved home list-style discovery into Explore and added a new 거래대금 explore section plus `/explore/amount` and `/api/explore/amount`.
+- Added `/search` with stock name/symbol/theme/label filtering using DB assets or live display cards.
+- Added relation utilities for same-theme and same-chart-type grids.
+- Added analytics event names for market session, home sort, panel, related stock, technical condition, and search experiments.
+
 ## Unreleased - Predeploy Detail/MTS Diagnosis Finish
 
 - Rebuilt the card detail page order around hero, chart, stock diagnosis, MTS CTA, chart setup, why appeared, external research, formula/alert, and bottom sponsored slot.

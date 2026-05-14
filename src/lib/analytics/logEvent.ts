@@ -68,7 +68,30 @@ export type EventType =
   | 'home_detail_click'
   | 'formula_copy_text'
   | 'external_research_click'
-  | 'influencer_link_click';
+  | 'influencer_link_click'
+  | 'market_session_clock_click'
+  | 'market_session_change'
+  | 'market_session_auto_restore'
+  | 'home_feed_sort_change'
+  | 'vertical_feed_card_view'
+  | 'horizontal_panel_view'
+  | 'horizontal_panel_swipe'
+  | 'main_panel_alert_click'
+  | 'main_panel_mts_click'
+  | 'tech_indicator_panel_view'
+  | 'tech_condition_select'
+  | 'tech_alert_create'
+  | 'financial_panel_view'
+  | 'opendart_click'
+  | 'related_panel_view'
+  | 'related_mode_switch'
+  | 'related_stock_click'
+  | 'theme_fear_greed_view'
+  | 'chart_type_formula_click'
+  | 'search_open'
+  | 'search_query_change'
+  | 'search_result_click'
+  | 'search_suggestion_click';
 
 export async function logServerEvent(input: {
   anonUserId: string;
