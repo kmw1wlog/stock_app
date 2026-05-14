@@ -1,10 +1,15 @@
 import 'server-only';
-import { safeFetchJson } from '@/lib/providers/http';
+import { safeProviderFetch } from '@/lib/providers/http';
 import { emptyProviderResult, type NormalizedCandle, type NormalizedQuote } from '@/lib/providers/types';
 
 export async function fetchUpbitTicker(market: string) {
-  const raw = await safeFetchJson<Array<Record<string, number | string>>>(`https://api.upbit.com/v1/ticker?markets=${market}`);
-  const item = raw?.[0];
+  const basis = '24h 기준 · Upbit public API';
+  const outcome = await safeProviderFetch<Array<Record<string, number | string>>>({
+    provider: 'upbit',
+    url: `https://api.upbit.com/v1/ticker?markets=${market}`,
+    basis,
+  });
+  const item = outcome.data?.[0];
   const quote: NormalizedQuote | null = item
     ? {
         symbol: market,
@@ -13,17 +18,22 @@ export async function fetchUpbitTicker(market: string) {
         changePct: Number(item.signed_change_rate) * 100,
         volume: Number(item.acc_trade_volume_24h),
         amount: Number(item.acc_trade_price_24h),
-        basis: '24h 기준 · Upbit public API',
+        basis,
         source: 'upbit',
       }
     : null;
-  return emptyProviderResult('upbit', '24h 기준 · Upbit public API', quote);
+  return { ...emptyProviderResult('upbit', basis, quote), raw: outcome };
 }
 
 export async function fetchUpbitCandles(market: string, interval = 'days', limit = 120) {
   const path = interval === 'minutes' ? 'minutes/60' : 'days';
-  const raw = await safeFetchJson<Array<Record<string, number | string>>>(`https://api.upbit.com/v1/candles/${path}?market=${market}&count=${limit}`);
-  const candles: NormalizedCandle[] = (raw ?? [])
+  const basis = `${interval} 캔들 · Upbit public API`;
+  const outcome = await safeProviderFetch<Array<Record<string, number | string>>>({
+    provider: 'upbit',
+    url: `https://api.upbit.com/v1/candles/${path}?market=${market}&count=${limit}`,
+    basis,
+  });
+  const candles: NormalizedCandle[] = (outcome.data ?? [])
     .map((item) => ({
       symbol: market,
       market: 'CRYPTO' as const,
@@ -37,5 +47,5 @@ export async function fetchUpbitCandles(market: string, interval = 'days', limit
       source: 'upbit',
     }))
     .sort((a, b) => a.time.localeCompare(b.time));
-  return emptyProviderResult('upbit', `${interval} candles · Upbit public API`, candles);
+  return { ...emptyProviderResult('upbit', basis, candles), raw: outcome };
 }

@@ -41,7 +41,7 @@ function SectionShell({ slug, title, hint, children }: { slug: ExploreSlug; titl
           <h2 className="text-xl font-black">{title}</h2>
           <p className="mt-1 text-xs font-black text-[#0B63F6]">{hint}</p>
         </div>
-        <Link href={`/explore/${slug}`} className="flex shrink-0 items-center gap-1 text-sm font-black text-[#0B63F6]">더보기<ChevronRight className="h-4 w-4" /></Link>
+        <Link href={`/explore/${slug}`} className="flex shrink-0 items-center gap-1 text-sm font-black text-[#0B63F6]">더보기 <ChevronRight className="h-4 w-4" /></Link>
       </div>
       {children}
     </section>

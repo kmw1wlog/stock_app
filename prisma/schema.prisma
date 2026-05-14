@@ -331,3 +331,21 @@ model ProviderPayloadCache {
   @@unique([provider, cacheKey])
   @@index([expiresAt])
 }
+
+model DataProviderStatus {
+  id             String   @id @default(cuid())
+  provider       String
+  dataType       String
+  status         String
+  lastCheckedAt  DateTime @default(now())
+  lastSuccessAt  DateTime?
+  lastError      String?
+  itemCount      Int      @default(0)
+  envMissing     Json?
+  samplePayload  Json?
+  notes          String?
+
+  @@unique([provider, dataType])
+  @@index([status])
+  @@index([lastCheckedAt])
+}

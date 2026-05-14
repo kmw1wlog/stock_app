@@ -8,7 +8,7 @@ export type ExploreSlug = 'movers' | 'themes' | 'news' | 'flows' | 'pullback' | 
 export const exploreMeta: Record<ExploreSlug, { title: string; basis: string; sortOptions: string[]; source: string }> = {
   movers: {
     title: '실시간 급등 / 상승예상 / 상한가',
-    basis: '국장 전일 기준 · 코인 24h 기준 · 미장은 TradingView/SEC 기준',
+    basis: '국장은 전일 기준 · 코인은 24h 기준 · 미장은 TradingView/SEC 기준',
     sortOptions: ['등락률', '거래대금', '최신 데이터'],
     source: 'db/provider',
   },
