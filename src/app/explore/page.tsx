@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Bell, ChevronRight, Database, Search } from 'lucide-react';
 import { NativeAdCard } from '@/components/ads/NativeAdCard';
 import { Badge } from '@/components/common/Badge';
@@ -6,7 +7,7 @@ import { MobileShell } from '@/components/layout/MobileShell';
 import { exploreMeta, getExplorePayload, type ExploreSlug } from '@/lib/exploreLive';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
-const sections: ExploreSlug[] = ['movers', 'themes', 'news', 'flows', 'pullback', 'after-hours', 'maps'];
+const sections: ExploreSlug[] = ['movers', 'amount', 'themes', 'news', 'flows', 'pullback', 'after-hours', 'maps'];
 
 export default async function ExplorePage() {
   const payloads = await Promise.all(sections.map(async (slug) => ({ slug, payload: await getExplorePayload(slug) })));
@@ -16,11 +17,15 @@ export default async function ExplorePage() {
         <header className="flex items-center justify-between px-5">
           <div>
             <h1 className="text-3xl font-black">탐색</h1>
-            <p className="mt-2 text-sm font-semibold text-slate-500">공식 데이터 기준 섹션입니다. 데이터가 없으면 준비중으로 표시합니다.</p>
+            <p className="mt-2 text-sm font-semibold text-slate-500">급상승, 거래대금, 테마, 뉴스·공시를 한곳에서 봅니다.</p>
           </div>
           <div className="flex gap-3 text-slate-600">
-            <Search className="h-6 w-6" />
-            <Bell className="h-6 w-6" />
+            <Link href="/search" aria-label="종목 검색" className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm">
+              <Search className="h-6 w-6" />
+            </Link>
+            <Link href="/alerts" aria-label="알림" className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm">
+              <Bell className="h-6 w-6" />
+            </Link>
           </div>
         </header>
         {payloads.map(({ slug, payload }, index) => (
@@ -45,7 +50,7 @@ export default async function ExplorePage() {
   );
 }
 
-function SectionShell({ slug, title, hint, children }: { slug: ExploreSlug; title: string; hint: string; children: React.ReactNode }) {
+function SectionShell({ slug, title, hint, children }: { slug: ExploreSlug; title: string; hint: string; children: ReactNode }) {
   return (
     <section className="px-5">
       <div className="mb-3 flex items-center justify-between gap-3">

@@ -28,6 +28,10 @@ Last updated: 2026-05-14
 | External research links | Implemented | Detail page links to OpenDART, YouTube, X, and Naver News and logs `external_research_click`. |
 | MTS selector MVP | Implemented | Added MTS provider catalog, `MTS에서 종목 보기` CTA, `/mts/select`, provider click logging, and sponsored disclosure. |
 | Sponsored slots | Implemented | Native ad cards now disclose `광고 / Sponsored` and state they are unrelated to condition selection or alert results. |
+| X/Tinder home feed | Implemented | Home now uses market session clock, `급상승/거래대금` tabs, vertical stock feed, and horizontal per-stock panels. Old home list sections moved to Explore. |
+| Home panel set | Implemented | Added main stock panel, daily chart/technical condition panel, financial panel, and same-theme/same-chart related stocks panel. |
+| Explore search | Implemented | Added `/search`, searchable stock cards, suggestion list, and search result click events. |
+| Explore amount section | Implemented | Added `amount` explore slug, `/explore/amount`, and `/api/explore/amount` for 거래대금 discovery. |
 | Full API inventory | Implemented | `docs/API_KEY_INVENTORY.md` maps every user-provided key to env, endpoint, app use, and status. |
 | Chart policy | Implemented policy | Native chart requires real candles. US uses TradingView widgets when direct price provider is not configured. |
 | Premium/user behavior UI | Removed from UI | Banned UI copy script passes. |
