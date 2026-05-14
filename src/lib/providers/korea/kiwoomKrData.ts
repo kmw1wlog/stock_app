@@ -88,12 +88,27 @@ export type KiwoomKrFlowData = {
 };
 
 const basis = '일별 기준 · Kiwoom REST API';
-const refreshCadence = '장중 15분, 장마감 후 1시간, 휴장일 1일 1회 권장';
+const refreshCadence = '장마감 이후 16:10~17:30 1회 권장';
 let cachedToken: { token: string; expiresAt: number } | null = null;
 let cachedFlow: { key: string; expiresAt: number; result: ProviderResult<KiwoomKrFlowData> } | null = null;
 
 function envMissing() {
-  return ['KIWOOM_REST_API_KEY', 'KIWOOM_REST_API_SECRET'].filter((key) => !process.env[key]);
+  const missing = [];
+  if (!process.env.KIWOOM_APP_KEY && !process.env.KIWOOM_REST_API_KEY) missing.push('KIWOOM_APP_KEY');
+  if (!process.env.KIWOOM_SECRET_KEY && !process.env.KIWOOM_REST_API_SECRET) missing.push('KIWOOM_SECRET_KEY');
+  return missing;
+}
+
+function appKey() {
+  return process.env.KIWOOM_APP_KEY ?? process.env.KIWOOM_REST_API_KEY;
+}
+
+function secretKey() {
+  return process.env.KIWOOM_SECRET_KEY ?? process.env.KIWOOM_REST_API_SECRET;
+}
+
+function baseUrl() {
+  return process.env.KIWOOM_API_BASE_URL ?? 'https://api.kiwoom.com';
 }
 
 function parseNumber(value: unknown): number | undefined {
@@ -127,13 +142,13 @@ async function getKiwoomToken() {
   const missing = envMissing();
   if (missing.length) throw new Error(`Missing env: ${missing.join(', ')}`);
 
-  const response = await fetch('https://api.kiwoom.com/oauth2/token', {
+  const response = await fetch(`${baseUrl()}/oauth2/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json;charset=UTF-8' },
     body: JSON.stringify({
       grant_type: 'client_credentials',
-      appkey: process.env.KIWOOM_REST_API_KEY,
-      secretkey: process.env.KIWOOM_REST_API_SECRET,
+      appkey: appKey(),
+      secretkey: secretKey(),
     }),
     cache: 'no-store',
   });
@@ -145,9 +160,9 @@ async function getKiwoomToken() {
   return data.token;
 }
 
-async function callKiwoom(apiId: string, path: string, body: Record<string, string>) {
+export async function callKiwoomRest(apiId: string, path: string, body: Record<string, string>) {
   const token = await getKiwoomToken();
-  const response = await fetch(`https://api.kiwoom.com${path}`, {
+  const response = await fetch(`${baseUrl()}${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8',
@@ -175,9 +190,9 @@ export async function fetchKiwoomKrFlow(symbol = '005930'): Promise<ProviderResu
   if (cachedFlow && cachedFlow.key === cacheKey && cachedFlow.expiresAt > Date.now()) return cachedFlow.result;
 
   const { start, end } = dateRange(20);
-  const shortSelling = await callKiwoom('ka10014', '/api/dostk/shsa', { stk_cd: symbol, strt_dt: start, end_dt: end });
-  const lending = await callKiwoom('ka20068', '/api/dostk/slb', { stk_cd: symbol });
-  const investor = await callKiwoom('ka10059', '/api/dostk/stkinfo', { stk_cd: symbol, dt: end, amt_qty_tp: '1', trde_tp: '0', unit_tp: '1' });
+  const shortSelling = await callKiwoomRest('ka10014', '/api/dostk/shsa', { stk_cd: symbol, strt_dt: start, end_dt: end });
+  const lending = await callKiwoomRest('ka20068', '/api/dostk/slb', { stk_cd: symbol });
+  const investor = await callKiwoomRest('ka10059', '/api/dostk/stkinfo', { stk_cd: symbol, dt: end, amt_qty_tp: '1', trde_tp: '0', unit_tp: '1' });
 
   const shortSellingRows = asRows<KiwoomShortSellingRow>(shortSelling.shrts_trnsn);
   const lendingRows = asRows<KiwoomLendingRow>(lending.dbrt_trde_trnsn);

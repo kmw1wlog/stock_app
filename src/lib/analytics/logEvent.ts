@@ -66,7 +66,9 @@ export type EventType =
   | 'home_alert_click'
   | 'home_formula_click'
   | 'home_detail_click'
-  | 'formula_copy_text';
+  | 'formula_copy_text'
+  | 'external_research_click'
+  | 'influencer_link_click';
 
 export async function logServerEvent(input: {
   anonUserId: string;

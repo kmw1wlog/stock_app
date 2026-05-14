@@ -78,6 +78,42 @@ model AssetPriceIntraday {
   @@index([time])
 }
 
+model InvestorFlowDaily {
+  id              String   @id @default(cuid())
+  assetId          String
+  date             DateTime
+  institutionNet   Float?
+  foreignNet       Float?
+  individualNet    Float?
+  source           String
+  basis            String
+  raw              Json?
+  createdAt        DateTime @default(now())
+
+  @@unique([assetId, date, source])
+  @@index([assetId])
+  @@index([date])
+}
+
+model AfterHoursQuoteDaily {
+  id             String   @id @default(cuid())
+  assetId         String
+  date            DateTime
+  afterPrice      Float?
+  afterChangePct  Float?
+  afterVolume     Float?
+  afterAmount     Float?
+  sessionType     String
+  source          String
+  basis           String
+  raw             Json?
+  createdAt       DateTime @default(now())
+
+  @@unique([assetId, date, source, sessionType])
+  @@index([assetId])
+  @@index([date])
+}
+
 model AssetLabel {
   id          String   @id @default(cuid())
   assetId     String

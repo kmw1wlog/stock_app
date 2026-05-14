@@ -9,9 +9,10 @@ type MtsViewButtonProps = {
   source: 'home' | 'detail' | 'formula' | 'saved' | 'alert';
   variant?: 'primary' | 'secondary';
   className?: string;
+  label?: string;
 };
 
-export function MtsViewButton({ card, source, variant = 'secondary', className = '' }: MtsViewButtonProps) {
+export function MtsViewButton({ card, source, variant = 'secondary', className = '', label = 'MTS에서 종목 보기' }: MtsViewButtonProps) {
   const { logEvent } = useAppState();
   const style =
     variant === 'primary'
@@ -34,7 +35,7 @@ export function MtsViewButton({ card, source, variant = 'secondary', className =
       }}
     >
       <ExternalLink className="h-5 w-5" />
-      MTS에서 종목 보기
+      {label}
     </button>
   );
 }

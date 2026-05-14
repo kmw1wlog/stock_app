@@ -5,7 +5,7 @@ Last updated: 2026-05-14
 | Area | Status | Notes |
 |---|---|---|
 | Versioning | Implemented | `package.json` is `0.5.0`; `src/lib/version.ts` is `0.5.0-live-data`. |
-| Branch workflow | Implemented | Current condition alert/MTS work is on `feature/condition-alert-mts-mvp`; main is not edited directly before PR merge. |
+| Branch workflow | Implemented | Current predeploy detail/diagnosis/MTS work is on `feature/predeploy-detail-diagnosis-mts`; main is not edited directly before PR merge. |
 | DATA_MODE policy | Implemented | `DATA_MODE=live` blocks mock card fallback unless `DATA_MODE=mock` or `NEXT_PUBLIC_ALLOW_MOCK_DATA=true`. |
 | Provider fetch outcome | Implemented | `safeProviderFetch` keeps status, raw text snippet, parse errors, and missing env. |
 | Provider status persistence | Implemented | `DataProviderStatus` model and status helpers are present. |
@@ -21,6 +21,11 @@ Last updated: 2026-05-14
 | KRX short/flow | Blocked | Env and provider status surface exist. API ID/permission and response format must be verified before labels are enabled. |
 | KRX alternative source | Implemented via Kiwoom REST | Kiwoom `ka10014`, `ka20068`, and `ka10059` are smoke-tested and rendered through `/api/korea/short-flow` plus a home feed card. |
 | Condition alert MVP | Implemented | Added `UserConditionAlert`, `ConditionAlertTrigger`, `/api/condition-alerts`, alert setup modal, and `/alerts` management page. |
+| Detail diagnosis panel | Implemented | Added `StockDiagnosisPanel` with score, supply stars, institution/foreigner accumulation, volume, short selling, volatility, finance, valuation, sector momentum, and after-hours labels. |
+| Kiwoom investor flow persistence | Implemented route, requires env | Added `InvestorFlowDaily` model and `/api/cron/kiwoom-investor-flow`. Refresh cadence: EOD 16:10~17:30 KST once. |
+| After-hours quote persistence | Partial | Added `AfterHoursQuoteDaily`, `afterHours` provider, and `/api/cron/after-hours`. Kiwoom `ka10087` is the selected lawful source candidate; production response format still needs account/env validation. Refresh cadence: EOD 18:20~19:00 KST once. |
+| Daily candle fallback | Implemented | `getDailyCandles` now reads DB first, then fetches KR Data.go.kr or crypto Binance/Upbit candles, saves them, and returns them without generating fake candles. |
+| External research links | Implemented | Detail page links to OpenDART, YouTube, X, and Naver News and logs `external_research_click`. |
 | MTS selector MVP | Implemented | Added MTS provider catalog, `MTS에서 종목 보기` CTA, `/mts/select`, provider click logging, and sponsored disclosure. |
 | Sponsored slots | Implemented | Native ad cards now disclose `광고 / Sponsored` and state they are unrelated to condition selection or alert results. |
 | Full API inventory | Implemented | `docs/API_KEY_INVENTORY.md` maps every user-provided key to env, endpoint, app use, and status. |

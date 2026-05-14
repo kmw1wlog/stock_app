@@ -35,13 +35,7 @@ export function MtsSelectClient() {
       isSponsored: Boolean(provider.isSponsored),
       positionIndex,
     });
-    logEvent('mts_deeplink_attempt', {
-      providerCode: provider.code,
-      cardKey,
-      assetKey,
-      symbol,
-      source,
-    });
+    logEvent('mts_deeplink_attempt', { providerCode: provider.code, cardKey, assetKey, symbol, source });
     window.location.href = buildMtsUrl(provider, symbol);
   };
 
@@ -100,7 +94,8 @@ export function MtsSelectClient() {
           <div className="flex gap-3">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#0B63F6]" />
             <p className="text-xs font-semibold leading-5 text-slate-500">
-              일부 증권앱은 제휴/광고에 따라 상단에 노출될 수 있습니다. 사용자는 원하는 MTS를 직접 선택할 수 있습니다. 본 기능은 해당 종목 화면을 여는 기능이며, 매수·매도 추천이 아닙니다.
+              일부 증권앱은 제휴/광고에 따라 상단에 노출될 수 있습니다. 사용자는 원하는 MTS를 직접 선택할 수 있습니다.
+              본 기능은 해당 종목 화면을 여는 기능이며, 매수·매도 추천이 아닙니다.
             </p>
           </div>
         </section>

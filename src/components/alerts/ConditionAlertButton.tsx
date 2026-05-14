@@ -28,7 +28,13 @@ export function ConditionAlertButton({ card, formula, className = '', variant = 
         type="button"
         className={`flex h-14 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-black ${style} ${className}`}
         onClick={() => {
-          logEvent('condition_alert_open_modal', { cardKey: card.id, assetKey: card.assetKey, symbol: card.symbol, market: card.market, formulaKey: formula.key });
+          logEvent('condition_alert_open_modal', {
+            cardKey: card.id,
+            assetKey: card.assetKey,
+            symbol: card.symbol,
+            market: card.market,
+            formulaKey: formula.key,
+          });
           setOpen(true);
         }}
       >

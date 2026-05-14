@@ -53,8 +53,8 @@ export default async function FormulaPage({ params }: { params: Promise<{ id: st
           </div>
 
           <FormulaActionPanel card={card} formula={formula} />
-          <NativeAdCard source="formula" slotName="formula_bottom" title="조건 확인 후 참고 콘텐츠" />
         </section>
+        <NativeAdCard source="formula" slotName="formula_bottom" title="조건 확인 후 참고 콘텐츠" />
       </div>
     </MobileShell>
   );

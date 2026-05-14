@@ -16,7 +16,7 @@ test('bottom tabs, condition CTAs, detail links, and MTS selector work', async (
     await expect(page).toHaveURL(pattern);
   }
 
-  await expect(page.getByText('오늘의 조건 포착')).toBeVisible();
+  await expect(page.getByText('오늘의 흐름 포착')).toBeVisible();
   await expect(page.getByRole('button', { name: /알림/ }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /조건식/ }).first()).toBeVisible();
 
@@ -29,10 +29,11 @@ test('bottom tabs, condition CTAs, detail links, and MTS selector work', async (
 
   await cardLinks.first().click();
   await expect(page).toHaveURL(/\/cards\/.+/);
+  await expect(page.getByText('종목 진단')).toBeVisible();
   await expect(page.getByText('이 조건 알림 받기').first()).toBeVisible();
-  await expect(page.getByText('MTS에서 종목 보기').first()).toBeVisible();
+  await expect(page.getByText('이 종목을 증권앱에서 확인하기').first()).toBeVisible();
 
-  await page.getByText('MTS에서 종목 보기').first().click();
+  await page.getByText('다른 MTS에서 보기').first().click();
   await expect(page).toHaveURL(/\/mts\/select/);
   await expect(page.getByText('이 종목을 증권앱에서 확인하기')).toBeVisible();
 });
