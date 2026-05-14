@@ -5,7 +5,7 @@ Last updated: 2026-05-14
 | Area | Status | Notes |
 |---|---|---|
 | Versioning | Implemented | `package.json` is `0.5.0`; `src/lib/version.ts` is `0.5.0-live-data`. |
-| Branch workflow | Implemented | Current KRX-alternative work is on `feature/krx-alternative-short-flow`; main is not edited directly. |
+| Branch workflow | Implemented | Current condition alert/MTS work is on `feature/condition-alert-mts-mvp`; main is not edited directly before PR merge. |
 | DATA_MODE policy | Implemented | `DATA_MODE=live` blocks mock card fallback unless `DATA_MODE=mock` or `NEXT_PUBLIC_ALLOW_MOCK_DATA=true`. |
 | Provider fetch outcome | Implemented | `safeProviderFetch` keeps status, raw text snippet, parse errors, and missing env. |
 | Provider status persistence | Implemented | `DataProviderStatus` model and status helpers are present. |
@@ -20,6 +20,9 @@ Last updated: 2026-05-14
 | US direct price | Partial | Optional provider job exists. If `US_DIRECT_PRICE_PROVIDER=none`, US price/rate is shown only through TradingView widgets. |
 | KRX short/flow | Blocked | Env and provider status surface exist. API ID/permission and response format must be verified before labels are enabled. |
 | KRX alternative source | Implemented via Kiwoom REST | Kiwoom `ka10014`, `ka20068`, and `ka10059` are smoke-tested and rendered through `/api/korea/short-flow` plus a home feed card. |
+| Condition alert MVP | Implemented | Added `UserConditionAlert`, `ConditionAlertTrigger`, `/api/condition-alerts`, alert setup modal, and `/alerts` management page. |
+| MTS selector MVP | Implemented | Added MTS provider catalog, `MTS에서 종목 보기` CTA, `/mts/select`, provider click logging, and sponsored disclosure. |
+| Sponsored slots | Implemented | Native ad cards now disclose `광고 / Sponsored` and state they are unrelated to condition selection or alert results. |
 | Full API inventory | Implemented | `docs/API_KEY_INVENTORY.md` maps every user-provided key to env, endpoint, app use, and status. |
 | Chart policy | Implemented policy | Native chart requires real candles. US uses TradingView widgets when direct price provider is not configured. |
 | Premium/user behavior UI | Removed from UI | Banned UI copy script passes. |

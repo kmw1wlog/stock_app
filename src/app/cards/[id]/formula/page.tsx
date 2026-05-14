@@ -1,34 +1,72 @@
 import Link from 'next/link';
-import { ChevronLeft, Copy } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
+import { NativeAdCard } from '@/components/ads/NativeAdCard';
+import { FormulaActionPanel } from '@/components/formula/FormulaActionPanel';
 import { MobileShell } from '@/components/layout/MobileShell';
+import { getFormulaForCard } from '@/lib/formulas/formulaCatalog';
 import { getDisplayCard } from '@/lib/marketData';
 
 export default async function FormulaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const card = await getDisplayCard(id);
-  const lines = [`종목=${card?.symbol ?? id}`, '가격·거래량·공시·뉴스 라벨 확인', '매수 지시가 아닌 참고 지표식'];
+  if (!card) {
+    return (
+      <MobileShell>
+        <div className="space-y-5 px-5 pt-5">
+          <Link href="/" className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm" aria-label="뒤로">
+            <ChevronLeft className="h-7 w-7" />
+          </Link>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm font-bold text-slate-500">데이터 준비중</div>
+        </div>
+      </MobileShell>
+    );
+  }
+
+  const formula = getFormulaForCard(card);
   return (
     <MobileShell>
       <div className="space-y-5 pb-28 pt-5">
         <header className="flex items-center gap-3 px-5">
-          <Link href={`/cards/${id}`} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm"><ChevronLeft className="h-7 w-7" /></Link>
+          <Link href={`/cards/${id}`} className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm" aria-label="뒤로">
+            <ChevronLeft className="h-7 w-7" />
+          </Link>
           <div>
-            <h1 className="text-3xl font-black">지표식 보기</h1>
-            <p className="mt-1 text-sm font-semibold text-slate-500">{card ? `${card.name} · ${card.dataBasisLabel}` : '데이터 준비중'}</p>
+            <h1 className="text-3xl font-black">조건식 보기</h1>
+            <p className="mt-1 text-sm font-semibold text-slate-500">{card.name} · {formula.shortName}</p>
           </div>
         </header>
+
         <section className="space-y-4 px-5">
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-black">복사용 참고 지표식</h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">조건식 조합 캔버스는 제공하지 않습니다. 아래 내용은 실제 투자 결과를 보장하지 않는 참고식입니다.</p>
-            <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/30 p-4 text-sm leading-8 text-slate-800">
-              {lines.map((line, index) => <div key={line} className="grid grid-cols-[28px_1fr] gap-3"><span className="font-mono text-slate-400">{index + 1}</span><span className="font-semibold">{line}</span></div>)}
-            </div>
+            <p className="text-xs font-black text-[#0B63F6]">{card.dataBasisLabel}</p>
+            <h2 className="mt-2 text-2xl font-black">{formula.name}</h2>
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{formula.description}</p>
           </div>
-          <button className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] text-base font-black text-white shadow-lg shadow-blue-500/25"><Copy className="h-5 w-5" />복사</button>
-          <p className="px-1 text-xs font-semibold leading-5 text-slate-500">조건식은 참고용으로 제공되며 실제 투자 결과를 보장하지 않습니다.</p>
+
+          <InfoList title="조건 기준" items={formula.criteria} />
+          <InfoList title="제외/주의 기준" items={formula.excludeRules} />
+
+          <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+            <h2 className="text-lg font-black text-slate-950">주의</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">{formula.riskNote}</p>
+            <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">본 조건식은 매수·매도 추천이 아닌 참고용 조건입니다.</p>
+          </div>
+
+          <FormulaActionPanel card={card} formula={formula} />
+          <NativeAdCard source="formula" slotName="formula_bottom" title="조건 확인 후 참고 콘텐츠" />
         </section>
       </div>
     </MobileShell>
+  );
+}
+
+function InfoList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 className="text-lg font-black">{title}</h2>
+      <ul className="mt-3 space-y-2 text-sm font-semibold leading-6 text-slate-600">
+        {items.map((item) => <li key={item}>· {item}</li>)}
+      </ul>
+    </div>
   );
 }

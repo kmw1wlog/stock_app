@@ -29,7 +29,7 @@ export async function ExploreDetailPage({ slug }: { slug: ExploreSlug }) {
         <section className="space-y-3 px-5">
           {payload.items.length ? payload.items.map((card) => <DetailCard key={card.id} card={card} />) : <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center"><Database className="mx-auto h-8 w-8 text-slate-400" /><p className="mt-3 text-sm font-bold text-slate-500">{payload.message ?? '데이터 준비중'}</p></div>}
         </section>
-        <p className="px-6 text-xs font-semibold leading-5 text-slate-500">본 정보는 투자 판단을 돕기 위한 지표 기반 참고 정보이며, 투자 권유나 수익 보장을 의미하지 않습니다.</p>
+        <p className="px-6 text-xs font-semibold leading-5 text-slate-500">본 정보는 투자 판단을 돕기 위한 지표 기반 참고 정보이며, 투자 권유나 투자 성과 약속을 의미하지 않습니다.</p>
       </div>
     </MobileShell>
   );

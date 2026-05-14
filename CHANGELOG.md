@@ -2,6 +2,11 @@
 
 ## 0.5.0 - Live Data Display MVP
 
+- Added condition alert MVP with anonymous-user alert persistence, `/alerts`, and `/api/condition-alerts`.
+- Reworked home/detail/formula CTAs around condition alerts, formula explanation, and MTS viewing.
+- Added MTS selector flow with sponsored disclosure and provider click logging.
+- Added explicit Sponsored ad disclosures across home, explore, rankings, formula, saved, and MTS surfaces.
+- Hardened banned-copy checks for trading-inducing phrases and switched UI tests to production `next start`.
 - Added `api:smoke` for user-provided API key verification across KR, US, crypto, macro, and broker-auth providers.
 - Added `docs/API_KEY_INVENTORY.md` and updated runtime provider documentation with actual smoke results.
 - Connected configured Data.go.kr, Alpaca, and Naver API data to live feed fallback rendering.

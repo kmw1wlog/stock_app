@@ -1,48 +1,38 @@
 import { expect, test } from '@playwright/test';
 
-test('home tabs, actions, detail links, and swipe gestures work', async ({ page }) => {
+test('bottom tabs, condition CTAs, detail links, and MTS selector work', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
   for (const [href, pattern] of [
     ['/rankings', /\/rankings$/],
-    ['/report', /\/report$/],
+    ['/alerts', /\/alerts$/],
     ['/explore', /\/explore$/],
     ['/saved', /\/saved$/],
     ['/', /\/$/],
   ] as const) {
-    await page.locator(`nav a[href="${href}"]`).click();
+    await page.locator('nav').locator(`a[href="${href}"]`).click();
     await expect(page).toHaveURL(pattern);
   }
 
-  await page.locator('button').nth(1).click();
-  await page.locator('button').nth(2).click();
-  await expect(page.locator('a[href="/explore/movers"]').first()).toBeVisible();
-  await expect(page.locator('a[href="/explore/news"]').first()).toBeVisible();
-  await expect(page.locator('a[href="/explore/after-hours"]').first()).toBeVisible();
+  await expect(page.getByText('오늘의 조건 포착')).toBeVisible();
+  await expect(page.getByRole('button', { name: /알림/ }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /조건식/ }).first()).toBeVisible();
+
   const cardLinks = page.locator('a[href^="/cards/"]');
   const cardCount = await cardLinks.count();
   if (cardCount === 0) {
     await expect(page.getByText('데이터 준비중').first()).toBeVisible();
     return;
   }
-  expect(cardCount).toBeGreaterThan(0);
-
-  const card = page.locator('article').first();
-  const box = await card.boundingBox();
-  expect(box).toBeTruthy();
-  if (box) {
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + 40, box.y + box.height / 2, { steps: 8 });
-    await page.mouse.up();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width - 40, box.y + box.height / 2, { steps: 8 });
-    await page.mouse.up();
-  }
 
   await cardLinks.first().click();
   await expect(page).toHaveURL(/\/cards\/.+/);
+  await expect(page.getByText('이 조건 알림 받기').first()).toBeVisible();
+  await expect(page.getByText('MTS에서 종목 보기').first()).toBeVisible();
+
+  await page.getByText('MTS에서 종목 보기').first().click();
+  await expect(page).toHaveURL(/\/mts\/select/);
+  await expect(page.getByText('이 종목을 증권앱에서 확인하기')).toBeVisible();
 });

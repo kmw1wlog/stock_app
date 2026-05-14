@@ -1,15 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, Folder, Home, Search, Trophy } from 'lucide-react';
+import { Bell, Folder, Home, Search, Trophy } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: '홈', icon: Home },
   { href: '/explore', label: '탐색', icon: Search },
   { href: '/rankings', label: '랭킹', icon: Trophy },
+  { href: '/alerts', label: '알림', icon: Bell },
   { href: '/saved', label: '보관함', icon: Folder },
-  { href: '/report', label: '리포트', icon: BarChart3 },
 ];
 
 export function BottomNav() {
@@ -20,10 +19,18 @@ export function BottomNav() {
         const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
         const Icon = item.icon;
         return (
-          <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center gap-1">
+          <a
+            key={item.href}
+            href={item.href}
+            onClick={(event) => {
+              event.preventDefault();
+              window.setTimeout(() => window.location.assign(item.href), 0);
+            }}
+            className="flex flex-col items-center justify-center gap-1"
+          >
             <Icon className={active ? 'h-6 w-6 text-[#0B63F6]' : 'h-6 w-6 text-slate-500'} strokeWidth={active ? 2.8 : 2.2} />
             <span className={active ? 'text-[11px] font-black text-[#0B63F6]' : 'text-[11px] font-bold text-slate-500'}>{item.label}</span>
-          </Link>
+          </a>
         );
       })}
     </nav>

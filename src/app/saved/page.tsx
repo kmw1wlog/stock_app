@@ -2,16 +2,20 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Bookmark, ChevronRight, Copy, Database, Heart, Search, TrendingUp } from 'lucide-react';
+import { Bell, Bookmark, ChevronRight, Copy, Database, Heart, Search } from 'lucide-react';
 import { Badge } from '@/components/common/Badge';
 import { MobileShell } from '@/components/layout/MobileShell';
+import { ConditionAlertButton } from '@/components/alerts/ConditionAlertButton';
+import { MtsViewButton } from '@/components/mts/MtsViewButton';
+import { NativeAdCard } from '@/components/ads/NativeAdCard';
 import { useAppState } from '@/context/AppStateContext';
+import { getFormulaForCard } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
 const tabs = [
   { key: 'saved', label: '저장 종목', icon: Bookmark },
   { key: 'liked', label: '관심 종목', icon: Heart },
-  { key: 'tracking', label: '확인 목록', icon: TrendingUp },
+  { key: 'alerts', label: '내 알림', icon: Bell },
   { key: 'formula', label: '복사 지표식', icon: Copy },
 ] as const;
 
@@ -32,11 +36,13 @@ export default function SavedPage() {
   const activeIds = useMemo(() => {
     if (activeTab === 'saved') return state.savedCardIds;
     if (activeTab === 'liked') return state.likedCardIds;
-    if (activeTab === 'tracking') return state.trackingCardIds;
-    return state.copiedFormulaIds.map((id) => id.split('-')[0]);
-  }, [activeTab, state.copiedFormulaIds, state.likedCardIds, state.savedCardIds, state.trackingCardIds]);
+    if (activeTab === 'formula') return state.copiedFormulaIds.map((id) => id.split('-')[0]);
+    return [];
+  }, [activeTab, state.copiedFormulaIds, state.likedCardIds, state.savedCardIds]);
 
-  const visibleCards = cards.filter((card) => activeIds.includes(card.id) || activeIds.includes(card.assetKey));
+  const visibleCards = activeTab === 'alerts'
+    ? []
+    : cards.filter((card) => activeIds.includes(card.id) || activeIds.includes(card.assetKey));
 
   return (
     <MobileShell>
@@ -44,12 +50,13 @@ export default function SavedPage() {
         <header className="flex items-start justify-between px-5">
           <div>
             <h1 className="text-3xl font-black tracking-normal">보관함</h1>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">내가 저장한 종목의 현재 공식 데이터만 표시합니다.</p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">저장한 종목과 조건식 알림을 현재 공식 데이터 기준으로 다시 확인합니다.</p>
           </div>
           <Link href="/data-status" className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-[#0B63F6]" aria-label="데이터 상태">
             <Search className="h-6 w-6" />
           </Link>
         </header>
+
         <div className="hide-scrollbar flex gap-2 overflow-x-auto px-5">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -61,36 +68,59 @@ export default function SavedPage() {
             );
           })}
         </div>
-        <section className="mx-5 rounded-3xl border border-blue-200 bg-blue-50 p-5">
-          <p className="text-xl font-black">
-            현재 데이터가 있는 보관 종목 <span className="text-[#0B63F6]">{visibleCards.length}개</span>
-          </p>
-          <p className="mt-1 text-sm font-semibold text-slate-600">가격, 등락률, 뉴스/공시, 차트 데이터가 없으면 준비중으로 표시합니다.</p>
-        </section>
-        <section className="space-y-3 px-5">
-          {visibleCards.length ? visibleCards.map((card) => <SavedManagementCard key={card.id} card={card} />) : (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center">
-              <Database className="mx-auto h-8 w-8 text-slate-400" />
-              <p className="mt-3 text-sm font-bold text-slate-500">저장된 종목에 live 데이터가 아직 없습니다.</p>
-            </div>
-          )}
-        </section>
+
+        {activeTab === 'alerts' ? (
+          <section className="mx-5 rounded-3xl border border-blue-200 bg-blue-50 p-5">
+            <p className="text-xl font-black">내 조건식 알림은 알림 탭에서 관리합니다.</p>
+            <p className="mt-1 text-sm font-semibold text-slate-600">활성 알림, 만료 예정, 최근 발생 기록을 한 곳에서 확인할 수 있습니다.</p>
+            <Link href="/alerts" className="mt-4 inline-flex items-center gap-1 rounded-2xl bg-[#0B63F6] px-4 py-3 text-sm font-black text-white">
+              알림 관리로 이동
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </section>
+        ) : (
+          <>
+            <section className="mx-5 rounded-3xl border border-blue-200 bg-blue-50 p-5">
+              <p className="text-xl font-black">
+                현재 데이터가 있는 보관 종목 <span className="text-[#0B63F6]">{visibleCards.length}개</span>
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-600">가격, 등락률, 뉴스/공시, 차트 데이터가 없으면 준비중으로 표시합니다.</p>
+            </section>
+
+            <section className="space-y-3 px-5">
+              {visibleCards.length ? visibleCards.map((card, index) => (
+                <div key={card.id} className="space-y-3">
+                  <SavedManagementCard card={card} />
+                  {index === 1 ? <NativeAdCard source="saved" slotName="saved_after_second_card" /> : null}
+                </div>
+              )) : (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center">
+                  <Database className="mx-auto h-8 w-8 text-slate-400" />
+                  <p className="mt-3 text-sm font-bold text-slate-500">저장한 종목의 live 데이터가 아직 없습니다.</p>
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </MobileShell>
   );
 }
 
 function SavedManagementCard({ card }: { card: DisplayCard }) {
+  const formula = getFormulaForCard(card);
   return (
-    <Link href={`/cards/${card.id}`} className="block rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-black text-[#0B63F6]">{card.marketLabel} · {card.theme ?? card.source}</p>
-          <h2 className="mt-1 truncate text-xl font-black">{card.name}</h2>
-          <p className="mt-1 line-clamp-1 text-sm font-semibold text-slate-500">{card.primaryReason}</p>
+    <article className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+      <Link href={`/cards/${card.id}`} className="block">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-black text-[#0B63F6]">{card.marketLabel} · {card.theme ?? card.source}</p>
+            <h2 className="mt-1 truncate text-xl font-black">{card.name}</h2>
+            <p className="mt-1 line-clamp-1 text-sm font-semibold text-slate-500">{card.primaryReason}</p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
         </div>
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
-      </div>
+      </Link>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <InfoPill label="현재가" value={card.price ? new Intl.NumberFormat('ko-KR').format(card.price) : '자료 준비중'} />
         <InfoPill label="등락률" value={card.changePct === undefined || card.changePct === null ? '위젯/자료 기준' : `${card.changePct > 0 ? '+' : ''}${card.changePct.toFixed(2)}%`} />
@@ -98,7 +128,11 @@ function SavedManagementCard({ card }: { card: DisplayCard }) {
         <InfoPill label="기준" value={card.dataBasisLabel} />
       </div>
       <div className="mt-3 flex flex-wrap gap-2">{(card.labels.length ? card.labels : ['데이터 준비중']).slice(0, 3).map((label) => <Badge key={label} tone="gray">{label}</Badge>)}</div>
-    </Link>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <ConditionAlertButton card={card} formula={formula} className="justify-center rounded-2xl border border-blue-200 bg-blue-50 px-3 py-3 text-sm font-black text-[#0B63F6]" />
+        <MtsViewButton card={card} source="saved" variant="secondary" className="justify-center rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-black text-slate-800" />
+      </div>
+    </article>
   );
 }
 
