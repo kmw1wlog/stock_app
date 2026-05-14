@@ -9,6 +9,7 @@ import { fetchAlternativeFearGreed } from '@/lib/providers/crypto/alternativeFea
 import { fetchBinance24hTicker } from '@/lib/providers/crypto/binance';
 import { fetchUpbitTicker } from '@/lib/providers/crypto/upbit';
 import { fetchKoreaEodQuote } from '@/lib/providers/korea/dataGoKr';
+import { fetchKiwoomKrFlow } from '@/lib/providers/korea/kiwoomKrData';
 import { fetchNaverNewsMentions } from '@/lib/providers/korea/naverNews';
 import { fetchUsDirectQuote } from '@/lib/providers/us/usDirectProvider';
 
@@ -27,6 +28,11 @@ function firstNumber(...values: Array<number | null | undefined>) {
 
 function labelTexts(labels: Array<{ displayText: string }> = []) {
   return labels.map((label) => label.displayText).filter(Boolean).slice(0, 5);
+}
+
+function compactAmount(value?: number) {
+  if (value === undefined) return '자료 확인';
+  return new Intl.NumberFormat('ko-KR', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
 
 export function envelope<T>(items: T[], source: string, basis: string, extra: Partial<DataEnvelope<T>> = {}): DataEnvelope<T> {
@@ -181,6 +187,40 @@ async function publicConfiguredApiCards(limit: number): Promise<DisplayCard[]> {
     }
   }
 
+  if (process.env.KIWOOM_REST_API_KEY && process.env.KIWOOM_REST_API_SECRET) {
+    try {
+      const flow = await fetchKiwoomKrFlow('005930');
+      const shortWeight = flow.data.latestShortSelling?.shortWeightPct;
+      const lendingBalance = flow.data.latestLending?.balance;
+      const foreigner = flow.data.latestInvestor?.foreigner;
+      const institution = flow.data.latestInvestor?.institution;
+      cards.push({
+        id: 'api-kr-005930-kiwoom-flow',
+        assetKey: '005930-kiwoom-flow',
+        symbol: '005930',
+        name: '삼성전자 공매도·수급',
+        market: 'KR',
+        marketLabel: '국장',
+        theme: '수급',
+        cardType: 'kr_short_flow',
+        title: '삼성전자 공매도·대차·투자자별 데이터',
+        primaryReason: `공매도 비중 ${shortWeight !== undefined ? `${shortWeight.toFixed(2)}%` : '자료 확인'} · 외국인 ${compactAmount(foreigner)} · 기관 ${compactAmount(institution)}`,
+        secondaryReason: `대차잔고 ${compactAmount(lendingBalance)} · ${flow.data.refreshCadence}`,
+        price: null,
+        changePct: null,
+        amount: flow.data.latestShortSelling?.shortTradeValue,
+        labels: ['공매도 데이터 확인', '대차거래 데이터 확인', '투자자별 수급 데이터 확인'],
+        dataBasisLabel: flow.basis,
+        source: flow.source,
+        updatedAt: flow.fetchedAt,
+        chartSetupType: '공매도/수급 확인',
+        isMock: false,
+      });
+    } catch {
+      // Kiwoom can rate-limit token/API calls. The status route and docs expose failures separately.
+    }
+  }
+
   if (process.env.US_DIRECT_PRICE_PROVIDER && process.env.US_DIRECT_PRICE_PROVIDER !== 'none') {
     const apple = await fetchUsDirectQuote('AAPL');
     if (apple.data?.price) {
@@ -281,7 +321,7 @@ function fromAsset(asset: {
       theme: asset.theme,
       cardType: cardTypeFrom(asset.market, changePct, labels),
       title: `${asset.name} 공식 위젯/SEC 데이터`,
-      primaryReason: labels[0] ?? 'TradingView 위젯 기준 가격/차트를 확인할 수 있습니다.',
+      primaryReason: labels[0] ?? 'TradingView 위젯 기준 가격·차트를 확인할 수 있습니다.',
       secondaryReason: '직접 가격 API가 없으면 자체 등락률은 표시하지 않습니다.',
       price: null,
       changePct: null,

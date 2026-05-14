@@ -5,6 +5,8 @@
 - Added `api:smoke` for user-provided API key verification across KR, US, crypto, macro, and broker-auth providers.
 - Added `docs/API_KEY_INVENTORY.md` and updated runtime provider documentation with actual smoke results.
 - Connected configured Data.go.kr, Alpaca, and Naver API data to live feed fallback rendering.
+- Added Kiwoom REST as the KRX-direct fallback for Samsung Electronics short selling, stock lending, and investor flow data.
+- Added `/api/korea/short-flow` summary output and wired Kiwoom short/flow data into the explore flows section.
 - Work branch: `feature/v0.5.0-live-data`.
 - Set `package.json` version to `0.5.0` and app version to `0.5.0-live-data`.
 - Added structured provider fetch outcomes and persistent `DataProviderStatus`.

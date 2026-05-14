@@ -5,7 +5,7 @@ Last updated: 2026-05-14
 | Area | Status | Notes |
 |---|---|---|
 | Versioning | Implemented | `package.json` is `0.5.0`; `src/lib/version.ts` is `0.5.0-live-data`. |
-| Branch workflow | Implemented | Current API-key verification/rendering work is on `feature/api-key-runtime-verification`; main is not edited directly. |
+| Branch workflow | Implemented | Current KRX-alternative work is on `feature/krx-alternative-short-flow`; main is not edited directly. |
 | DATA_MODE policy | Implemented | `DATA_MODE=live` blocks mock card fallback unless `DATA_MODE=mock` or `NEXT_PUBLIC_ALLOW_MOCK_DATA=true`. |
 | Provider fetch outcome | Implemented | `safeProviderFetch` keeps status, raw text snippet, parse errors, and missing env. |
 | Provider status persistence | Implemented | `DataProviderStatus` model and status helpers are present. |
@@ -19,6 +19,7 @@ Last updated: 2026-05-14
 | SEC EDGAR pipeline | Partial | Job exists and skips CIK-missing assets. Requires proper `SEC_USER_AGENT`. |
 | US direct price | Partial | Optional provider job exists. If `US_DIRECT_PRICE_PROVIDER=none`, US price/rate is shown only through TradingView widgets. |
 | KRX short/flow | Blocked | Env and provider status surface exist. API ID/permission and response format must be verified before labels are enabled. |
+| KRX alternative source | Implemented via Kiwoom REST | Kiwoom `ka10014`, `ka20068`, and `ka10059` are smoke-tested and rendered through `/api/korea/short-flow` plus a home feed card. |
 | Full API inventory | Implemented | `docs/API_KEY_INVENTORY.md` maps every user-provided key to env, endpoint, app use, and status. |
 | Chart policy | Implemented policy | Native chart requires real candles. US uses TradingView widgets when direct price provider is not configured. |
 | Premium/user behavior UI | Removed from UI | Banned UI copy script passes. |
@@ -32,7 +33,9 @@ Last updated: 2026-05-14
 - `npm run prisma:generate`: passed.
 - `npm run data:smoke`: passed with Binance, Upbit, and Alternative Fear & Greed.
 - `npm run check:banned-copy`: passed.
-- `npm run data:verify-render`: passed against `http://localhost:3000`; `/api/cards/feed` returned 7 live cards with `isMock: false`.
+- `npm run data:verify-render`: passed against `http://localhost:3000`; `/api/cards/feed` returned 8 live cards with `isMock: false`.
 - `npm run test:ui`: passed.
-- `npm run api:smoke`: passed with 15 successful providers and 1 blocked KRX API-ID group.
+- `npm run api:smoke`: passed with 16 successful providers and 1 blocked KRX API-ID group.
 - `POST /api/admin/refresh-all`: passed locally with 10 job results using `CRON_SECRET`.
+- `GET /api/korea/short-flow?symbol=005930`: passed locally with Kiwoom short selling, lending, and investor rows.
+- `GET /api/explore/flows`: passed locally and returned the Kiwoom short/flow card.

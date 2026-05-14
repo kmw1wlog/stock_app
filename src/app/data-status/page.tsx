@@ -11,6 +11,7 @@ const providerDefinitions = [
   { provider: 'marketaux', label: 'Marketaux', dataType: 'news', data: '미장/글로벌 뉴스 제목/링크', envRequired: ['MARKETAUX_API_TOKEN'], uiSection: '탐색/리포트', jobName: 'marketaux-news' },
   { provider: 'sec-edgar', label: 'SEC EDGAR', dataType: 'us_filings', data: '미장 공시', envRequired: ['SEC_USER_AGENT'], uiSection: '미장 상세/리포트', jobName: 'us-sec' },
   { provider: 'tradingview-widget', label: 'TradingView widgets', dataType: 'widget', data: '미장 가격/차트 위젯', envRequired: [], uiSection: '홈/상세', jobName: 'widget' },
+  { provider: 'kiwoom-rest', label: 'Kiwoom REST', dataType: 'kr_short_flow', data: '국장 공매도/대차/투자자별', envRequired: ['KIWOOM_REST_API_KEY', 'KIWOOM_REST_API_SECRET'], uiSection: '홈/수급 탐색', jobName: 'kiwoom-kr-flow' },
   { provider: 'binance', label: 'Binance', dataType: 'crypto_24h_ticker', data: '코인 24h/캔들', envRequired: [], uiSection: '홈/탐색/차트', jobName: 'crypto-quotes' },
   { provider: 'upbit', label: 'Upbit', dataType: 'crypto_24h_ticker', data: 'KRW 코인 24h/캔들', envRequired: [], uiSection: '홈/탐색/차트', jobName: 'crypto-quotes' },
   { provider: 'alternative-fng', label: 'Alternative Fear & Greed', dataType: 'crypto_sentiment', data: '코인 심리', envRequired: [], uiSection: '리포트/맵', jobName: 'fear-greed' },
@@ -32,10 +33,9 @@ async function providerRows() {
     const run = definition.jobName === 'widget' ? undefined : lastRun(definition.jobName);
     const persisted = statusFor(definition.provider, definition.dataType);
     const env = envStatus(definition.envRequired);
-    const widgetStatus =
-      definition.provider === 'tradingview-widget'
-        ? process.env.NEXT_PUBLIC_ENABLE_TRADINGVIEW_WIDGETS === 'true' ? 'configured' : 'disabled'
-        : undefined;
+    const widgetStatus = definition.provider === 'tradingview-widget'
+      ? process.env.NEXT_PUBLIC_ENABLE_TRADINGVIEW_WIDGETS === 'true' ? 'configured' : 'disabled'
+      : undefined;
     return {
       ...definition,
       status: persisted?.status ?? widgetStatus ?? env.status,
@@ -83,7 +83,12 @@ export default async function DataStatusPage() {
               </section>
             );
           })}
-          {!rows.length ? <div className="rounded-3xl border border-slate-200 bg-white p-5 text-center"><Database className="mx-auto h-8 w-8 text-slate-400" /><p className="mt-3 text-sm font-bold text-slate-500">데이터 상태를 불러오지 못했습니다.</p></div> : null}
+          {!rows.length ? (
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-center">
+              <Database className="mx-auto h-8 w-8 text-slate-400" />
+              <p className="mt-3 text-sm font-bold text-slate-500">데이터 상태를 불러오지 못했습니다.</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </MobileShell>

@@ -69,7 +69,7 @@ function filterCards(slug: ExploreSlug, cards: DisplayCard[]) {
     case 'news':
       return cards.filter(hasNewsOrDisclosure).slice(0, 20);
     case 'flows':
-      return cards.filter((card) => card.labels.some((label) => label.includes('수급') || label.includes('기관') || label.includes('외국인'))).slice(0, 20);
+      return cards.filter((card) => card.cardType.includes('flow') || card.labels.some((label) => label.includes('수급') || label.includes('기관') || label.includes('외국인') || label.includes('투자자별'))).slice(0, 20);
     case 'pullback':
       return sortCards(cards.filter((card) => (card.changePct ?? 0) < 0 || card.labels.some((label) => label.includes('차트자리'))), 'loser').slice(0, 20);
     case 'after-hours':
