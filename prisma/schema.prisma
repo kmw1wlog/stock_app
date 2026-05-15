@@ -29,6 +29,8 @@ model Asset {
   intradayPrices  AssetPriceIntraday[]
   labels          AssetLabel[]
   cards           RecommendationCard[]
+  taFeatures      AssetTaFeature[]
+  formulaSignals  FormulaSignal[]
 
   @@unique([market, symbol])
   @@index([market])
@@ -133,6 +135,49 @@ model AssetLabel {
   @@index([assetId])
   @@index([labelType])
   @@unique([assetId, labelType, labelKey])
+}
+
+model AssetTaFeature {
+  id           String   @id @default(cuid())
+  assetId      String
+  time         DateTime
+  interval     String
+  source       String
+  featuresJson Json
+  createdAt    DateTime @default(now())
+
+  asset        Asset    @relation(fields: [assetId], references: [id])
+
+  @@unique([assetId, time, interval, source])
+  @@index([assetId])
+  @@index([time])
+  @@index([interval])
+}
+
+model FormulaSignal {
+  id             String   @id @default(cuid())
+  assetId         String
+  formulaKey      String
+  formulaName     String
+  phase           String?
+  triggeredAt     DateTime @default(now())
+  fitScore        Float
+  alertLine       String
+  matchedReasons  Json?
+  missingReasons  Json?
+  riskTags        Json?
+  featuresJson    Json?
+  source          String
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+
+  asset           Asset    @relation(fields: [assetId], references: [id])
+
+  @@index([assetId])
+  @@index([formulaKey])
+  @@index([fitScore])
+  @@index([triggeredAt])
+  @@index([status])
 }
 
 model RecommendationCard {

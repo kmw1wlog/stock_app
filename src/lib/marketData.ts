@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { stockCards } from '@/data/mockStocks';
 import { emptyDataMessage, getDataMode, isMockAllowed } from '@/lib/dataMode';
 import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
@@ -150,6 +152,21 @@ function uniqueCards(cards: DisplayCard[]) {
     merged.push(card);
   }
   return merged;
+}
+
+async function yfinanceSignalCards(limit: number): Promise<DisplayCard[]> {
+  try {
+    const file = path.join(process.cwd(), 'public', 'data', 'yfinance-formula-signals.json');
+    const payload = JSON.parse(await readFile(file, 'utf-8')) as { items?: DisplayCard[] };
+    return (payload.items ?? []).slice(0, limit).map((card) => ({
+      ...card,
+      source: 'yfinance',
+      dataBasisLabel: card.dataBasisLabel || 'Yahoo Finance 지연 데이터 / 개발 검증용',
+      isMock: false,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 async function fetchPublicCryptoQuote(asset: { binanceSymbol: string; upbitMarket: string }) {
@@ -415,7 +432,7 @@ function fromAsset(asset: {
 
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   if (!hasDatabaseUrl()) {
-    const liveCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
+    const liveCards = uniqueCards([...(await yfinanceSignalCards(limit)), ...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
     const withKrWatch = liveCards.some((card) => card.market === 'KR') ? liveCards : uniqueCards([...defaultKrWatchCards(5), ...liveCards]);
     return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
   }
@@ -476,10 +493,10 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
 
   const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
   const liveCards = await publicConfiguredApiCards(limit);
-  const mergedCards = uniqueCards([...recommendationCards, ...dbCards, ...liveCards, ...defaultUsWidgetCards(4)]);
+  const mergedCards = uniqueCards([...recommendationCards, ...(await yfinanceSignalCards(limit)), ...dbCards, ...liveCards, ...defaultUsWidgetCards(4)]);
   const withKrWatch = mergedCards.some((card) => card.market === 'KR') ? mergedCards : uniqueCards([...defaultKrWatchCards(5), ...mergedCards]);
   if (withKrWatch.length) return withKrWatch.slice(0, limit);
-  const providerCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
+  const providerCards = uniqueCards([...(await yfinanceSignalCards(limit)), ...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
   return providerCards.length ? providerCards.slice(0, limit) : mockCards(limit);
 }
 

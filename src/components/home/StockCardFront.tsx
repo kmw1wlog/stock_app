@@ -65,7 +65,7 @@ export function StockCardFront({ card, formula, candidates, onShowBack, onSkip }
       </div>
 
       <div className="mt-4 rounded-3xl bg-white/10 p-4">
-        <p className="text-xs font-black text-blue-100">한 줄 근거</p>
+        <p className="text-xs font-black text-blue-100">피드 선정 이유</p>
         <p className="mt-2 text-base font-black leading-6 text-white">{evidenceLine}</p>
       </div>
 

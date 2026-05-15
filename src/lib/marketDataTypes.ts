@@ -26,22 +26,43 @@ export type DisplayCard = {
   upbitMarket?: string | null;
   chartSetupType?: string | null;
   technicalSnapshot?: {
+    timeAdjustedVolumeRatio?: number;
+    timeAdjustedAmountRatio?: number;
     volumeRatio20?: number;
+    amountRatio20?: number;
     amountRankPct?: number;
+    amountRankJump?: number;
     distanceToPrevHighPct?: number;
     breakoutLookbackDays?: number;
+    boxRangePct?: number;
+    boxBreakout?: boolean;
     closeToHighPct?: number;
     intradayRangePct?: number;
     volatilityRank20?: number;
     ma5Slope?: number;
     ma20Slope?: number;
+    isAboveMa5?: boolean;
+    isAboveVwap?: boolean;
+    gapPct?: number;
+    morningHighBreakout?: boolean;
+    vwapReclaim?: boolean;
+    afternoonReacceleration?: boolean;
     pullbackDays?: number;
+    pullbackDepthPct?: number;
+    previousDayChangePct?: number;
+    previousDayVolumeRatio20?: number;
+    afterHoursChangePct?: number;
+    marketRelativeStrengthPct?: number;
   };
   themeSnapshot?: {
     themeBreadthUpCount?: number;
+    themeTotalCount?: number;
     themeAvgChangePct?: number;
+    themeAmountRatio?: number;
+    themeVolumeRatio?: number;
     themeLeaderSymbol?: string;
     isThemeLeader?: boolean;
+    themeRole?: 'leader' | 'second' | 'follower' | 'overheated' | 'laggard' | 'none';
   };
   riskSnapshot?: {
     isInvestmentWarning?: boolean;

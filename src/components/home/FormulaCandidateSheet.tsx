@@ -11,6 +11,7 @@ type FormulaCandidateSheetProps = {
 };
 
 const fitTone: Record<FormulaCandidate['fitLabel'], string> = {
+  '가장 적합': 'bg-blue-50 text-[#0B63F6]',
   '지금 가장 잘 맞음': 'bg-blue-50 text-[#0B63F6]',
   관찰용: 'bg-slate-100 text-slate-700',
   '조건 부족': 'bg-amber-50 text-amber-700',
@@ -44,7 +45,7 @@ export function FormulaCandidateSheet({ open, candidates, onClose, onSelect }: F
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-base font-black text-slate-950">{candidate.formula.name}</p>
-                  <p className="mt-1 text-sm font-semibold leading-5 text-slate-500">{candidate.formula.userIntent}</p>
+                  <p className="mt-1 text-sm font-semibold leading-5 text-slate-500">{candidate.phase} · {candidate.fitScore}점 · {candidate.formula.userIntent}</p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-black ${fitTone[candidate.fitLabel]}`}>{candidate.fitLabel}</span>
               </div>
