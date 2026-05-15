@@ -1,7 +1,8 @@
 'use client';
 
-import { Bell, X } from 'lucide-react';
+import { Bell, ExternalLink, X } from 'lucide-react';
 import type { FormulaDefinition } from '@/lib/formulas/formulaCatalog';
+import { buildCardEvidenceLine } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 import { createConditionAlert } from '@/lib/user/userConditionAlerts';
 import { useAppState } from '@/context/AppStateContext';
@@ -17,8 +18,10 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
   const { showToast, logEvent } = useAppState();
   if (!open) return null;
 
+  const evidenceLine = buildCardEvidenceLine(card);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-4 pb-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 px-4 pb-4">
       <section className="w-full max-w-[430px] rounded-[28px] bg-white p-5 shadow-2xl">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
@@ -29,23 +32,45 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
             <X className="h-5 w-5" />
           </button>
         </div>
+
         <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
-          <p className="text-sm font-bold text-slate-700">
+          <p className="text-sm font-bold leading-6 text-slate-700">
             {card.name}에서 <span className="text-[#0B63F6]">{formula.name}</span> 조건이 다시 발생하면 알려드립니다.
           </p>
           <p className="mt-3 text-sm font-semibold text-slate-600">알림 유효기간: {formula.defaultExpiresInDays}일</p>
           <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">만료 전 다시 확인하고 연장할 수 있습니다.</p>
         </div>
+
+        <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-black text-slate-500">알림 미리보기</p>
+          <p className="mt-2 text-base font-black text-slate-950">{card.name} 조건식 알림</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{evidenceLine}</p>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] font-black">
+            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">상세보기</span>
+            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">MTS에서 보기</span>
+            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">다른 MTS</span>
+          </div>
+        </div>
+
         <p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
-          본 알림은 매수·매도 추천이 아닙니다. 조건 충족 사실을 알려주는 참고 기능입니다.
+          본 알림은 조건 충족 사실을 알려주는 참고 기능이며 매수·매도 추천이 아닙니다.
         </p>
+
         <button
           type="button"
           className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] text-base font-black text-white shadow-lg shadow-blue-500/25"
           onClick={async () => {
             try {
               const alert = await createConditionAlert(card, formula);
-              logEvent('condition_alert_create', { cardKey: card.id, assetKey: card.assetKey, symbol: card.symbol, market: card.market, formulaKey: formula.key, alertId: alert.id });
+              logEvent('condition_alert_create', {
+                cardKey: card.id,
+                assetKey: card.assetKey,
+                symbol: card.symbol,
+                market: card.market,
+                formulaKey: formula.key,
+                alertId: alert.id,
+                evidenceLine,
+              });
               showToast('조건식 알림을 설정했습니다.');
               onClose();
             } catch {
@@ -55,6 +80,14 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
         >
           <Bell className="h-5 w-5" />
           알림 받기
+        </button>
+        <button
+          type="button"
+          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-700"
+          onClick={() => window.location.assign(`/cards/${card.id}`)}
+        >
+          <ExternalLink className="h-4 w-4" />
+          상세에서 더 확인
         </button>
       </section>
     </div>

@@ -37,6 +37,14 @@ Last updated: 2026-05-14
 | Premium/user behavior UI | Removed from UI | Banned UI copy script passes. |
 | PWA | Partial | Manifest exists; native store wrapping is not included in this version. |
 
+## Home Flip Card Update
+
+| Area | Status | Notes |
+|---|---|---|
+| Flip card home UX | Implemented | Home vertical feed now renders a front/back stock card instead of the horizontal panel carousel. The front card is a 3-second condition-alert decision card; the back card summarizes evidence, formula criteria, diagnosis, related stocks, formula detail, and MTS viewing. |
+| Formula candidate recommendation | Implemented | Added `getPrimaryFormulaForCard`, `getFormulaCandidatesForCard`, fit labels, matched/missing reasons, and a bottom sheet for selecting alternate formulas before alert setup. |
+| Alert preview | Implemented | Alert setup modal now includes a notification preview with evidence line plus `상세보기 / MTS에서 보기 / 다른 MTS` button preview. |
+
 ## Latest Local Verification
 
 - `npm run typecheck`: passed.

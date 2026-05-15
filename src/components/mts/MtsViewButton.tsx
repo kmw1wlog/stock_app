@@ -12,7 +12,7 @@ type MtsViewButtonProps = {
   label?: string;
 };
 
-export function MtsViewButton({ card, source, variant = 'secondary', className = '', label = 'MTS에서 종목 보기' }: MtsViewButtonProps) {
+export function MtsViewButton({ card, source, variant = 'secondary', className = '', label = 'MTS에서 보기' }: MtsViewButtonProps) {
   const { logEvent } = useAppState();
   const style =
     variant === 'primary'

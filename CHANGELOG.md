@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - Flip Card Condition Alert Home
+
+- Replaced the home stock horizontal carousel with an explicit front/back flip card flow.
+- Added a 3-second front card focused on evidence, primary formula recommendation, and the main `이 조건 알림 받기` CTA.
+- Added a back card summarizing why the card appeared, formula criteria, caution rules, diagnosis summary, related stocks, formula detail, and MTS viewing.
+- Added formula candidate scoring and a bottom sheet for `다른 조건식 추천받기`.
+- Added alert preview UI showing the exact notification-style evidence line before creating an alert.
+- Repaired Korean copy in formula, alert, MTS, chart, relation, and home feed surfaces touched by this flow.
+
 ## Unreleased - X/Tinder Home Feed + Search Explore
 
 - Reworked the home screen into a vertical stock feed with horizontal panels for main info, daily chart/technical conditions, financial checks, and related stocks.

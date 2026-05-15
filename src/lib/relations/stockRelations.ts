@@ -12,7 +12,7 @@ function completeWithMarket(card: DisplayCard, picked: DisplayCard[], allCards: 
 
 export function getSameThemeCards(card: DisplayCard, allCards: DisplayCard[], limit = 6): DisplayCard[] {
   const theme = card.theme?.trim();
-  const themeLabels = card.labels.filter((label) => label.includes('테마') || label.includes(theme ?? ''));
+  const themeLabels = card.labels.filter((label) => label.includes('테마') || Boolean(theme && label.includes(theme)));
   const matched = byAmountOrGain(
     allCards.filter((item) => {
       if (item.id === card.id) return false;
@@ -25,7 +25,7 @@ export function getSameThemeCards(card: DisplayCard, allCards: DisplayCard[], li
 
 export function getSameChartTypeCards(card: DisplayCard, allCards: DisplayCard[], limit = 6): DisplayCard[] {
   const setup = card.chartSetupType?.trim();
-  const chartLabels = card.labels.filter((label) => label.includes('차트자리'));
+  const chartLabels = card.labels.filter((label) => label.includes('차트자리') || label.includes('차트'));
   const matched = byAmountOrGain(
     allCards.filter((item) => {
       if (item.id === card.id) return false;
