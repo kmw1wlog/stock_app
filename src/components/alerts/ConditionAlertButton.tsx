@@ -12,9 +12,10 @@ type ConditionAlertButtonProps = {
   formula: FormulaDefinition;
   className?: string;
   variant?: 'primary' | 'secondary';
+  label?: string;
 };
 
-export function ConditionAlertButton({ card, formula, className = '', variant = 'primary' }: ConditionAlertButtonProps) {
+export function ConditionAlertButton({ card, formula, className = '', variant = 'primary', label = '이 조건 알림 받기' }: ConditionAlertButtonProps) {
   const [open, setOpen] = useState(false);
   const { logEvent } = useAppState();
   const style =
@@ -39,7 +40,7 @@ export function ConditionAlertButton({ card, formula, className = '', variant = 
         }}
       >
         <Bell className="h-5 w-5" />
-        이 조건 알림 받기
+        {label}
       </button>
       <AlertSetupModal card={card} formula={formula} open={open} onClose={() => setOpen(false)} />
     </>

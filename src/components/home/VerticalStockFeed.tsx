@@ -18,7 +18,9 @@ export function VerticalStockFeed({ cards, allCards }: { cards: DisplayCard[]; a
       <div className="px-5 py-10">
         <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
           <p className="text-xl font-black">데이터 준비중</p>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">선택한 시장의 실데이터 카드가 아직 없습니다. 탐색 탭에서 다른 시장을 확인할 수 있습니다.</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+            선택한 시장의 데이터 카드가 아직 없습니다. 탐색 탭에서 다른 시장이나 데이터 상태를 확인할 수 있습니다.
+          </p>
         </div>
       </div>
     );
