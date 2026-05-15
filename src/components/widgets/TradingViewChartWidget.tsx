@@ -20,7 +20,7 @@ function TradingViewWidget({ symbol, mode }: { symbol: string; mode: 'mini' | 'a
   const { logEvent } = useAppState();
 
   useEffect(() => {
-    if (!ref.current || process.env.NEXT_PUBLIC_ENABLE_TRADINGVIEW_WIDGETS !== 'true') {
+    if (!ref.current) {
       return;
     }
     ref.current.innerHTML = '';
@@ -50,7 +50,7 @@ function TradingViewWidget({ symbol, mode }: { symbol: string; mode: 'mini' | 'a
         : {
             symbol,
             width: '100%',
-            height: 220,
+            height: 150,
             locale: 'kr',
             dateRange: '1M',
             colorTheme: 'light',
@@ -64,5 +64,5 @@ function TradingViewWidget({ symbol, mode }: { symbol: string; mode: 'mini' | 'a
     logEvent('widget_view', { provider: 'tradingview', widget: mode === 'advanced' ? 'advanced_chart' : 'mini_symbol_overview', symbol, isWidget: true });
   }, [logEvent, mode, symbol]);
 
-  return <div ref={ref} className={mode === 'advanced' ? 'h-[420px] min-h-[420px] overflow-hidden rounded-3xl border border-slate-200 bg-white' : 'min-h-[220px] overflow-hidden rounded-3xl border border-slate-200 bg-white'} />;
+  return <div ref={ref} className={mode === 'advanced' ? 'h-[420px] min-h-[420px] overflow-hidden rounded-3xl border border-slate-200 bg-white' : 'h-[150px] min-h-[150px] overflow-hidden rounded-3xl border border-slate-200 bg-white'} />;
 }

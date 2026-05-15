@@ -81,6 +81,13 @@ const defaultKrWatchSymbols = [
   { symbol: '277810', name: '레인보우로보틱스', theme: '로봇', tvSymbol: 'KRX:277810' },
 ];
 
+const defaultUsWidgetSymbols = [
+  { symbol: 'AAPL', name: 'Apple', theme: 'M7', tvSymbol: 'NASDAQ:AAPL' },
+  { symbol: 'NVDA', name: 'NVIDIA', theme: 'AI·반도체', tvSymbol: 'NASDAQ:NVDA' },
+  { symbol: 'MSFT', name: 'Microsoft', theme: 'M7', tvSymbol: 'NASDAQ:MSFT' },
+  { symbol: 'TSLA', name: 'Tesla', theme: '전기차', tvSymbol: 'NASDAQ:TSLA' },
+];
+
 function defaultKrWatchCards(limit: number): DisplayCard[] {
   return defaultKrWatchSymbols.slice(0, limit).map((asset) => ({
     id: `default-kr-${asset.symbol}`,
@@ -103,6 +110,32 @@ function defaultKrWatchCards(limit: number): DisplayCard[] {
     tvSymbol: asset.tvSymbol,
     chartSetupType: '기본 관심종목',
     isWidget: false,
+    isMock: false,
+  }));
+}
+
+function defaultUsWidgetCards(limit: number): DisplayCard[] {
+  return defaultUsWidgetSymbols.slice(0, limit).map((asset) => ({
+    id: `default-us-${asset.symbol.toLowerCase()}`,
+    assetKey: asset.symbol,
+    symbol: asset.symbol,
+    name: asset.name,
+    market: 'US',
+    marketLabel: '미장',
+    theme: asset.theme,
+    cardType: 'us_widget',
+    title: `${asset.name} TradingView 위젯`,
+    primaryReason: '직접 가격 API가 없어도 TradingView 위젯으로 차트와 종목 흐름을 확인할 수 있습니다.',
+    secondaryReason: '앱 내부에서 미장 등락률을 임의 계산하지 않고 위젯 기준으로 표시합니다.',
+    price: null,
+    changePct: null,
+    labels: ['TradingView 위젯', '직접 가격 API 미사용'],
+    dataBasisLabel: 'TradingView 위젯 기준 · 직접 가격 API 없음',
+    source: 'tradingview',
+    updatedAt: nowIso(),
+    tvSymbol: asset.tvSymbol,
+    chartSetupType: '위젯 차트 확인',
+    isWidget: true,
     isMock: false,
   }));
 }
@@ -382,7 +415,7 @@ function fromAsset(asset: {
 
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   if (!hasDatabaseUrl()) {
-    const liveCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))]);
+    const liveCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
     const withKrWatch = liveCards.some((card) => card.market === 'KR') ? liveCards : uniqueCards([...defaultKrWatchCards(5), ...liveCards]);
     return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
   }
@@ -443,10 +476,10 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
 
   const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
   const liveCards = await publicConfiguredApiCards(limit);
-  const mergedCards = uniqueCards([...recommendationCards, ...dbCards, ...liveCards]);
+  const mergedCards = uniqueCards([...recommendationCards, ...dbCards, ...liveCards, ...defaultUsWidgetCards(4)]);
   const withKrWatch = mergedCards.some((card) => card.market === 'KR') ? mergedCards : uniqueCards([...defaultKrWatchCards(5), ...mergedCards]);
   if (withKrWatch.length) return withKrWatch.slice(0, limit);
-  const providerCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))]);
+  const providerCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
   return providerCards.length ? providerCards.slice(0, limit) : mockCards(limit);
 }
 
