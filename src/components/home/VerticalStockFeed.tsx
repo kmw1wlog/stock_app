@@ -27,7 +27,7 @@ export function VerticalStockFeed({ cards, allCards }: { cards: DisplayCard[]; a
   }
 
   return (
-    <div className="hide-scrollbar h-[calc(100dvh-138px)] overflow-y-auto scroll-smooth pb-28 [scroll-snap-type:y_proximity]">
+    <div className="hide-scrollbar h-[calc(100dvh-138px)] touch-pan-y overflow-y-auto scroll-smooth pb-28 [scroll-snap-type:y_mandatory]">
       {cards.map((card, index) => (
         <div key={card.id}>
           <StockSwipeStack
