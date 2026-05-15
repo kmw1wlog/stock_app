@@ -1,6 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import type { FormulaCandidate } from '@/lib/formulas/formulaCatalog';
 
 type FormulaCandidateSheetProps = {
@@ -58,6 +58,13 @@ export function FormulaCandidateSheet({ open, candidates, onClose, onSelect }: F
               {candidate.missingReasons?.length ? (
                 <p className="mt-3 text-xs font-semibold leading-5 text-amber-700">부족한 기준: {candidate.missingReasons.join(' · ')}</p>
               ) : null}
+              {candidate.riskTags?.length ? (
+                <p className="mt-2 text-xs font-semibold leading-5 text-rose-700">주의: {candidate.riskTags.join(' · ')}</p>
+              ) : null}
+              <span className="mt-3 flex h-10 items-center justify-center gap-1.5 rounded-2xl bg-slate-950 text-xs font-black text-white">
+                <Bell className="h-4 w-4" />
+                이 조건으로 알림 받기
+              </span>
             </button>
           ))}
         </div>

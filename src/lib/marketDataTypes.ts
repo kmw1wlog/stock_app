@@ -25,6 +25,31 @@ export type DisplayCard = {
   binanceSymbol?: string | null;
   upbitMarket?: string | null;
   chartSetupType?: string | null;
+  technicalSnapshot?: {
+    volumeRatio20?: number;
+    amountRankPct?: number;
+    distanceToPrevHighPct?: number;
+    breakoutLookbackDays?: number;
+    closeToHighPct?: number;
+    intradayRangePct?: number;
+    volatilityRank20?: number;
+    ma5Slope?: number;
+    ma20Slope?: number;
+    pullbackDays?: number;
+  };
+  themeSnapshot?: {
+    themeBreadthUpCount?: number;
+    themeAvgChangePct?: number;
+    themeLeaderSymbol?: string;
+    isThemeLeader?: boolean;
+  };
+  riskSnapshot?: {
+    isInvestmentWarning?: boolean;
+    isLowLiquidity?: boolean;
+    upperWickPct?: number;
+    gapPct?: number;
+    overheatScore?: number;
+  };
   isWidget?: boolean;
   isMock?: boolean;
 };

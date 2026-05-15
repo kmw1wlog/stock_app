@@ -28,10 +28,10 @@ export function AssetChart({ market, assetKey, tvSymbol, coingeckoId, compact }:
   }, [assetKey, compact, market]);
 
   if (compact) {
-    if (market === 'US' && tvSymbol) return <TradingViewMiniSymbolWidget symbol={tvSymbol} />;
+    if (tvSymbol) return <TradingViewMiniSymbolWidget symbol={tvSymbol} />;
     return <div className="grid min-h-[120px] place-items-center rounded-2xl bg-slate-50 text-xs font-bold text-slate-500">차트 데이터 준비중</div>;
   }
-  if (market === 'US' && tvSymbol) return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
+  if (tvSymbol) return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
   if (market === 'CRYPTO' && coingeckoId && process.env.NEXT_PUBLIC_ENABLE_COINGECKO_WIDGETS === 'true') return <CoinGeckoPriceWidget coinId={coingeckoId} />;
   if (policy.chartDisplayMode === 'native_lightweight' || market === 'CRYPTO') {
     return candles.length ? <NativePriceChart candles={candles} /> : <div className="grid min-h-[220px] place-items-center rounded-3xl border border-slate-200 bg-white text-sm font-bold text-slate-500">{message}</div>;

@@ -6,7 +6,6 @@ import { AlertSetupModal } from '@/components/alerts/AlertSetupModal';
 import { AssetChart } from '@/components/chart/AssetChart';
 import { Badge } from '@/components/common/Badge';
 import { FormulaCandidateSheet } from '@/components/home/FormulaCandidateSheet';
-import { MtsViewButton } from '@/components/mts/MtsViewButton';
 import { useAppState } from '@/context/AppStateContext';
 import { buildCardEvidenceLine, type FormulaCandidate, type FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
@@ -29,7 +28,8 @@ export function StockCardFront({ card, formula, candidates, onShowBack, onSkip }
   const [alertFormula, setAlertFormula] = useState<FormulaDefinition | null>(null);
   const [candidateOpen, setCandidateOpen] = useState(false);
   const evidenceLine = useMemo(() => buildCardEvidenceLine(card), [card]);
-  const criteria = formula.criteria.slice(0, 3);
+  const primaryCandidate = candidates.find((candidate) => candidate.formula.key === formula.key) ?? candidates[0];
+  const matchedReasons = (primaryCandidate?.matchedReasons.length ? primaryCandidate.matchedReasons : formula.criteria).slice(0, 3);
 
   return (
     <section className="flex h-full flex-col overflow-hidden rounded-[30px] bg-[#071426] p-5 text-white shadow-2xl shadow-slate-900/25">
@@ -70,7 +70,7 @@ export function StockCardFront({ card, formula, candidates, onShowBack, onSkip }
       </div>
 
       <div className="mt-3 rounded-3xl bg-white p-4 text-slate-950">
-        <p className="text-xs font-black text-[#0B63F6]">추천 알림 조건식</p>
+        <p className="text-xs font-black text-[#0B63F6]">이 종목에 맞는 조건식</p>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-black">{formula.name}</h3>
@@ -79,7 +79,7 @@ export function StockCardFront({ card, formula, candidates, onShowBack, onSkip }
           <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-black text-[#0B63F6]">{formula.shortName}</span>
         </div>
         <div className="mt-3 grid gap-1.5">
-          {criteria.map((item) => (
+          {matchedReasons.map((item) => (
             <p key={item} className="flex items-start gap-2 text-xs font-bold leading-5 text-slate-700">
               <span className="mt-0.5 text-[#0B63F6]">✓</span>
               {item}
@@ -111,7 +111,7 @@ export function StockCardFront({ card, formula, candidates, onShowBack, onSkip }
             className="flex h-12 items-center justify-center gap-1.5 rounded-2xl bg-white/10 px-3 text-xs font-black text-white"
           >
             <Layers className="h-4 w-4" />
-            다른 조건식
+            다른 조건식 추천받기
           </button>
           <button
             type="button"
@@ -125,17 +125,14 @@ export function StockCardFront({ card, formula, candidates, onShowBack, onSkip }
             관심종목 추가
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={onShowBack}
-            className="flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-white/15 bg-white/5 px-3 text-xs font-black text-blue-100"
-          >
-            <RotateCcw className="h-4 w-4" />
-            뒷면에서 상세 보기
-          </button>
-          <MtsViewButton card={card} source="home" variant="secondary" label="MTS에서 보기" className="h-11 border-white/20 bg-white/10 text-xs text-white" />
-        </div>
+        <button
+          type="button"
+          onClick={onShowBack}
+          className="flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl border border-white/15 bg-white/5 px-3 text-xs font-black text-blue-100"
+        >
+          <RotateCcw className="h-4 w-4" />
+          카드를 뒤집어 근거 보기
+        </button>
       </div>
 
       <div className="mt-3 flex items-center justify-center gap-1 text-[11px] font-bold text-blue-100/70">

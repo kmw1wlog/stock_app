@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ArrowLeft, ExternalLink, RotateCcw } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, RotateCcw } from 'lucide-react';
 import { MtsViewButton } from '@/components/mts/MtsViewButton';
 import { useAppState } from '@/context/AppStateContext';
 import { buildCardEvidenceLine, type FormulaDefinition } from '@/lib/formulas/formulaCatalog';
@@ -92,19 +92,20 @@ export function StockCardBack({ card, formula, sameThemeCards, sameChartCards, o
       </Section>
 
       <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
-        <button type="button" onClick={onShowFront} className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-800">
-          <RotateCcw className="h-4 w-4" />
-          앞면으로
-        </button>
-        <Link
-          href={`/cards/${card.id}/formula`}
-          onClick={() => logEvent('home_formula_click', { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'flip_card_back' })}
-          className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] text-sm font-black text-white"
-        >
-          조건식 자세히 보기
-        </Link>
+        <MtsViewButton card={card} source="home" variant="primary" label="MTS에서 보기" className="h-12 text-sm" />
+        <MtsViewButton card={card} source="home" variant="secondary" label="다른 MTS에서 보기" className="h-12 text-sm" />
       </div>
-      <MtsViewButton card={card} source="home" variant="secondary" label="MTS에서 보기" className="mt-2" />
+      <button
+        type="button"
+        onClick={() => {
+          logEvent('home_flip_front_return', { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'flip_card_back' });
+          onShowFront();
+        }}
+        className="mt-2 flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-800"
+      >
+        <RotateCcw className="h-4 w-4" />
+        앞면으로 돌아가기
+      </button>
       <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">본 정보는 조건 충족 사실을 보여주는 참고 정보이며, 매수·매도 추천이 아닙니다.</p>
     </section>
   );
@@ -172,12 +173,6 @@ function RelatedGroup({ title, cards, sourceCard }: { title: string; cards: Disp
           <div className="col-span-3 rounded-2xl bg-white px-3 py-3 text-center text-xs font-bold text-slate-500">관련 데이터 준비중</div>
         )}
       </div>
-      {title.includes('차트') ? (
-        <Link href={`/cards/${sourceCard.id}/formula`} className="mt-2 flex h-10 items-center justify-center gap-1 rounded-2xl bg-white text-xs font-black text-[#0B63F6]">
-          이 차트유형 조건식 보기
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
-      ) : null}
     </div>
   );
 }

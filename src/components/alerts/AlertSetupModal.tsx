@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, ExternalLink, X } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import type { FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import { buildCardEvidenceLine } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
@@ -46,7 +46,7 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
           <p className="mt-2 text-base font-black text-slate-950">{card.name} 조건식 알림</p>
           <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{evidenceLine}</p>
           <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] font-black">
-            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">상세보기</span>
+            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">카드 뒷면</span>
             <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">MTS에서 보기</span>
             <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">다른 MTS</span>
           </div>
@@ -80,14 +80,6 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
         >
           <Bell className="h-5 w-5" />
           알림 받기
-        </button>
-        <button
-          type="button"
-          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-700"
-          onClick={() => window.location.assign(`/cards/${card.id}`)}
-        >
-          <ExternalLink className="h-4 w-4" />
-          상세에서 더 확인
         </button>
       </section>
     </div>
