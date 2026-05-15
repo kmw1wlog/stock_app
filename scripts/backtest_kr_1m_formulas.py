@@ -19,6 +19,7 @@ import argparse
 import json
 import math
 import re
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -58,6 +59,18 @@ class FormulaStats:
         self.hits += int(hit)
         self.future_return_sum += future_return
         self.max_drawdown_sum += max_drawdown
+
+    def add_many(self, hits: pd.Series, future_returns: pd.Series, max_drawdowns: pd.Series) -> None:
+        self.signals += int(len(hits))
+        self.hits += int(hits.sum())
+        self.future_return_sum += float(np.nan_to_num(future_returns.to_numpy(dtype=float), nan=0).sum())
+        self.max_drawdown_sum += float(np.nan_to_num(max_drawdowns.to_numpy(dtype=float), nan=0).sum())
+
+    def merge(self, other: "FormulaStats") -> None:
+        self.signals += other.signals
+        self.hits += other.hits
+        self.future_return_sum += other.future_return_sum
+        self.max_drawdown_sum += other.max_drawdown_sum
 
 
 def symbol_from_dir(path: Path) -> str:
@@ -241,6 +254,67 @@ def market_returns(symbol_dirs: list[Path], max_symbols: int | None) -> dict[int
     return merged.groupby(level=0)["return"].mean().to_dict()
 
 
+def process_symbol_dir(
+    market_name: str,
+    symbol_dir_str: str,
+    market_return_by_day: dict[int, float],
+    surge_pct: float,
+    horizon_bars: int,
+    cooldown_bars: int,
+    min_amount: float,
+) -> dict[str, Any]:
+    symbol_dir = Path(symbol_dir_str)
+    df = load_symbol_frame(symbol_dir)
+    if df.empty or len(df) < 500:
+        return {"processed": 0, "skipped": 1, "baselineTotal": 0, "baselineHits": 0, "stats": {}, "examples": []}
+
+    df = future_metrics(add_features(df, market_return_by_day), horizon_bars)
+    eligible = (df["cum_amount"] >= min_amount) & df["future_max_return_pct"].notna() & df["prev_close"].notna()
+    baseline_total = int(eligible.sum())
+    baseline_hits = int((eligible & (df["future_max_return_pct"] >= surge_pct)).sum())
+    masks = formula_masks(df, min_amount)
+    symbol = symbol_from_dir(symbol_dir)
+    display_name = name_from_dir(symbol_dir)
+    stats: dict[str, FormulaStats] = defaultdict(FormulaStats)
+    examples: list[dict[str, Any]] = []
+
+    for key, mask in masks.items():
+        picked = cooldown_indices(mask & eligible, df, cooldown_bars)
+        if not picked:
+            continue
+        picked_df = df.loc[picked]
+        hits = picked_df["future_max_return_pct"] >= surge_pct
+        stats[key].add_many(hits, picked_df["future_max_return_pct"], picked_df["future_max_drawdown_pct"])
+        if len(examples) < 5:
+            example_df = picked_df.head(5 - len(examples))
+            example_hits = hits.loc[example_df.index]
+            for (_, row), hit in zip(example_df.iterrows(), example_hits):
+                examples.append(
+                    {
+                        "market": market_name,
+                        "symbol": symbol,
+                        "name": display_name,
+                        "formulaKey": key,
+                        "formulaName": FORMULA_NAMES.get(key, key),
+                        "datetime": str(row["datetime"]),
+                        "close": float(row["close"]),
+                        "futureMaxReturnPct": round(float(row["future_max_return_pct"]), 2),
+                        "hit": bool(hit),
+                        "volumeRatio": round(float(row["expected_volume_ratio"]), 2) if not math.isnan(row["expected_volume_ratio"]) else None,
+                        "amountRatio": round(float(row["expected_amount_ratio"]), 2) if not math.isnan(row["expected_amount_ratio"]) else None,
+                    }
+                )
+
+    return {
+        "processed": 1,
+        "skipped": 0,
+        "baselineTotal": baseline_total,
+        "baselineHits": baseline_hits,
+        "stats": dict(stats),
+        "examples": examples,
+    }
+
+
 def summarize(stats: dict[str, FormulaStats], baseline_hits: int, baseline_total: int) -> dict[str, Any]:
     baseline_rate = baseline_hits / baseline_total if baseline_total else 0
     formulas = []
@@ -280,6 +354,9 @@ def summarize(stats: dict[str, FormulaStats], baseline_hits: int, baseline_total
 
 def run_market(name: str, root: Path, args: argparse.Namespace) -> dict[str, Any]:
     symbol_dirs = list_symbol_dirs(root)
+    total_discovered = len(symbol_dirs)
+    if args.skip_symbols:
+        symbol_dirs = symbol_dirs[args.skip_symbols :]
     if args.max_symbols:
         symbol_dirs = symbol_dirs[: args.max_symbols]
     market_return_by_day = market_returns(symbol_dirs, args.market_return_symbols) if args.market_return_symbols else {}
@@ -290,50 +367,59 @@ def run_market(name: str, root: Path, args: argparse.Namespace) -> dict[str, Any
     skipped = 0
     examples: list[dict[str, Any]] = []
 
-    for symbol_dir in symbol_dirs:
-        df = load_symbol_frame(symbol_dir)
-        if df.empty or len(df) < 500:
-            skipped += 1
-            continue
-        df = future_metrics(add_features(df, market_return_by_day), args.horizon_bars)
-        eligible = (df["cum_amount"] >= args.min_amount) & df["future_max_return_pct"].notna() & df["prev_close"].notna()
-        baseline_total += int(eligible.sum())
-        baseline_hits += int((eligible & (df["future_max_return_pct"] >= args.surge_pct)).sum())
-        masks = formula_masks(df, args.min_amount)
-        symbol = symbol_from_dir(symbol_dir)
-        display_name = name_from_dir(symbol_dir)
-        for key, mask in masks.items():
-            picked = cooldown_indices(mask & eligible, df, args.cooldown_bars)
-            if not picked:
-                continue
-            picked_df = df.loc[picked]
-            for _, row in picked_df.iterrows():
-                hit = bool(row["future_max_return_pct"] >= args.surge_pct)
-                stats[key].add(hit, float(row["future_max_return_pct"]), float(row["future_max_drawdown_pct"]))
-                if len(examples) < 30:
-                    examples.append(
-                        {
-                            "market": name,
-                            "symbol": symbol,
-                            "name": display_name,
-                            "formulaKey": key,
-                            "formulaName": FORMULA_NAMES.get(key, key),
-                            "datetime": str(row["datetime"]),
-                            "close": float(row["close"]),
-                            "futureMaxReturnPct": round(float(row["future_max_return_pct"]), 2),
-                            "hit": hit,
-                            "volumeRatio": round(float(row["expected_volume_ratio"]), 2) if not math.isnan(row["expected_volume_ratio"]) else None,
-                            "amountRatio": round(float(row["expected_amount_ratio"]), 2) if not math.isnan(row["expected_amount_ratio"]) else None,
-                        }
-                    )
-        processed += 1
-        if args.progress_every and processed % args.progress_every == 0:
-            print(json.dumps({"market": name, "processed": processed, "baselineMinutes": baseline_total, "signals": sum(s.signals for s in stats.values())}, ensure_ascii=False))
+    def merge_result(result: dict[str, Any]) -> None:
+        nonlocal baseline_total, baseline_hits, processed, skipped, examples
+        processed += int(result["processed"])
+        skipped += int(result["skipped"])
+        baseline_total += int(result["baselineTotal"])
+        baseline_hits += int(result["baselineHits"])
+        for key, item in result["stats"].items():
+            stats[key].merge(item)
+        if len(examples) < 30:
+            examples.extend(result["examples"][: 30 - len(examples)])
+
+    if args.workers <= 1:
+        for symbol_dir in symbol_dirs:
+            result = process_symbol_dir(
+                name,
+                str(symbol_dir),
+                market_return_by_day,
+                args.surge_pct,
+                args.horizon_bars,
+                args.cooldown_bars,
+                args.min_amount,
+            )
+            merge_result(result)
+            if args.progress_every and (processed + skipped) % args.progress_every == 0:
+                print(json.dumps({"market": name, "completed": processed + skipped, "processed": processed, "skipped": skipped, "baselineMinutes": baseline_total, "signals": sum(s.signals for s in stats.values())}, ensure_ascii=False), flush=True)
+    else:
+        with ProcessPoolExecutor(max_workers=args.workers) as executor:
+            futures = [
+                executor.submit(
+                    process_symbol_dir,
+                    name,
+                    str(symbol_dir),
+                    market_return_by_day,
+                    args.surge_pct,
+                    args.horizon_bars,
+                    args.cooldown_bars,
+                    args.min_amount,
+                )
+                for symbol_dir in symbol_dirs
+            ]
+            completed = 0
+            for future in as_completed(futures):
+                merge_result(future.result())
+                completed += 1
+                if args.progress_every and completed % args.progress_every == 0:
+                    print(json.dumps({"market": name, "completed": completed, "processed": processed, "skipped": skipped, "baselineMinutes": baseline_total, "signals": sum(s.signals for s in stats.values())}, ensure_ascii=False), flush=True)
 
     return {
         "market": name,
         "root": str(root),
-        "symbolsDiscovered": len(list_symbol_dirs(root)),
+        "symbolsDiscovered": total_discovered,
+        "symbolsSkippedByOffset": args.skip_symbols,
+        "symbolsSelectedForRun": len(symbol_dirs),
         "symbolsProcessed": processed,
         "symbolsSkipped": skipped,
         **summarize(stats, baseline_hits, baseline_total),
@@ -345,23 +431,31 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--kospi-root", default="A_kospi_1m_parquet/output_parquet/1m")
     parser.add_argument("--kosdaq-root", default="B_kosdaq_1m_parquet/output_parquet_kosdaq/1m")
+    parser.add_argument("--markets", default="both", choices=["both", "kospi", "kosdaq"], help="which market dataset to run")
     parser.add_argument("--out", default="public/data/kr-1m-formula-backtest.json")
     parser.add_argument("--surge-pct", type=float, default=3.0)
     parser.add_argument("--horizon-bars", type=int, default=120)
     parser.add_argument("--cooldown-bars", type=int, default=30)
     parser.add_argument("--min-amount", type=float, default=2_000_000_000)
+    parser.add_argument("--skip-symbols", type=int, default=0, help="skip this many sorted symbol directories per market before running")
     parser.add_argument("--max-symbols", type=int, default=0, help="0 means all symbols")
     parser.add_argument("--market-return-symbols", type=int, default=200, help="sample size for market relative-strength baseline; 0 disables it")
+    parser.add_argument("--workers", type=int, default=1, help="parallel worker processes for per-symbol backtests")
     parser.add_argument("--progress-every", type=int, default=250)
     args = parser.parse_args()
     if args.max_symbols <= 0:
         args.max_symbols = None
+    if args.skip_symbols < 0:
+        args.skip_symbols = 0
+    if args.workers < 1:
+        args.workers = 1
 
     started = datetime.now(timezone.utc)
-    markets = [
-        run_market("KOSPI", Path(args.kospi_root), args),
-        run_market("KOSDAQ", Path(args.kosdaq_root), args),
-    ]
+    markets = []
+    if args.markets in ("both", "kospi"):
+        markets.append(run_market("KOSPI", Path(args.kospi_root), args))
+    if args.markets in ("both", "kosdaq"):
+        markets.append(run_market("KOSDAQ", Path(args.kosdaq_root), args))
     total_baseline = sum(m["baseline"]["eligibleMinutes"] for m in markets)
     total_hits = sum(m["baseline"]["hits"] for m in markets)
     total_signals = sum(m["overallSignals"]["signals"] for m in markets)
@@ -377,7 +471,9 @@ def main() -> None:
             "horizonBars": args.horizon_bars,
             "cooldownBars": args.cooldown_bars,
             "minAmount": args.min_amount,
+            "skipSymbols": args.skip_symbols,
             "maxSymbols": args.max_symbols,
+            "workers": args.workers,
             "targetDefinition": f"signal close 이후 {args.horizon_bars}개 1분봉 내 고가 +{args.surge_pct}% 이상",
         },
         "combined": {
