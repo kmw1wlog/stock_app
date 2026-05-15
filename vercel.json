@@ -1,0 +1,15 @@
+{
+  "crons": [
+    { "path": "/api/cron/korea-eod", "schedule": "0 10 * * 1-5" },
+    { "path": "/api/cron/dart", "schedule": "*/30 * * * 1-5" },
+    { "path": "/api/cron/naver-news", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/us-sec", "schedule": "*/30 * * * 1-5" },
+    { "path": "/api/cron/us-finra", "schedule": "30 3 * * 2-6" },
+    { "path": "/api/cron/crypto-quotes", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/crypto-defillama", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/fear-greed", "schedule": "5 0 * * *" },
+    { "path": "/api/cron/generate-cards", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/calculate-results", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/rollups", "schedule": "*/15 * * * *" }
+  ]
+}
