@@ -1,6 +1,6 @@
 'use client';
 
-import { type PointerEvent, useEffect, useMemo, useState } from 'react';
+import { type PointerEvent, type TouchEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { StockCardBack } from '@/components/home/StockCardBack';
 import { StockCardFront } from '@/components/home/StockCardFront';
 import { useAppState } from '@/context/AppStateContext';
@@ -18,6 +18,7 @@ type StockFlipCardProps = {
 export function StockFlipCard({ card, allCards, formula, onSkip }: StockFlipCardProps) {
   const [side, setSide] = useState<'front' | 'back'>('front');
   const [drag, setDrag] = useState<{ startX: number; startY: number; deltaX: number; deltaY: number; active: boolean } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; deltaX: number; deltaY: number; active: boolean; locked?: 'horizontal' | 'vertical' } | null>(null);
   const { logEvent } = useAppState();
   const candidates = useMemo(() => getFormulaCandidatesForCard(card), [card]);
   const sameThemeCards = useMemo(() => getSameThemeCards(card, allCards, 6), [allCards, card]);
@@ -53,28 +54,65 @@ export function StockFlipCard({ card, allCards, formula, onSkip }: StockFlipCard
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (isInteractiveTarget(event.target)) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    setDrag({ startX: event.clientX, startY: event.clientY, deltaX: 0, deltaY: 0, active: true });
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    startDrag(event.clientX, event.clientY);
   };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    setDrag((current) => {
-      if (!current?.active) return current;
-      return {
-        ...current,
-        deltaX: event.clientX - current.startX,
-        deltaY: event.clientY - current.startY,
-      };
-    });
+    moveDrag(event.clientX, event.clientY);
   };
 
-  const finishDrag = () => {
-    if (!drag?.active) return;
-    const absX = Math.abs(drag.deltaX);
-    const absY = Math.abs(drag.deltaY);
+  const startDrag = (clientX: number, clientY: number) => {
+    const nextDrag = { startX: clientX, startY: clientY, deltaX: 0, deltaY: 0, active: true };
+    dragRef.current = nextDrag;
+    setDrag(nextDrag);
+  };
+
+  const moveDrag = (clientX: number, clientY: number) => {
+    const current = dragRef.current;
+    if (!current?.active) return;
+    const deltaX = clientX - current.startX;
+    const deltaY = clientY - current.startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    const locked = current.locked ?? (absX > 10 || absY > 10 ? (absX > absY ? 'horizontal' : 'vertical') : undefined);
+    const nextDrag = { ...current, deltaX, deltaY, locked };
+    dragRef.current = nextDrag;
+    setDrag(nextDrag);
+  };
+
+  const finishDrag = (source: 'pointer' | 'touch') => {
+    const current = dragRef.current;
+    if (!current?.active) return;
+    const absX = Math.abs(current.deltaX);
+    const absY = Math.abs(current.deltaY);
     if (absX > 72 && absX > absY * 1.25) {
       showSide(side === 'front' ? 'back' : 'front', 'drag');
+      logEvent('stock_flip_drag_complete', {
+        cardKey: card.id,
+        symbol: card.symbol,
+        market: card.market,
+        side,
+        source,
+        deltaX: Math.round(current.deltaX),
+      });
     }
+    dragRef.current = null;
     setDrag(null);
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (isInteractiveTarget(event.target)) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    startDrag(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    moveDrag(touch.clientX, touch.clientY);
+    if (dragRef.current?.locked === 'horizontal') event.preventDefault();
   };
 
   const dragOffset = drag && Math.abs(drag.deltaX) > Math.abs(drag.deltaY) ? Math.max(-22, Math.min(22, drag.deltaX * 0.08)) : 0;
@@ -85,8 +123,18 @@ export function StockFlipCard({ card, allCards, formula, onSkip }: StockFlipCard
         className="relative h-full touch-pan-y select-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={finishDrag}
-        onPointerCancel={() => setDrag(null)}
+        onPointerUp={() => finishDrag('pointer')}
+        onPointerCancel={() => {
+          dragRef.current = null;
+          setDrag(null);
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={() => finishDrag('touch')}
+        onTouchCancel={() => {
+          dragRef.current = null;
+          setDrag(null);
+        }}
         style={{ transform: `translateX(${dragOffset}px)` }}
       >
         <div className={side === 'front' ? 'h-full opacity-100 transition-opacity duration-200' : 'pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200'}>

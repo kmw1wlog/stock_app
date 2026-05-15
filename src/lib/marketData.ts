@@ -73,6 +73,52 @@ function mockCards(limit: number): DisplayCard[] {
   }));
 }
 
+const defaultKrWatchSymbols = [
+  { symbol: '005930', name: '삼성전자', theme: '반도체', tvSymbol: 'KRX:005930' },
+  { symbol: '000660', name: 'SK하이닉스', theme: '반도체', tvSymbol: 'KRX:000660' },
+  { symbol: '035420', name: 'NAVER', theme: '인터넷', tvSymbol: 'KRX:035420' },
+  { symbol: '005380', name: '현대차', theme: '자동차', tvSymbol: 'KRX:005380' },
+  { symbol: '277810', name: '레인보우로보틱스', theme: '로봇', tvSymbol: 'KRX:277810' },
+];
+
+function defaultKrWatchCards(limit: number): DisplayCard[] {
+  return defaultKrWatchSymbols.slice(0, limit).map((asset) => ({
+    id: `default-kr-${asset.symbol}`,
+    assetKey: asset.symbol,
+    symbol: asset.symbol,
+    name: asset.name,
+    market: 'KR',
+    marketLabel: '국장',
+    theme: asset.theme,
+    cardType: 'kr_gainer',
+    title: `${asset.name} 기본 관심종목`,
+    primaryReason: '기본 한국 관심종목입니다. 공식 가격 데이터가 들어오면 등락률과 거래대금이 함께 표시됩니다.',
+    secondaryReason: '추천 카드가 일부 시장에만 있어도 홈에서 주요 국장 종목을 계속 확인할 수 있게 유지합니다.',
+    price: null,
+    changePct: null,
+    labels: ['기본 관심종목', '공식 데이터 연결 대기'],
+    dataBasisLabel: '기본 관심종목 · 공식 데이터 연결 대기',
+    source: 'default-watchlist',
+    updatedAt: nowIso(),
+    tvSymbol: asset.tvSymbol,
+    chartSetupType: '기본 관심종목',
+    isWidget: false,
+    isMock: false,
+  }));
+}
+
+function uniqueCards(cards: DisplayCard[]) {
+  const seen = new Set<string>();
+  const merged: DisplayCard[] = [];
+  for (const card of cards) {
+    const key = `${card.market}:${card.symbol}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(card);
+  }
+  return merged;
+}
+
 async function fetchPublicCryptoQuote(asset: { binanceSymbol: string; upbitMarket: string }) {
   const binance = await fetchBinance24hTicker(asset.binanceSymbol);
   if (binance.data?.price) return binance;
@@ -336,8 +382,9 @@ function fromAsset(asset: {
 
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   if (!hasDatabaseUrl()) {
-    const liveCards = [...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))];
-    return liveCards.length ? liveCards.slice(0, limit) : mockCards(limit);
+    const liveCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))]);
+    const withKrWatch = liveCards.some((card) => card.market === 'KR') ? liveCards : uniqueCards([...defaultKrWatchCards(5), ...liveCards]);
+    return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
   }
 
   const cards = await prisma.recommendationCard.findMany({
@@ -355,8 +402,7 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
     take: limit,
   });
 
-  if (cards.length) {
-    return cards.map((card) => {
+  const recommendationCards = cards.map((card) => {
       const assetCard = fromAsset(card.asset);
       return {
         ...(assetCard ?? {
@@ -383,7 +429,6 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
         isMock: false,
       };
     });
-  }
 
   const assets = await prisma.asset.findMany({
     where: { isActive: true },
@@ -397,9 +442,12 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   });
 
   const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
-  if (dbCards.length) return dbCards;
-  const liveCards = [...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))];
-  return liveCards.length ? liveCards.slice(0, limit) : mockCards(limit);
+  const liveCards = await publicConfiguredApiCards(limit);
+  const mergedCards = uniqueCards([...recommendationCards, ...dbCards, ...liveCards]);
+  const withKrWatch = mergedCards.some((card) => card.market === 'KR') ? mergedCards : uniqueCards([...defaultKrWatchCards(5), ...mergedCards]);
+  if (withKrWatch.length) return withKrWatch.slice(0, limit);
+  const providerCards = uniqueCards([...(await publicConfiguredApiCards(limit)), ...(await publicCryptoCards(limit))]);
+  return providerCards.length ? providerCards.slice(0, limit) : mockCards(limit);
 }
 
 export async function getDisplayCard(cardKey: string) {
