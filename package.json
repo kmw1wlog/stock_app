@@ -14,6 +14,7 @@
     "api:smoke": "tsx scripts/api-provider-smoke.ts",
     "data:verify-render": "tsx scripts/verify-render-data.ts",
     "yfinance:scan": "python3 scripts/yfinance_kr_formula_scan.py",
+    "backtest:kr1m": "python3 scripts/backtest_kr_1m_formulas.py",
     "check:banned-copy": "tsx scripts/check-banned-copy.ts"
   },
   "dependencies": {

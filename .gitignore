@@ -47,3 +47,9 @@ playwright-report/
 # generated native folders
 /ios
 /android
+
+# local historical market data
+A_kospi_1m_parquet/
+B_kosdaq_1m_parquet/
+A_kospi_1m_parquet.zip
+B_kosdaq_1m_parquet.zip
