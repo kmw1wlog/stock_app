@@ -35,6 +35,22 @@ function stripHtml(value = '') {
   return value.replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timeoutHandle = setTimeout(() => resolve(fallback), ms);
+      }),
+    ]);
+  } catch {
+    return fallback;
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+  }
+}
+
 export function envelope<T>(items: T[], source: string, basis: string, extra: Partial<DataEnvelope<T>> = {}): DataEnvelope<T> {
   return {
     ok: true,
@@ -197,13 +213,11 @@ async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
     { symbol: 'ETH', binanceSymbol: 'ETHUSDT', upbitMarket: 'KRW-ETH', name: 'Ethereum', theme: '대형코인', coingeckoId: 'ethereum', tvSymbol: 'BINANCE:ETHUSDT' },
     { symbol: 'SOL', binanceSymbol: 'SOLUSDT', upbitMarket: 'KRW-SOL', name: 'Solana', theme: 'L1', coingeckoId: 'solana', tvSymbol: 'BINANCE:SOLUSDT' },
   ];
-  const cards: DisplayCard[] = [];
-
-  for (const asset of symbols) {
+  const quoteCards = await Promise.all(symbols.map(async (asset) => {
     const result = await fetchPublicCryptoQuote(asset);
-    if (!result.data?.price) continue;
+    if (!result.data?.price) return null;
     const changePct = result.data.changePct ?? 0;
-    cards.push({
+    return {
       id: `public-crypto-${asset.symbol.toLowerCase()}`,
       assetKey: asset.symbol,
       symbol: asset.symbol,
@@ -230,9 +244,10 @@ async function publicCryptoCards(limit: number): Promise<DisplayCard[]> {
       chartSetupType: '24h 가격·거래량 확인',
       isWidget: false,
       isMock: false,
-    });
-  }
+    } satisfies DisplayCard;
+  }));
 
+  const cards: DisplayCard[] = quoteCards.filter((card): card is NonNullable<typeof card> => Boolean(card));
   const fearGreed = await fetchAlternativeFearGreed();
   if (fearGreed.data) {
     cards.push({
@@ -449,7 +464,12 @@ function fromAsset(asset: {
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   const runtimeCards = await runtimeLiveCards(limit);
   if (!hasDatabaseUrl()) {
-    const liveCards = uniqueCards([...runtimeCards, ...(await yfinanceSignalCards(limit)), ...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
+    const [yfinanceCards, configuredCards, cryptoCards] = await Promise.all([
+      yfinanceSignalCards(limit),
+      withTimeout(publicConfiguredApiCards(limit), 2000, [] as DisplayCard[]),
+      withTimeout(publicCryptoCards(limit), 2000, [] as DisplayCard[]),
+    ]);
+    const liveCards = uniqueCards([...runtimeCards, ...yfinanceCards, ...configuredCards, ...defaultUsWidgetCards(4), ...cryptoCards]);
     const withKrWatch = liveCards.some((card) => card.market === 'KR') ? liveCards : uniqueCards([...defaultKrWatchCards(5), ...liveCards]);
     return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
   }
@@ -509,11 +529,14 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
   });
 
   const dbCards = assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit);
-  const liveCards = await publicConfiguredApiCards(limit);
-  const mergedCards = uniqueCards([...runtimeCards, ...recommendationCards, ...(await yfinanceSignalCards(limit)), ...dbCards, ...liveCards, ...defaultUsWidgetCards(4)]);
+  const [yfinanceCards, liveCards] = await Promise.all([
+    yfinanceSignalCards(limit),
+    withTimeout(publicConfiguredApiCards(limit), 2000, [] as DisplayCard[]),
+  ]);
+  const mergedCards = uniqueCards([...runtimeCards, ...recommendationCards, ...yfinanceCards, ...dbCards, ...liveCards, ...defaultUsWidgetCards(4)]);
   const withKrWatch = mergedCards.some((card) => card.market === 'KR') ? mergedCards : uniqueCards([...defaultKrWatchCards(5), ...mergedCards]);
   if (withKrWatch.length) return withKrWatch.slice(0, limit);
-  const providerCards = uniqueCards([...(await yfinanceSignalCards(limit)), ...(await publicConfiguredApiCards(limit)), ...defaultUsWidgetCards(4), ...(await publicCryptoCards(limit))]);
+  const providerCards = uniqueCards([...yfinanceCards, ...liveCards, ...defaultUsWidgetCards(4), ...(await withTimeout(publicCryptoCards(limit), 2000, [] as DisplayCard[]))]);
   return providerCards.length ? providerCards.slice(0, limit) : mockCards(limit);
 }
 
