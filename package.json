@@ -13,6 +13,10 @@
     "data:smoke": "tsx scripts/data-smoke.ts",
     "api:smoke": "tsx scripts/api-provider-smoke.ts",
     "data:verify-render": "tsx scripts/verify-render-data.ts",
+    "live:sync": "tsx scripts/sync-live-runtime.ts",
+    "yfinance:scan": "python3 scripts/yfinance_kr_formula_scan.py",
+    "backtest:kr1m": "python3 scripts/backtest_kr_1m_formulas.py",
+    "backtest:kr-horizontal": "python3 scripts/backtest_kosdaq_horizontal_disclosures.py",
     "check:banned-copy": "tsx scripts/check-banned-copy.ts"
   },
   "dependencies": {
