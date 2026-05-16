@@ -14,6 +14,8 @@ import { getFormulaForCard } from '@/lib/formulas/formulaCatalog';
 import { getDisplayCard } from '@/lib/marketData';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
+export const dynamic = 'force-dynamic';
+
 function percent(value?: number | null) {
   if (value === null || value === undefined) return '자료 기준';
   return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;

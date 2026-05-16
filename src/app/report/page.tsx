@@ -5,6 +5,8 @@ import { MobileShell } from '@/components/layout/MobileShell';
 import { getDisplayCards, sortCards } from '@/lib/marketData';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ReportPage() {
   const cards = await getDisplayCards(160);
   const summary = {

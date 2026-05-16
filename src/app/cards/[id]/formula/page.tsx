@@ -6,6 +6,8 @@ import { MobileShell } from '@/components/layout/MobileShell';
 import { getFormulaForCard } from '@/lib/formulas/formulaCatalog';
 import { getDisplayCard } from '@/lib/marketData';
 
+export const dynamic = 'force-dynamic';
+
 export default async function FormulaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const card = await getDisplayCard(id);

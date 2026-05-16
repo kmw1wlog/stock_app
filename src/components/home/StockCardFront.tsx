@@ -1,15 +1,17 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { Bell, Bookmark, ChevronDown, Layers, RotateCcw, X } from 'lucide-react';
-import { AlertSetupModal } from '@/components/alerts/AlertSetupModal';
 import { AssetChart } from '@/components/chart/AssetChart';
 import { Badge } from '@/components/common/Badge';
-import { FormulaCandidateSheet } from '@/components/home/FormulaCandidateSheet';
 import { MtsViewButton } from '@/components/mts/MtsViewButton';
 import { useAppState } from '@/context/AppStateContext';
 import { buildCardEvidenceLine, type FormulaCandidate, type FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
+
+const AlertSetupModal = dynamic(() => import('@/components/alerts/AlertSetupModal').then((mod) => mod.AlertSetupModal), { ssr: false });
+const FormulaCandidateSheet = dynamic(() => import('@/components/home/FormulaCandidateSheet').then((mod) => mod.FormulaCandidateSheet), { ssr: false });
 
 function percent(value?: number | null) {
   if (value === null || value === undefined) return '데이터 기준';

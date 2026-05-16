@@ -14,6 +14,8 @@ import { fetchKoreaEodQuote } from '@/lib/providers/korea/dataGoKr';
 import { fetchNaverNewsMentions } from '@/lib/providers/korea/naverNews';
 import { fetchUsDirectQuote } from '@/lib/providers/us/usDirectProvider';
 
+export type FeedMode = 'default' | 'fast';
+
 const nowIso = () => new Date().toISOString();
 
 function marketLabel(market: string) {
@@ -462,7 +464,80 @@ function fromAsset(asset: {
 }
 
 export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
+  return getDisplayCardsByMode(limit, 'default');
+}
+
+async function getFastDisplayCards(limit: number, runtimeCards: DisplayCard[]): Promise<DisplayCard[]> {
+  if (!hasDatabaseUrl()) {
+    const yfinanceCards = await yfinanceSignalCards(limit);
+    const fastCards = uniqueCards([...runtimeCards, ...yfinanceCards, ...defaultUsWidgetCards(4)]);
+    const withKrWatch = fastCards.some((card) => card.market === 'KR') ? fastCards : uniqueCards([...defaultKrWatchCards(5), ...fastCards]);
+    return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
+  }
+
+  const [recommendationCards, dbCards, yfinanceCards] = await Promise.all([
+    prisma.recommendationCard.findMany({
+      where: { status: 'active' },
+      include: {
+        asset: {
+          include: {
+            labels: { orderBy: { updatedAt: 'desc' }, take: 6 },
+            dailyPrices: { orderBy: { date: 'desc' }, take: 1 },
+            intradayPrices: { orderBy: { time: 'desc' }, take: 1 },
+          },
+        },
+      },
+      orderBy: { detectedAt: 'desc' },
+      take: limit,
+    }).then((cards) => cards.map((card) => {
+      const assetCard = fromAsset(card.asset);
+      return {
+        ...(assetCard ?? {
+          id: card.id,
+          assetKey: card.assetId,
+          symbol: card.asset.symbol,
+          name: card.asset.name,
+          market: card.market as MarketType,
+          marketLabel: marketLabel(card.market),
+          cardType: card.cardType,
+          title: card.title,
+          primaryReason: card.primaryReason,
+          labels: [],
+          dataBasisLabel: card.dataBasisLabel ?? '공식 데이터 기준',
+          source: 'db',
+          isMock: false,
+        }),
+        id: card.id,
+        title: card.title,
+        primaryReason: card.primaryReason,
+        secondaryReason: card.secondaryReason ?? assetCard?.secondaryReason,
+        cardType: card.cardType,
+        dataBasisLabel: card.dataBasisLabel ?? assetCard?.dataBasisLabel ?? '공식 데이터 기준',
+        isMock: false,
+      };
+    })),
+    prisma.asset.findMany({
+      where: { isActive: true },
+      include: {
+        labels: { orderBy: { updatedAt: 'desc' }, take: 6 },
+        dailyPrices: { orderBy: { date: 'desc' }, take: 1 },
+        intradayPrices: { orderBy: { time: 'desc' }, take: 1 },
+      },
+      orderBy: [{ market: 'asc' }, { symbol: 'asc' }],
+      take: limit * 2,
+    }).then((assets) => assets.map(fromAsset).filter((card): card is DisplayCard => Boolean(card)).slice(0, limit)),
+    yfinanceSignalCards(limit),
+  ]);
+
+  const mergedCards = uniqueCards([...runtimeCards, ...recommendationCards, ...yfinanceCards, ...dbCards, ...defaultUsWidgetCards(4)]);
+  const withKrWatch = mergedCards.some((card) => card.market === 'KR') ? mergedCards : uniqueCards([...defaultKrWatchCards(5), ...mergedCards]);
+  return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
+}
+
+export async function getDisplayCardsByMode(limit = 50, mode: FeedMode = 'default'): Promise<DisplayCard[]> {
   const runtimeCards = await runtimeLiveCards(limit);
+  if (mode === 'fast') return getFastDisplayCards(limit, runtimeCards);
+
   if (!hasDatabaseUrl()) {
     const [yfinanceCards, configuredCards, cryptoCards] = await Promise.all([
       yfinanceSignalCards(limit),
@@ -552,9 +627,9 @@ export function sortCards(cards: DisplayCard[], key: 'gainer' | 'loser' | 'amoun
   return copy.sort((a, b) => (b.changePct ?? 0) - (a.changePct ?? 0));
 }
 
-export async function feedEnvelope(limit = 50) {
-  const cards = await getDisplayCards(limit);
-  return envelope(cards, cards.length ? 'db/provider' : 'provider', '공식 API/DB/위젯 기준', {
+export async function feedEnvelope(limit = 50, mode: FeedMode = 'default') {
+  const cards = await getDisplayCardsByMode(limit, mode);
+  return envelope(cards, mode === 'fast' ? 'runtime/db/fallback' : cards.length ? 'db/provider' : 'provider', mode === 'fast' ? 'runtime JSON/DB/기본 관심종목 기준' : '공식 API/DB/위젯 기준', {
     message: cards.length ? undefined : emptyDataMessage(),
     fallback: false,
   });

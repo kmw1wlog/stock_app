@@ -1,4 +1,8 @@
+import { seedTestLiveAlertFixture } from './seed-test-live-alert';
+
 const baseUrl = process.env.SMOKE_BASE_URL || 'http://localhost:3000';
+const warmupEnabled = process.env.SMOKE_WARMUP !== 'false';
+const requireLiveTrigger = process.env.SMOKE_REQUIRE_LIVE_TRIGGER === 'true';
 
 type JsonObject = Record<string, unknown>;
 
@@ -74,6 +78,10 @@ function printFail(message: string) {
   console.error(`[FAIL] ${message}`);
 }
 
+function printInfo(message: string) {
+  console.log(`[INFO] ${message}`);
+}
+
 function ensure(condition: unknown, message: string): asserts condition {
   if (!condition) {
     throw new Error(message);
@@ -101,6 +109,21 @@ async function runPage(path: string, timeoutMs: number) {
   ensure(result.status >= 200 && result.status < 300, `GET ${path} status=${result.status}`);
   ensure(result.body.length > 0, `GET ${path} returned empty body`);
   printPass(`GET ${path} ${result.durationMs}ms`);
+}
+
+async function runWarmup(path: string, timeoutMs: number, asPage = false) {
+  try {
+    if (asPage) {
+      await runPage(path, timeoutMs);
+      printInfo(`warmup ${path} complete`);
+      return;
+    }
+    await runGet(path, timeoutMs);
+    printInfo(`warmup ${path} complete`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    printInfo(`warmup ${path} skipped: ${message}`);
+  }
 }
 
 async function runConditionAlertsCrud(timeoutMs: number) {
@@ -141,11 +164,40 @@ async function runConditionAlertsCrud(timeoutMs: number) {
   printPass(`condition-alerts CRUD ${mode} ${postResult.durationMs + getResult.durationMs + patchResult.durationMs}ms`);
 }
 
+function canSeedLocalFixture() {
+  return baseUrl.startsWith('http://localhost:') || baseUrl.startsWith('http://127.0.0.1:');
+}
+
+async function runLiveTriggerFixturePhase() {
+  if (!canSeedLocalFixture()) {
+    printInfo(`fixture seed skipped for non-local base url: ${baseUrl}`);
+    const result = await fetchWithTimeout('GET', '/api/live-alert-triggers', 3000);
+    ensureJsonOk(result);
+    const count = Number(result.json?.count ?? 0);
+    if (requireLiveTrigger) ensure(count >= 1, 'GET /api/live-alert-triggers missing seeded trigger');
+    printPass(`GET /api/live-alert-triggers ${result.durationMs}ms count=${count}`);
+    return;
+  }
+
+  await seedTestLiveAlertFixture();
+  const result = await fetchWithTimeout('GET', '/api/live-alert-triggers', 3000);
+  ensureJsonOk(result);
+  const count = Number(result.json?.count ?? 0);
+  ensure(count >= 1, 'GET /api/live-alert-triggers missing seeded trigger');
+  printPass(`fixture live-alert-triggers ${result.durationMs}ms count=${count}`);
+}
+
 async function main() {
   try {
+    if (warmupEnabled) {
+      await runWarmup('/', 20000, true);
+      await runWarmup('/alerts', 20000, true);
+      await runWarmup('/api/cards/feed?mode=fast', 20000);
+    }
+
     await runPage('/', 5000);
     await runPage('/alerts', 5000);
-    await runGet('/api/cards/feed', 5000, (result) => {
+    await runGet('/api/cards/feed?mode=fast', 3000, (result) => {
       const count = Number(result.json?.count ?? (Array.isArray(result.json?.items) ? result.json?.items.length : 0));
       return `count=${count}`;
     });
@@ -153,6 +205,7 @@ async function main() {
     await runGet('/api/live-alert-triggers', 3000, (result) => `count=${Number(result.json?.count ?? 0)}`);
     await runGet('/api/cron/live-runtime-sync', 5000, (result) => `mode=${String(result.json?.mode ?? 'unknown')}`);
     await runConditionAlertsCrud(5000);
+    await runLiveTriggerFixturePhase();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     printFail(message);

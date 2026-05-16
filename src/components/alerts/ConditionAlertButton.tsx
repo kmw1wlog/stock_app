@@ -1,11 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { Bell } from 'lucide-react';
-import { AlertSetupModal } from '@/components/alerts/AlertSetupModal';
 import { useAppState } from '@/context/AppStateContext';
 import type { FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
+
+const AlertSetupModal = dynamic(() => import('@/components/alerts/AlertSetupModal').then((mod) => mod.AlertSetupModal), { ssr: false });
 
 type ConditionAlertButtonProps = {
   card: DisplayCard;

@@ -15,6 +15,7 @@
     "api:smoke": "tsx scripts/api-provider-smoke.ts",
     "data:verify-render": "tsx scripts/verify-render-data.ts",
     "smoke:pre-apk": "tsx scripts/smoke-pre-apk.ts",
+    "seed:test-alert": "tsx scripts/seed-test-live-alert.ts",
     "live:sync": "tsx scripts/sync-live-runtime.ts",
     "yfinance:scan": "python3 scripts/yfinance_kr_formula_scan.py",
     "backtest:kr1m": "python3 scripts/backtest_kr_1m_formulas.py",

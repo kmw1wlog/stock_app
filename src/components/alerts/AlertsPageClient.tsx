@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, Clock, Pause, RefreshCw } from 'lucide-react';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { useAppState } from '@/context/AppStateContext';
@@ -12,22 +12,33 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric' }).format(new Date(value));
 }
 
-export function AlertsPageClient({ initialLiveTriggers }: { initialLiveTriggers: LiveAlertTrigger[] }) {
+export function AlertsPageClient({ initialLiveTriggers, fetchOnMount = false }: { initialLiveTriggers: LiveAlertTrigger[]; fetchOnMount?: boolean }) {
   const [alerts, setAlerts] = useState<ConditionAlertDto[]>([]);
   const [liveTriggers, setLiveTriggers] = useState<LiveAlertTrigger[]>(initialLiveTriggers);
+  const [alertsLoading, setAlertsLoading] = useState(true);
+  const [liveLoading, setLiveLoading] = useState(fetchOnMount && initialLiveTriggers.length === 0);
   const { anonymousId, showToast, logEvent } = useAppState();
+  const hasFetchedLiveRef = useRef(false);
 
   useEffect(() => {
     if (!anonymousId) return;
-    fetchConditionAlerts(anonymousId).then(setAlerts);
+    setAlertsLoading(true);
+    fetchConditionAlerts(anonymousId)
+      .then(setAlerts)
+      .finally(() => setAlertsLoading(false));
   }, [anonymousId]);
 
   useEffect(() => {
+    if (hasFetchedLiveRef.current && !fetchOnMount) return;
+    if (hasFetchedLiveRef.current) return;
+    hasFetchedLiveRef.current = true;
+    setLiveLoading(true);
     fetch('/api/live-alert-triggers')
       .then((response) => response.json())
       .then((data: { items?: LiveAlertTrigger[] }) => setLiveTriggers(data.items ?? initialLiveTriggers))
-      .catch(() => setLiveTriggers(initialLiveTriggers));
-  }, [initialLiveTriggers]);
+      .catch(() => setLiveTriggers(initialLiveTriggers))
+      .finally(() => setLiveLoading(false));
+  }, [fetchOnMount, initialLiveTriggers]);
 
   const active = useMemo(() => alerts.filter((alert) => alert.status === 'active'), [alerts]);
   const expiring = active.filter((alert) => alert.expiresAt && new Date(alert.expiresAt).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000);
@@ -49,7 +60,8 @@ export function AlertsPageClient({ initialLiveTriggers }: { initialLiveTriggers:
 
         <section className="space-y-3">
           <h2 className="text-xl font-black">활성 알림</h2>
-          {active.length ? active.map((alert) => (
+          {alertsLoading && !alerts.length ? <AlertsSkeleton label="저장한 알림 불러오는 중" /> : null}
+          {!alertsLoading && active.length ? active.map((alert) => (
             <div key={alert.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start gap-3">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-[#0B63F6]"><Bell className="h-6 w-6" /></span>
@@ -88,14 +100,15 @@ export function AlertsPageClient({ initialLiveTriggers }: { initialLiveTriggers:
                 </button>
               </div>
             </div>
-          )) : (
+          )) : !alertsLoading ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm font-bold text-slate-500">아직 설정한 조건식 알림이 없습니다.</div>
-          )}
+          ) : null}
         </section>
 
         <section className="space-y-3">
           <h2 className="text-xl font-black">최근 실시간 감지</h2>
-          {liveTriggers.length ? liveTriggers.slice(0, 8).map((trigger) => (
+          {liveLoading && !liveTriggers.length ? <AlertsSkeleton label="최근 감지 확인 중" /> : null}
+          {!liveLoading && liveTriggers.length ? liveTriggers.slice(0, 8).map((trigger) => (
             <div key={`${trigger.alertId}-${trigger.triggeredAt}-${trigger.formulaKey ?? 'formula'}`} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start gap-3">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><Bell className="h-6 w-6" /></span>
@@ -107,9 +120,9 @@ export function AlertsPageClient({ initialLiveTriggers }: { initialLiveTriggers:
                 </div>
               </div>
             </div>
-          )) : (
+          )) : !liveLoading ? (
             <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm font-bold text-slate-500">최근 실시간 감지 내역이 아직 없습니다.</div>
-          )}
+          ) : null}
         </section>
 
         <p className="text-xs font-semibold leading-5 text-slate-500">본 알림은 조건 충족 사실을 알려주는 참고 기능이며, 매수·매도 추천이 아닙니다.</p>
@@ -123,6 +136,19 @@ function Metric({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center">
       <p className="text-xs font-bold text-slate-500">{label}</p>
       <p className="mt-1 text-2xl font-black text-[#0B63F6]">{value}</p>
+    </div>
+  );
+}
+
+function AlertsSkeleton({ label }: { label: string }) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="animate-pulse space-y-3">
+        <div className="h-5 w-40 rounded bg-slate-100" />
+        <div className="h-4 w-28 rounded bg-slate-100" />
+        <div className="h-12 rounded-2xl bg-slate-100" />
+      </div>
+      <p className="mt-4 text-xs font-bold text-slate-500">{label}</p>
     </div>
   );
 }
