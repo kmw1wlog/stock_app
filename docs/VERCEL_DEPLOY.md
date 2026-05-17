@@ -31,7 +31,7 @@ npm run build
 
 Important:
 
-- `next@16` requires Node `>=20.9.0`
+- this repo is pinned to Node `24.x`
 - if your local shell still resolves to Node `18`, switch to Node `20+` first
 - one working local example in this repo is:
 
@@ -49,6 +49,13 @@ Recommended for predictable fallback/mock behavior:
 
 - `DATA_MODE=mock`
 - `NEXT_PUBLIC_ALLOW_MOCK_DATA=true`
+
+Fallback safety:
+
+- if `DATA_MODE=live` is explicitly set, the app stays in live mode
+- if `DATA_MODE=mock` is set, the app stays in mock mode
+- if `NEXT_PUBLIC_ALLOW_MOCK_DATA=true`, the app stays in mock mode
+- if the app is running on Vercel and no DB/provider env is configured, the app now falls back to `mock` automatically so the HTTPS URL can still render the shell and fallback APIs
 
 Optional UI-only toggles:
 
@@ -98,9 +105,27 @@ npm install
 npm run build
 ```
 
-5. Ensure the project Node version is `20` or higher.
+5. Ensure the project Node version is `24.x`.
 
-If Vercel exposes a Node version selector, choose Node `22`.
+If Vercel exposes a Node version selector, choose Node `24`.
+
+## Build Diagnostics
+
+The build script prints the active Node version first:
+
+```bash
+npm run build
+```
+
+Expected first line in build logs:
+
+```bash
+v24.x.x
+```
+
+GitHub Actions also mirrors the Vercel build in:
+
+- `.github/workflows/vercel-build-check.yml`
 
 ## Expected Behavior In Fallback Deploy
 
