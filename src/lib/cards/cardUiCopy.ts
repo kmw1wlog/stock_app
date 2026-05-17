@@ -5,11 +5,7 @@ export type AlertRecommendationCopy = {
   eyebrow: string;
   title: string;
   summary: string;
-  scopeChip: string;
-  spreadChip: string;
   expiresLabel: string;
-  disclaimer: string;
-  detailCtaLabel: string;
   shareSummary: string;
 };
 
@@ -92,26 +88,22 @@ export function buildCardEvidenceSentence(card: DisplayCard) {
 export function buildAlertRecommendationCopy(card: DisplayCard, formula: FormulaDefinition, candidates: FormulaCandidate[]): AlertRecommendationCopy {
   const alias = formatFormulaAlias(formula);
   const conditionPhrase = formatConditionPhrase(formula, card);
-  const alternateCandidate = candidates.find((candidate) => candidate.formula.key !== formula.key);
+  void candidates;
 
   const summary =
     formula.key === 'chart_setup_detected'
-      ? '같은 흐름이 다시 나오면 알려드려요.'
+      ? '같은 흐름이 다시 보이면 알려드려요.'
       : formula.key === 'kr_gainer_volume_price' || formula.key === 'kr_volume_amount_spike'
         ? '거래가 다시 붙으면 알려드려요.'
         : formula.key === 'kr_disclosure_event' || formula.key === 'kr_news_mention' || formula.key === 'us_widget_sec_event'
           ? '뉴스 이후 반응이 잡히면 알려드려요.'
-          : '같은 흐름이 다시 나오면 알려드려요.';
+          : '같은 흐름이 다시 보이면 알려드려요.';
 
   return {
-    eyebrow: '추천 알림',
+    eyebrow: '알림 제안',
     title: alias,
     summary,
-    scopeChip: '같은 종목',
-    spreadChip: '비슷한 종목',
     expiresLabel: `${formula.defaultExpiresInDays}일 관찰`,
-    disclaimer: '',
-    detailCtaLabel: alternateCandidate ? '다른 조건식' : '조건 보기',
     shareSummary: `${alias} · ${conditionPhrase}`,
   };
 }
@@ -131,17 +123,52 @@ export function buildFrontTagLabels(card: DisplayCard, formula: FormulaDefinitio
   const theme = shortThemeLabel(card.theme);
   if (theme) tags.push(theme);
 
-  if (card.chartSetupType || hasKeyword(card, '차트자리') || formula.key === 'chart_setup_detected') {
-    tags.push('신호');
-  } else if (hasKeyword(card, '뉴스') || hasKeyword(card, '공시') || hasKeyword(card, 'SEC')) {
-    tags.push('이벤트');
-  } else if (card.amount || card.volume || /volume|amount/.test(formula.key)) {
-    tags.push('관심흐름');
-  } else {
-    tags.push('관찰중');
+  switch (card.cardType) {
+    case 'kr_volume':
+    case 'kr_amount':
+      tags.push('거래');
+      break;
+    case 'kr_news':
+      tags.push('뉴스');
+      break;
+    case 'kr_disclosure':
+      tags.push('공시');
+      break;
+    case 'kr_gainer':
+      tags.push('상승');
+      break;
+    case 'kr_loser':
+      tags.push('하락');
+      break;
+    case 'us_widget':
+    case 'us_sec_event':
+      tags.push('미장');
+      break;
+    case 'crypto_live':
+    case 'crypto_24h':
+      tags.push('코인');
+      break;
+    default:
+      if (card.chartSetupType || hasKeyword(card, '차트자리') || formula.key === 'chart_setup_detected') tags.push('신호');
+      else if (hasKeyword(card, '뉴스') || hasKeyword(card, '공시') || hasKeyword(card, 'SEC')) tags.push('이벤트');
+      else if (card.amount || card.volume || /volume|amount/.test(formula.key)) tags.push('거래');
+      else tags.push('관심');
+      break;
   }
 
   return tags.filter(Boolean).slice(0, 3);
+}
+
+export function buildFrontStatusLabel(card: DisplayCard, formula: FormulaDefinition) {
+  if (hasKeyword(card, '뉴스')) return '뉴스 확인';
+  if (hasKeyword(card, '공시') || hasKeyword(card, 'SEC')) return '공시 확인';
+  if (formula.key === 'chart_setup_detected' || card.chartSetupType || hasKeyword(card, '차트자리')) return '신호 감지';
+  if (formula.key === 'kr_gainer_volume_price' || formula.key === 'kr_volume_amount_spike' || card.amount || card.volume) return '거래 증가';
+  if ((card.changePct ?? 0) > 0) return '상승 흐름';
+  if ((card.changePct ?? 0) < 0) return '하락 관찰';
+  if (card.market === 'US') return '미장 추적';
+  if (card.market === 'CRYPTO') return '코인 추적';
+  return '관찰중';
 }
 
 export function buildShareText(args: {

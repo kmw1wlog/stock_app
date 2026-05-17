@@ -38,7 +38,7 @@ export function VerticalStockFeed({ cards, allCards }: { cards: DisplayCard[]; a
       className="hide-scrollbar h-[100dvh] overflow-y-auto"
       style={{
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 118px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 128px)',
       }}
     >
       {visibleCards.map((card, index) => (

@@ -67,7 +67,7 @@ export function buildDiagnosisMetrics(card: DisplayCard): DiagnosisMetric[] {
   const chartSetup = Boolean(card.chartSetupType || hasKeyword(card, '차트자리'));
 
   return [
-    { label: '진단', value: `${score}`, tone: score >= 70 ? 'good' : score < 45 ? 'caution' : 'neutral' },
+    { label: '신호', value: `${score}`, tone: score >= 70 ? 'good' : score < 45 ? 'caution' : 'neutral' },
     { label: '흐름', value: flow.value, tone: flow.tone },
     { label: '거래', value: trade.value, tone: trade.tone },
     { label: '변동성', value: volatility.value, tone: volatility.tone },

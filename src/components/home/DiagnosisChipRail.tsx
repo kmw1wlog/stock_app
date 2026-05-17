@@ -11,21 +11,19 @@ const toneClass = {
 } as const;
 
 export function DiagnosisChipRail({ card }: { card: DisplayCard }) {
-  const metrics = buildDiagnosisMetrics(card);
+  const metrics = buildDiagnosisMetrics(card).filter((metric) => ['신호', '거래', '변동성'].includes(metric.label)).slice(0, 3);
 
   return (
-    <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="flex min-w-max gap-1.5 pr-4">
+    <div className="grid grid-cols-3 gap-2">
         {metrics.map((metric) => (
           <div
             key={metric.label}
-            className={`min-w-[78px] shrink-0 rounded-[18px] border px-2.5 py-1.5 ${toneClass[metric.tone]}`}
+            className={`rounded-[18px] border px-2.5 py-2 ${toneClass[metric.tone]}`}
           >
             <p className="text-[10px] font-black opacity-70">{metric.label}</p>
             <p className="mt-0.5 whitespace-nowrap text-[11px] font-black">{metric.value}</p>
           </div>
         ))}
-      </div>
     </div>
   );
 }

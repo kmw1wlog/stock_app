@@ -32,15 +32,12 @@ export function StockFlipCard({ card, allCards, formula, onSkip }: StockFlipCard
   }, [card.id, card.market, card.symbol, formula.key, logEvent, side]);
 
   return (
-    <div className="h-full px-4 pb-2">
-      <div className="relative h-full">
-        <div className={side === 'front' ? 'h-full opacity-100 transition-opacity duration-200' : 'pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200'}>
-          <StockCardFront card={card} formula={formula} candidates={candidates} onShowBack={() => setSide('back')} onSkip={onSkip} />
-        </div>
-        <div className={side === 'back' ? 'h-full opacity-100 transition-opacity duration-200' : 'pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200'}>
-          <StockCardBack card={card} formula={formula} sameThemeCards={sameThemeCards} sameChartCards={sameChartCards} onShowFront={() => setSide('front')} />
-        </div>
-      </div>
+    <div className="px-4 pb-2">
+      {side === 'front' ? (
+        <StockCardFront card={card} formula={formula} candidates={candidates} onShowBack={() => setSide('back')} onSkip={onSkip} />
+      ) : (
+        <StockCardBack card={card} formula={formula} sameThemeCards={sameThemeCards} sameChartCards={sameChartCards} onShowFront={() => setSide('front')} />
+      )}
     </div>
   );
 }
