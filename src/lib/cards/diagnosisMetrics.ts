@@ -28,17 +28,17 @@ function scoreCard(card: DisplayCard) {
 
 function flowValue(card: DisplayCard) {
   const changePct = card.changePct ?? 0;
-  if (changePct > 3) return { value: '상승 확인', tone: 'good' as const };
-  if (changePct > 0) return { value: '완만한 상승', tone: 'neutral' as const };
+  if (changePct > 3) return { value: '상승 흐름', tone: 'good' as const };
+  if (changePct > 0) return { value: '흐름 관찰', tone: 'neutral' as const };
   if (changePct < -5) return { value: '하락 유의', tone: 'caution' as const };
-  if (changePct < 0) return { value: '조정 구간', tone: 'neutral' as const };
-  return { value: '보합/대기', tone: 'neutral' as const };
+  if (changePct < 0) return { value: '조정 관찰', tone: 'neutral' as const };
+  return { value: '관찰 중', tone: 'neutral' as const };
 }
 
 function tradeValue(card: DisplayCard) {
   if (card.amount) return { value: '거래대금 확인', tone: 'good' as const };
-  if (card.volume) return { value: '거래량 확인', tone: 'neutral' as const };
-  return { value: '자료부족', tone: 'neutral' as const };
+  if (card.volume) return { value: '거래량 관찰', tone: 'neutral' as const };
+  return { value: '거래 대기', tone: 'neutral' as const };
 }
 
 function volatilityValue(card: DisplayCard) {
@@ -47,7 +47,7 @@ function volatilityValue(card: DisplayCard) {
   if (abs >= 6) return { value: '유의', tone: 'caution' as const };
   if (abs >= 3) return { value: '보통', tone: 'neutral' as const };
   if (abs > 0) return { value: '낮음', tone: 'good' as const };
-  return { value: '자료부족', tone: 'neutral' as const };
+  return { value: '관찰', tone: 'neutral' as const };
 }
 
 function riskValue(card: DisplayCard) {
@@ -67,16 +67,16 @@ export function buildDiagnosisMetrics(card: DisplayCard): DiagnosisMetric[] {
   const chartSetup = Boolean(card.chartSetupType || hasKeyword(card, '차트자리'));
 
   return [
-    { label: '진단점수', value: `${score}/100`, tone: score >= 70 ? 'good' : score < 45 ? 'caution' : 'neutral' },
+    { label: '진단', value: `${score}`, tone: score >= 70 ? 'good' : score < 45 ? 'caution' : 'neutral' },
     { label: '흐름', value: flow.value, tone: flow.tone },
     { label: '거래', value: trade.value, tone: trade.tone },
     { label: '변동성', value: volatility.value, tone: volatility.tone },
-    { label: '수급', value: card.market === 'KR' ? '자료부족' : '시장기준', tone: 'neutral' },
-    { label: '뉴스', value: news ? '확인' : '없음', tone: news ? 'good' : 'neutral' },
-    { label: '공시', value: disclosure ? '확인' : '확인필요', tone: disclosure ? 'good' : 'neutral' },
+    { label: '수급', value: card.market === 'KR' ? '대기' : '시장 기준', tone: 'neutral' },
+    { label: '뉴스', value: news ? '확인' : '대기', tone: news ? 'good' : 'neutral' },
+    { label: '공시', value: disclosure ? '확인' : '확인 중', tone: disclosure ? 'good' : 'neutral' },
     { label: '차트자리', value: chartSetup ? '확인' : '대기', tone: chartSetup ? 'good' : 'neutral' },
     { label: '같은테마', value: card.theme ? '연결됨' : '대기', tone: card.theme ? 'good' : 'neutral' },
     { label: '리스크', value: riskValue(card).value, tone: riskValue(card).tone },
-    { label: '시간외반응', value: card.market === 'KR' ? '확인필요' : card.market === 'US' ? '위젯기준' : '24h기준', tone: 'neutral' },
+    { label: '시간외반응', value: card.market === 'KR' ? '확인 중' : card.market === 'US' ? '위젯 기준' : '24h 기준', tone: 'neutral' },
   ];
 }

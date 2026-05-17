@@ -15,7 +15,6 @@ const CoinGeckoPriceWidget = dynamic(() => import('@/components/widgets/CoinGeck
 export function AssetChart({ market, assetKey, tvSymbol, coingeckoId, compact }: { market: MarketType; assetKey?: string; tvSymbol?: string; coingeckoId?: string; compact?: boolean }) {
   const policy = getDisplayPolicy(market);
   const [candles, setCandles] = useState<Candle[]>([]);
-  const [message, setMessage] = useState('차트 데이터 준비중');
 
   useEffect(() => {
     if ((market !== 'KR' && market !== 'CRYPTO') || compact || !assetKey) return;
@@ -23,9 +22,8 @@ export function AssetChart({ market, assetKey, tvSymbol, coingeckoId, compact }:
       .then((response) => response.json())
       .then((data: { candles?: Candle[]; message?: string }) => {
         setCandles(data.candles ?? []);
-        setMessage(data.message ?? '차트 데이터 준비중');
       })
-      .catch(() => setMessage('차트 데이터 준비중'));
+      .catch(() => setCandles([]));
   }, [assetKey, compact, market]);
 
   if (compact) {
@@ -35,7 +33,7 @@ export function AssetChart({ market, assetKey, tvSymbol, coingeckoId, compact }:
   if (market === 'US' && tvSymbol) return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
   if (market === 'CRYPTO' && coingeckoId && process.env.NEXT_PUBLIC_ENABLE_COINGECKO_WIDGETS === 'true') return <CoinGeckoPriceWidget coinId={coingeckoId} />;
   if (policy.chartDisplayMode === 'native_lightweight' || market === 'CRYPTO') {
-    return candles.length ? <NativePriceChart candles={candles} /> : <div className="grid min-h-[220px] place-items-center rounded-3xl border border-slate-200 bg-white text-sm font-bold text-slate-500">{message}</div>;
+    return candles.length ? <NativePriceChart candles={candles} /> : <MiniSampleChart />;
   }
-  return <div className="grid min-h-[220px] place-items-center rounded-3xl border border-slate-200 bg-white text-sm font-bold text-slate-500">차트 데이터 준비중</div>;
+  return <MiniSampleChart />;
 }

@@ -82,12 +82,10 @@ export function ShareCardSheet({ open, card, formula, candidates, evidenceSenten
 
         <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-black text-slate-950">{card.symbol} · {card.marketLabel}</p>
-          <p className="mt-3 text-xs font-black text-slate-500">한 줄 근거</p>
-          <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">{evidenceSentence}</p>
-          <p className="mt-3 text-xs font-black text-slate-500">추천 알림</p>
-          <p className="mt-1 text-sm font-semibold text-slate-700">{alertCopy.shareSummary}</p>
+          <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">{evidenceSentence}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-700">{alertCopy.shareSummary}</p>
           <p className="mt-1 text-xs font-semibold text-slate-500">{formula.name} · {alertCopy.expiresLabel}</p>
-          <p className="mt-3 text-[11px] font-semibold leading-5 text-slate-500">투자 추천이 아닌 참고용 조건 알림입니다.</p>
+          <p className="mt-3 text-[11px] font-semibold leading-5 text-slate-500">투자 추천이 아닌 참고용 정보입니다.</p>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
