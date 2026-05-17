@@ -43,11 +43,7 @@ export function VerticalStockFeed({ cards, allCards }: { cards: DisplayCard[]; a
     >
       {visibleCards.map((card, index) => (
         <div key={card.id}>
-          <StockSwipeStack
-            card={card}
-            allCards={allCards}
-            onSkip={() => logEvent('card_skip', { cardKey: card.id, symbol: card.symbol, market: card.market, positionIndex: index })}
-          />
+          <StockSwipeStack card={card} allCards={allCards} />
           {index > 0 && index % 5 === 0 ? <NativeAdCard source="home" slotName={`home_vertical_${index}`} title="제휴 콘텐츠" /> : null}
         </div>
       ))}
