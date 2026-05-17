@@ -10,14 +10,12 @@ type HomeHeaderProps = {
 
 export function HomeHeader({ activeMarket, sessionMode, onMarketChange }: HomeHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200 bg-[#F8FAFC]/95 px-5 pb-3 pt-3 backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-black text-[#0B63F6]">급등주 for you</p>
-          <h1 className="mt-0.5 text-2xl font-black tracking-normal">오늘의 흐름 포착</h1>
-          <p className="mt-1 text-xs font-semibold text-slate-500">세로로 넘기고, 한 종목은 가로로 더 봅니다.</p>
-        </div>
-        <MarketSessionClock activeMarket={activeMarket} mode={sessionMode} onChange={onMarketChange} />
+    <header
+      className="pointer-events-none fixed right-3 z-40"
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
+    >
+      <div className="pointer-events-auto rounded-full border border-slate-200/70 bg-white/88 px-2 py-2 shadow-lg shadow-slate-900/10 backdrop-blur-xl">
+        <MarketSessionClock activeMarket={activeMarket} mode={sessionMode} onChange={onMarketChange} compact />
       </div>
     </header>
   );

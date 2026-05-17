@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { Candle } from '@/lib/chart/candleService';
 import type { MarketType } from '@/lib/display/displayPolicy';
 import { getDisplayPolicy } from '@/lib/display/displayPolicy';
+import { MiniSampleChart } from './MiniSampleChart';
 
 const NativePriceChart = dynamic(() => import('./NativePriceChart').then((mod) => mod.NativePriceChart), { ssr: false });
 const TradingViewAdvancedChartWidget = dynamic(() => import('@/components/widgets/TradingViewChartWidget').then((mod) => mod.TradingViewAdvancedChartWidget), { ssr: false });
@@ -29,7 +30,7 @@ export function AssetChart({ market, assetKey, tvSymbol, coingeckoId, compact }:
 
   if (compact) {
     if (market === 'US' && tvSymbol) return <TradingViewMiniSymbolWidget symbol={tvSymbol} />;
-    return <div className="grid min-h-[120px] place-items-center rounded-2xl bg-slate-50 text-xs font-bold text-slate-500">차트 데이터 준비중</div>;
+    return <MiniSampleChart />;
   }
   if (market === 'US' && tvSymbol) return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
   if (market === 'CRYPTO' && coingeckoId && process.env.NEXT_PUBLIC_ENABLE_COINGECKO_WIDGETS === 'true') return <CoinGeckoPriceWidget coinId={coingeckoId} />;

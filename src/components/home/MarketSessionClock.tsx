@@ -10,6 +10,7 @@ export type MarketSessionClockProps = {
   activeMarket: MarketSession;
   mode: 'auto' | 'manual';
   onChange: (market: MarketSession, mode: 'auto' | 'manual') => void;
+  compact?: boolean;
 };
 
 const marketLabels: Record<MarketSession, string> = {
@@ -31,7 +32,7 @@ function handRotation(activeMarket: MarketSession) {
   return 345;
 }
 
-export function MarketSessionClock({ activeMarket, mode, onChange }: MarketSessionClockProps) {
+export function MarketSessionClock({ activeMarket, mode, onChange, compact = false }: MarketSessionClockProps) {
   const [open, setOpen] = useState(false);
   const { logEvent } = useAppState();
   const rotation = handRotation(activeMarket);
@@ -51,14 +52,34 @@ export function MarketSessionClock({ activeMarket, mode, onChange }: MarketSessi
           logEvent('market_session_clock_click', { activeMarket, mode });
           setOpen(true);
         }}
-        className="relative grid h-12 w-12 place-items-center rounded-full border border-slate-200 bg-white shadow-sm"
+        className={
+          compact
+            ? 'flex h-10 items-center gap-2 rounded-full px-3 text-slate-900'
+            : 'relative grid h-12 w-12 place-items-center rounded-full border border-slate-200 bg-white shadow-sm'
+        }
       >
-        <Clock3 className="h-8 w-8 text-slate-900" />
-        <span
-          className="absolute left-1/2 top-1/2 h-[18px] w-[2px] origin-bottom rounded-full bg-[#0B63F6]"
-          style={{ transform: `translate(-50%, -100%) rotate(${rotation}deg)` }}
-        />
-        <span className="absolute -bottom-1 rounded-full bg-slate-950 px-1.5 py-0.5 text-[9px] font-black text-white">{marketLabels[activeMarket]}</span>
+        {compact ? (
+          <>
+            <span className="relative grid h-6 w-6 place-items-center">
+              <Clock3 className="h-5 w-5 text-slate-900" />
+              <span
+                className="absolute left-1/2 top-1/2 h-[9px] w-[2px] origin-bottom rounded-full bg-[#0B63F6]"
+                style={{ transform: `translate(-50%, -100%) rotate(${rotation}deg)` }}
+              />
+            </span>
+            <span className="text-xs font-black">{marketLabels[activeMarket]}</span>
+            <span className="rounded-full bg-slate-950 px-1.5 py-0.5 text-[9px] font-black text-white">{mode === 'auto' ? 'AUTO' : 'MANUAL'}</span>
+          </>
+        ) : (
+          <>
+            <Clock3 className="h-8 w-8 text-slate-900" />
+            <span
+              className="absolute left-1/2 top-1/2 h-[18px] w-[2px] origin-bottom rounded-full bg-[#0B63F6]"
+              style={{ transform: `translate(-50%, -100%) rotate(${rotation}deg)` }}
+            />
+            <span className="absolute -bottom-1 rounded-full bg-slate-950 px-1.5 py-0.5 text-[9px] font-black text-white">{marketLabels[activeMarket]}</span>
+          </>
+        )}
       </button>
 
       {open ? (

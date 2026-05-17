@@ -34,7 +34,13 @@ export function VerticalStockFeed({ cards, allCards }: { cards: DisplayCard[]; a
   }
 
   return (
-    <div className="hide-scrollbar h-[calc(100dvh-138px)] overflow-y-auto scroll-smooth pb-28 [scroll-snap-type:y_proximity]">
+    <div
+      className="hide-scrollbar h-[100dvh] overflow-y-auto scroll-smooth [scroll-snap-type:y_proximity]"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+      }}
+    >
       {visibleCards.map((card, index) => (
         <div key={card.id}>
           <StockSwipeStack
@@ -46,7 +52,7 @@ export function VerticalStockFeed({ cards, allCards }: { cards: DisplayCard[]; a
         </div>
       ))}
       {cards.length > visibleCount ? (
-        <div className="px-5 pb-8">
+        <div className="px-5 pb-8 pt-2">
           <button
             type="button"
             onClick={() => setVisibleCount((current) => Math.min(current + 5, cards.length))}

@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { ArrowLeft, ExternalLink, RotateCcw } from 'lucide-react';
 import { MtsViewButton } from '@/components/mts/MtsViewButton';
 import { useAppState } from '@/context/AppStateContext';
+import { buildCardEvidenceSentence } from '@/lib/cards/cardUiCopy';
 import { buildCardEvidenceLine, type FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
@@ -47,6 +48,7 @@ export function StockCardBack({ card, formula, sameThemeCards, sameChartCards, o
   const { logEvent } = useAppState();
   const diagnosis = scoreLabel(card);
   const evidence = buildCardEvidenceLine(card);
+  const evidenceSentence = buildCardEvidenceSentence(card);
   const topTheme = sameThemeCards.slice(0, 3);
   const topChart = sameChartCards.slice(0, 3);
 
@@ -57,13 +59,14 @@ export function StockCardBack({ card, formula, sameThemeCards, sameChartCards, o
           <ArrowLeft className="h-4 w-4" />
           앞면
         </button>
-        <p className="text-xs font-black text-[#0B63F6]">근거 상세</p>
+        <p className="text-xs font-black text-[#0B63F6]">상세</p>
       </div>
 
       <h2 className="text-2xl font-black text-slate-950">{card.name}</h2>
       <p className="mt-1 text-sm font-bold text-slate-500">{card.symbol} · {card.marketLabel}</p>
 
       <Section title="왜 이 카드가 떴나요?">
+        <InfoRow label="한 줄 근거" value={evidenceSentence} />
         <InfoRow label="시장 데이터" value={evidence} />
         <InfoRow label="뉴스/공시" value={card.labels.find((label) => /뉴스|공시|SEC/.test(label)) ?? '표시 가능한 데이터 없음'} />
         <InfoRow label="시간외 반응" value={card.market === 'KR' ? '시간외 데이터 제공처 확인 필요' : '해당 시장은 위젯/공식 데이터 기준'} />

@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { HomeFeedSortTabs, type HomeFeedSort } from '@/components/home/HomeFeedSortTabs';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { getDefaultMarketByTime, type MarketSession } from '@/components/home/MarketSessionClock';
 import { MobileShell } from '@/components/layout/MobileShell';
@@ -13,9 +12,8 @@ const VerticalStockFeed = dynamic(() => import('@/components/home/VerticalStockF
   loading: () => <HomeFeedSkeleton />,
 });
 
-function sortFeedCards(cards: DisplayCard[], sort: HomeFeedSort) {
+function sortFeedCards(cards: DisplayCard[]) {
   const copy = [...cards];
-  if (sort === 'amount') return copy.sort((a, b) => (b.amount ?? b.volume ?? 0) - (a.amount ?? a.volume ?? 0));
   return copy.sort((a, b) => (b.changePct ?? 0) - (a.changePct ?? 0));
 }
 
@@ -80,10 +78,8 @@ const localFallbackCards: DisplayCard[] = [
 export function HomePageClient({ initialCards, fetchOnMount = false }: { initialCards: DisplayCard[]; fetchOnMount?: boolean }) {
   const [cards, setCards] = useState<DisplayCard[]>(initialCards);
   const [loading, setLoading] = useState(fetchOnMount && initialCards.length === 0);
-  const [loadFailed, setLoadFailed] = useState(false);
   const [activeMarket, setActiveMarket] = useState<MarketSession>(() => getDefaultMarketByTime());
   const [sessionMode, setSessionMode] = useState<'auto' | 'manual'>('auto');
-  const [sort, setSort] = useState<HomeFeedSort>('gainer');
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -96,17 +92,14 @@ export function HomePageClient({ initialCards, fetchOnMount = false }: { initial
         const nextCards = data.cards ?? data.items ?? [];
         if (nextCards.length) {
           setCards(nextCards);
-          setLoadFailed(false);
           return;
         }
         if (!initialCards.length) {
           setCards(localFallbackCards);
-          setLoadFailed(true);
         }
       })
       .catch(() => {
         if (!initialCards.length) setCards(localFallbackCards);
-        setLoadFailed(true);
       })
       .finally(() => setLoading(false));
   }, [fetchOnMount, initialCards.length]);
@@ -114,8 +107,8 @@ export function HomePageClient({ initialCards, fetchOnMount = false }: { initial
   const sortedFeed = useMemo(() => {
     const marketCards = cards.filter((card) => card.market === activeMarket);
     const feedCards = marketCards.length ? marketCards : cards;
-    return sortFeedCards(feedCards, sort);
-  }, [activeMarket, cards, sort]);
+    return sortFeedCards(feedCards);
+  }, [activeMarket, cards]);
 
   return (
     <MobileShell>
@@ -127,15 +120,7 @@ export function HomePageClient({ initialCards, fetchOnMount = false }: { initial
           setSessionMode(mode);
         }}
       />
-      <HomeFeedSortTabs sort={sort} activeMarket={activeMarket} onChange={setSort} />
       {loading && cards.length === 0 ? <HomeFeedSkeleton /> : null}
-      {loadFailed ? (
-        <div className="px-5 pb-2">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
-            fast feed 응답이 지연되어 기본 관심종목으로 먼저 표시합니다.
-          </div>
-        </div>
-      ) : null}
       {!loading || cards.length ? <VerticalStockFeed cards={sortedFeed} allCards={cards} /> : null}
     </MobileShell>
   );

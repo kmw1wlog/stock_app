@@ -7,7 +7,7 @@ import type { DisplayCard } from '@/lib/marketDataTypes';
 export function StockSwipeStack({ card, allCards, onSkip }: { card: DisplayCard; allCards: DisplayCard[]; onSkip?: () => void }) {
   const formula = getFormulaForCard(card);
   return (
-    <article className="h-[82dvh] snap-start py-2">
+    <article className="h-[calc(100dvh-84px)] snap-start py-1.5">
       <StockFlipCard card={card} allCards={allCards} formula={formula} onSkip={onSkip} />
     </article>
   );
