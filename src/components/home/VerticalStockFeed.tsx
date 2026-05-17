@@ -35,10 +35,10 @@ export function VerticalStockFeed({ cards, allCards }: { cards: DisplayCard[]; a
 
   return (
     <div
-      className="hide-scrollbar h-[100dvh] overflow-y-auto scroll-smooth [scroll-snap-type:y_proximity]"
+      className="hide-scrollbar h-[100dvh] overflow-y-auto"
       style={{
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 118px)',
       }}
     >
       {visibleCards.map((card, index) => (

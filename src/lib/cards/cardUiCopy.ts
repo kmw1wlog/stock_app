@@ -27,7 +27,7 @@ function formatFormulaAlias(formula: FormulaDefinition) {
     case 'us_widget_sec_event':
       return '이벤트 반응 재감지';
     case 'chart_setup_detected':
-      return '차트자리 재감지';
+      return '흐름 재감지';
     case 'crypto_24h_price_volume':
     case 'crypto_24h_downside':
       return '24시간 흐름 재감지';
@@ -41,23 +41,23 @@ function formatFormulaAlias(formula: FormulaDefinition) {
 function formatConditionPhrase(formula: FormulaDefinition, card: DisplayCard) {
   switch (formula.key) {
     case 'kr_gainer_volume_price':
-      return '거래대금/가격 동시 확인';
+      return '거래가 다시 붙는지';
     case 'kr_volume_amount_spike':
-      return '거래대금 집중 확인';
+      return '거래가 다시 커지는지';
     case 'kr_disclosure_event':
     case 'kr_news_mention':
     case 'us_widget_sec_event':
-      return '뉴스·공시 이벤트 확인';
+      return '뉴스 이후 반응이 이어지는지';
     case 'chart_setup_detected':
-      return '차트자리 재출현 확인';
+      return '같은 흐름이 다시 나오는지';
     case 'crypto_24h_price_volume':
-      return '24시간 변동/거래 확인';
+      return '24시간 흐름이 다시 커지는지';
     case 'crypto_24h_downside':
-      return '24시간 하락 반응 확인';
+      return '하락 반응이 다시 이어지는지';
     case 'kr_loser_watch':
-      return '하락 구간 거래 흐름 확인';
+      return '조정 구간 반응이 이어지는지';
     default:
-      return card.chartSetupType ? '차트/거래 흐름 확인' : '가격/거래 흐름 확인';
+      return card.chartSetupType ? '같은 흐름이 이어지는지' : '가격·거래 흐름이 이어지는지';
   }
 }
 
@@ -72,7 +72,7 @@ export function buildCardEvidenceSentence(card: DisplayCard) {
     return '뉴스나 공시 이후 반응을 확인할 종목입니다.';
   }
   if (hasChart) {
-    return '차트자리 조건이 다시 잡힌 종목입니다.';
+    return '같은 흐름이 다시 잡힌 종목입니다.';
   }
   if (changePct > 0 && hasAmount) {
     return '가격과 거래 흐름이 함께 커진 종목입니다.';
@@ -94,14 +94,23 @@ export function buildAlertRecommendationCopy(card: DisplayCard, formula: Formula
   const conditionPhrase = formatConditionPhrase(formula, card);
   const alternateCandidate = candidates.find((candidate) => candidate.formula.key !== formula.key);
 
+  const summary =
+    formula.key === 'chart_setup_detected'
+      ? '같은 흐름이 다시 나오면 알려드려요.'
+      : formula.key === 'kr_gainer_volume_price' || formula.key === 'kr_volume_amount_spike'
+        ? '거래가 다시 붙으면 알려드려요.'
+        : formula.key === 'kr_disclosure_event' || formula.key === 'kr_news_mention' || formula.key === 'us_widget_sec_event'
+          ? '뉴스 이후 반응이 잡히면 알려드려요.'
+          : '같은 흐름이 다시 나오면 알려드려요.';
+
   return {
     eyebrow: '추천 알림',
     title: alias,
-    summary: `${conditionPhrase} 흐름이 다시 나오면 알려드려요.`,
+    summary,
     scopeChip: '같은 종목',
     spreadChip: '비슷한 종목',
     expiresLabel: `${formula.defaultExpiresInDays}일 관찰`,
-    disclaimer: '참고용 알림',
+    disclaimer: '',
     detailCtaLabel: alternateCandidate ? '다른 조건식' : '조건 보기',
     shareSummary: `${alias} · ${conditionPhrase}`,
   };
@@ -123,11 +132,11 @@ export function buildFrontTagLabels(card: DisplayCard, formula: FormulaDefinitio
   if (theme) tags.push(theme);
 
   if (card.chartSetupType || hasKeyword(card, '차트자리') || formula.key === 'chart_setup_detected') {
-    tags.push('차트자리');
+    tags.push('신호');
   } else if (hasKeyword(card, '뉴스') || hasKeyword(card, '공시') || hasKeyword(card, 'SEC')) {
     tags.push('이벤트');
   } else if (card.amount || card.volume || /volume|amount/.test(formula.key)) {
-    tags.push('거래흐름');
+    tags.push('관심흐름');
   } else {
     tags.push('관찰중');
   }

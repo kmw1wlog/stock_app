@@ -74,9 +74,9 @@ export function buildDiagnosisMetrics(card: DisplayCard): DiagnosisMetric[] {
     { label: '수급', value: card.market === 'KR' ? '대기' : '시장 기준', tone: 'neutral' },
     { label: '뉴스', value: news ? '확인' : '대기', tone: news ? 'good' : 'neutral' },
     { label: '공시', value: disclosure ? '확인' : '확인 중', tone: disclosure ? 'good' : 'neutral' },
-    { label: '차트자리', value: chartSetup ? '확인' : '대기', tone: chartSetup ? 'good' : 'neutral' },
+    { label: '신호', value: chartSetup ? '확인' : '대기', tone: chartSetup ? 'good' : 'neutral' },
     { label: '같은테마', value: card.theme ? '연결됨' : '대기', tone: card.theme ? 'good' : 'neutral' },
-    { label: '리스크', value: riskValue(card).value, tone: riskValue(card).tone },
-    { label: '시간외반응', value: card.market === 'KR' ? '확인 중' : card.market === 'US' ? '위젯 기준' : '24h 기준', tone: 'neutral' },
+    { label: '주의', value: riskValue(card).value, tone: riskValue(card).tone },
+    { label: '시간외', value: card.market === 'KR' ? '확인 중' : card.market === 'US' ? '위젯 기준' : '24h 기준', tone: 'neutral' },
   ];
 }

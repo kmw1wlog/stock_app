@@ -15,7 +15,7 @@ export function MiniSampleChart() {
   const areaPath = `M0,102 L${points} L${width},102 Z`;
 
   return (
-    <div className="rounded-[22px] bg-slate-50 px-3 py-2.5">
+    <div className="rounded-[22px] bg-[#F7FAFF] px-3 py-2.5">
       <div className="mb-2 flex items-center justify-between">
         <p className="text-[10px] font-black text-slate-700">예시 흐름</p>
         <p className="text-[10px] font-bold text-slate-400">샘플 차트</p>
@@ -23,15 +23,15 @@ export function MiniSampleChart() {
       <svg viewBox={`0 0 ${width} ${height}`} className="h-[118px] w-full overflow-visible">
         <defs>
           <linearGradient id="sampleChartFill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#0B63F6" stopOpacity="0.38" />
+            <stop offset="0%" stopColor="#2563EB" stopOpacity="0.34" />
             <stop offset="100%" stopColor="#0B63F6" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <rect x="0" y="8" width={width} height="94" rx="18" fill="#EFF6FF" />
-        <line x1="0" y1="102" x2={width} y2="102" stroke="#BFD5F5" strokeDasharray="4 5" />
+        <rect x="0" y="8" width={width} height="94" rx="18" fill="#EEF4FF" />
+        <line x1="0" y1="102" x2={width} y2="102" stroke="#C6D7F6" strokeDasharray="4 5" />
         <path d={areaPath} fill="url(#sampleChartFill)" opacity="1" />
-        <polyline fill="none" stroke="#0B63F6" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" points={points} />
-        <circle cx="320" cy="24" r="4.5" fill="#0B63F6" />
+        <polyline fill="none" stroke="#2563EB" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" points={points} />
+        <circle cx="320" cy="24" r="4.5" fill="#2563EB" />
       </svg>
     </div>
   );

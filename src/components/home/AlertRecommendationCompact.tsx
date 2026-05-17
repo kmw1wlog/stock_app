@@ -8,30 +8,23 @@ type AlertRecommendationCompactProps = {
   card: DisplayCard;
   formula: FormulaDefinition;
   candidates: FormulaCandidate[];
-  onOpenCandidates: () => void;
 };
 
-export function AlertRecommendationCompact({ card, formula, candidates, onOpenCandidates }: AlertRecommendationCompactProps) {
+export function AlertRecommendationCompact({ card, formula, candidates }: AlertRecommendationCompactProps) {
   const copy = buildAlertRecommendationCopy(card, formula, candidates);
 
   return (
-    <section className="rounded-[24px] border border-white/14 bg-white/12 px-4 py-3 text-white">
+    <section className="rounded-[22px] border border-[#BFD3F7]/30 bg-[#EAF2FF]/95 px-4 py-3 text-slate-950 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] font-black text-blue-100/90">{copy.eyebrow}</p>
-        <span className="rounded-full bg-white/12 px-2 py-1 text-[10px] font-black text-blue-100">{copy.expiresLabel}</span>
+        <p className="text-[11px] font-black text-[#2563EB]">{copy.eyebrow}</p>
+        <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-black text-[#2563EB]">{copy.expiresLabel}</span>
       </div>
-      <h3 className="mt-1 text-[17px] font-black leading-5">{copy.title}</h3>
-      <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-5 text-blue-50/90">{copy.summary}</p>
-      <div className="mt-2 flex items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5">
-          <span className="rounded-full bg-white/12 px-2.5 py-1 text-[10px] font-black text-white/90">{copy.scopeChip}</span>
-          <span className="rounded-full bg-white/12 px-2.5 py-1 text-[10px] font-black text-white/90">{copy.spreadChip}</span>
-        </div>
-        <button type="button" onClick={onOpenCandidates} className="shrink-0 text-[11px] font-black text-blue-100">
-          {copy.detailCtaLabel}
-        </button>
+      <h3 className="mt-1 text-[16px] font-black leading-5 text-slate-950">{copy.title}</h3>
+      <p className="mt-1 line-clamp-1 text-[13px] font-semibold leading-5 text-slate-600">{copy.summary}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black text-slate-700">{copy.scopeChip}</span>
+        <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black text-slate-700">{copy.spreadChip}</span>
       </div>
-      <p className="mt-2 text-[10px] font-semibold text-blue-100/60">{copy.disclaimer}</p>
     </section>
   );
 }
