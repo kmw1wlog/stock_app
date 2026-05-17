@@ -2,7 +2,7 @@
 
 import { Copy, Share2, X } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
-import { buildAlertRecommendationCopy, buildShareText, type AlertRecommendationCopy } from '@/lib/cards/cardUiCopy';
+import { buildAlertRecommendationCopy, buildOneLineWhySummary, buildShareText, type AlertRecommendationCopy } from '@/lib/cards/cardUiCopy';
 import type { FormulaCandidate, FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
@@ -20,6 +20,7 @@ export function ShareCardSheet({ open, card, formula, candidates, evidenceSenten
   if (!open) return null;
 
   const alertCopy: AlertRecommendationCopy = buildAlertRecommendationCopy(card, formula, candidates);
+  const oneLineSummary = buildOneLineWhySummary(card);
   const shareUrl = typeof window === 'undefined' ? `/cards/${card.id}` : `${window.location.origin}/cards/${card.id}`;
   const shareText = buildShareText({
     card,
@@ -82,6 +83,7 @@ export function ShareCardSheet({ open, card, formula, candidates, evidenceSenten
 
         <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-sm font-black text-slate-950">{card.symbol} · {card.marketLabel}</p>
+          <p className="mt-3 text-sm font-black leading-6 text-slate-900">{oneLineSummary}</p>
           <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">{evidenceSentence}</p>
           <p className="mt-2 text-sm font-semibold text-slate-700">{alertCopy.shareSummary}</p>
           <p className="mt-1 text-xs font-semibold text-slate-500">{formula.name} · {alertCopy.expiresLabel}</p>

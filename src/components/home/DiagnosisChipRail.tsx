@@ -4,24 +4,24 @@ import { buildDiagnosisMetrics } from '@/lib/cards/diagnosisMetrics';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
 const toneClass = {
-  good: 'border-blue-200/70 bg-[#F4F8FF] text-[#1854C7]',
-  neutral: 'border-slate-200/70 bg-[#F7FAFF] text-slate-700',
-  caution: 'border-amber-200/70 bg-[#FFF7E8] text-amber-700',
-  risk: 'border-rose-200/70 bg-[#FFF2F4] text-rose-700',
+  good: 'border-white/10 bg-white/12 text-white',
+  neutral: 'border-white/10 bg-white/10 text-blue-50',
+  caution: 'border-amber-300/25 bg-amber-300/10 text-amber-100',
+  risk: 'border-rose-300/25 bg-rose-300/10 text-rose-100',
 } as const;
 
 export function DiagnosisChipRail({ card }: { card: DisplayCard }) {
-  const metrics = buildDiagnosisMetrics(card).filter((metric) => ['신호', '거래', '변동성'].includes(metric.label)).slice(0, 3);
+  const metrics = buildDiagnosisMetrics(card).slice(0, 3);
 
   return (
     <div className="grid grid-cols-3 gap-2">
         {metrics.map((metric) => (
           <div
             key={metric.label}
-            className={`rounded-[18px] border px-2.5 py-2 ${toneClass[metric.tone]}`}
+            className={`rounded-[16px] border px-2.5 py-2 ${toneClass[metric.tone]}`}
           >
-            <p className="text-[10px] font-black opacity-70">{metric.label}</p>
-            <p className="mt-0.5 whitespace-nowrap text-[11px] font-black">{metric.value}</p>
+            <p className="text-[10px] font-black opacity-75">{metric.label}</p>
+            <p className="mt-1 whitespace-nowrap text-[11px] font-black">{metric.value}</p>
           </div>
         ))}
     </div>

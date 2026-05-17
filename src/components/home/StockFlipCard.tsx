@@ -34,7 +34,15 @@ export function StockFlipCard({ card, allCards, formula, onSkip }: StockFlipCard
   return (
     <div className="px-4 pb-2">
       {side === 'front' ? (
-        <StockCardFront card={card} formula={formula} candidates={candidates} onShowBack={() => setSide('back')} onSkip={onSkip} />
+        <StockCardFront
+          card={card}
+          formula={formula}
+          candidates={candidates}
+          sameThemeCards={sameThemeCards}
+          sameChartCards={sameChartCards}
+          onShowBack={() => setSide('back')}
+          onSkip={onSkip}
+        />
       ) : (
         <StockCardBack card={card} formula={formula} sameThemeCards={sameThemeCards} sameChartCards={sameChartCards} onShowFront={() => setSide('front')} />
       )}
