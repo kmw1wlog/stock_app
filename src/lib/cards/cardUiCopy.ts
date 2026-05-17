@@ -67,6 +67,7 @@ function volumeDeltaLabel(card: DisplayCard) {
 
 function chartPosition(card: DisplayCard) {
   const setup = card.chartSetupType ?? '';
+  if (/위젯/.test(setup)) return '가격 흐름 확인';
   if (/전고점|재도전/.test(setup)) return '전고점 재도전';
   if (/돌파/.test(setup)) return '돌파 초입';
   if (/눌림|조정/.test(setup)) return '눌림형';
@@ -142,6 +143,9 @@ export function buildSummaryTradeLine(card: DisplayCard) {
 export function buildOneLineWhySummary(card: DisplayCard) {
   const parts = [eventThemeReason(card), chartPosition(card), tradeReason(card)].filter(Boolean) as string[];
   const unique = parts.filter((part, index) => parts.indexOf(part) === index);
+  if (unique.length === 1 && compactTheme(card.theme)) {
+    return `${compactTheme(card.theme)} 관심 + ${unique[0]}`;
+  }
   return unique.slice(0, 3).join(' + ') || '관심 흐름 + 거래 반응 확인';
 }
 

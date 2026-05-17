@@ -27,7 +27,6 @@ export function AssetChart({ market, assetKey, tvSymbol, coingeckoId, compact }:
   }, [assetKey, compact, market]);
 
   if (compact) {
-    if (market === 'US' && tvSymbol) return <TradingViewMiniSymbolWidget symbol={tvSymbol} />;
     return <MiniSampleChart />;
   }
   if (market === 'US' && tvSymbol) return <TradingViewAdvancedChartWidget symbol={tvSymbol} />;
