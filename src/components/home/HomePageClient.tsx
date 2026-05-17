@@ -17,6 +17,12 @@ function sortFeedCards(cards: DisplayCard[]) {
   return copy.sort((a, b) => (b.changePct ?? 0) - (a.changePct ?? 0));
 }
 
+function withKrFallbackCards(cards: DisplayCard[]) {
+  const seen = new Set(cards.map((card) => card.symbol));
+  const fallback = localFallbackCards.filter((card) => !seen.has(card.symbol));
+  return [...cards, ...fallback].slice(0, Math.max(5, cards.length));
+}
+
 const localFallbackCards: DisplayCard[] = [
   {
     id: 'fallback-kr-005930',
@@ -47,7 +53,7 @@ const localFallbackCards: DisplayCard[] = [
     cardType: 'kr_gainer',
     title: 'SK하이닉스 기본 관심종목',
     primaryReason: '초기 화면은 데이터 fetch와 분리된 shell-first 구조로 유지됩니다.',
-    secondaryReason: '조건식 알림 설정은 실제 데이터 도착 전에도 열 수 있습니다.',
+    secondaryReason: '알림 설정은 실제 데이터 도착 전에도 열 수 있습니다.',
     labels: ['기본 관심종목', 'shell-first'],
     dataBasisLabel: '로컬 fallback 기준',
     source: 'local-fallback',
@@ -55,22 +61,21 @@ const localFallbackCards: DisplayCard[] = [
     isMock: false,
   },
   {
-    id: 'fallback-us-aapl',
-    assetKey: 'AAPL',
-    symbol: 'AAPL',
-    name: 'Apple',
-    market: 'US',
-    marketLabel: '미장',
-    theme: 'M7',
-    cardType: 'us_widget',
-    title: 'Apple 위젯 카드',
-    primaryReason: '미장 카드는 TradingView 위젯 기준으로 안전하게 fallback 됩니다.',
-    secondaryReason: '외부 provider 지연은 첫 화면 HTML 응답을 막지 않습니다.',
-    labels: ['위젯 카드', 'fast fallback'],
+    id: 'fallback-kr-277810',
+    assetKey: '277810',
+    symbol: '277810',
+    name: '레인보우로보틱스',
+    market: 'KR',
+    marketLabel: '국장',
+    theme: '로봇',
+    cardType: 'chart_setup',
+    title: '레인보우로보틱스 기본 관심종목',
+    primaryReason: '로봇 테마 흐름과 뉴스/공시 확인 입구를 우선 제공합니다.',
+    secondaryReason: '실시간 데이터가 연결되면 거래/수급 지표가 보강됩니다.',
+    labels: ['기본 관심종목', '로봇'],
     dataBasisLabel: '로컬 fallback 기준',
     source: 'local-fallback',
-    tvSymbol: 'NASDAQ:AAPL',
-    isWidget: true,
+    tvSymbol: 'KRX:277810',
     isMock: false,
   },
 ];
@@ -89,9 +94,9 @@ export function HomePageClient({ initialCards, fetchOnMount = false }: { initial
     fetch('/api/cards/feed?mode=fast', { cache: 'no-store' })
       .then((response) => response.json())
       .then((data: { items?: DisplayCard[]; cards?: DisplayCard[] }) => {
-        const nextCards = data.cards ?? data.items ?? [];
+        const nextCards = (data.cards ?? data.items ?? []).filter((card) => card.market === 'KR');
         if (nextCards.length) {
-          setCards(nextCards);
+          setCards(withKrFallbackCards(nextCards));
           return;
         }
         if (!initialCards.length) {
@@ -105,10 +110,12 @@ export function HomePageClient({ initialCards, fetchOnMount = false }: { initial
   }, [fetchOnMount, initialCards.length]);
 
   const sortedFeed = useMemo(() => {
-    const marketCards = cards.filter((card) => card.market === activeMarket);
-    const feedCards = marketCards.length ? marketCards : cards;
+    const krCards = cards.filter((card) => card.market === 'KR');
+    const marketCards = krCards.filter((card) => card.market === activeMarket);
+    const feedCards = marketCards.length ? marketCards : withKrFallbackCards(krCards);
     return sortFeedCards(feedCards);
   }, [activeMarket, cards]);
+  const krAllCards = useMemo(() => withKrFallbackCards(cards.filter((card) => card.market === 'KR')), [cards]);
 
   return (
     <MobileShell>
@@ -121,7 +128,7 @@ export function HomePageClient({ initialCards, fetchOnMount = false }: { initial
         }}
       />
       {loading && cards.length === 0 ? <HomeFeedSkeleton /> : null}
-      {!loading || cards.length ? <VerticalStockFeed cards={sortedFeed} allCards={cards} /> : null}
+      {!loading || cards.length ? <VerticalStockFeed cards={sortedFeed} allCards={krAllCards} /> : null}
     </MobileShell>
   );
 }

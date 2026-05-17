@@ -1,4 +1,4 @@
-import { formatFormulaCopy, type FormulaCandidate, type FormulaDefinition } from '@/lib/formulas/formulaCatalog';
+import { type FormulaCandidate, type FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import { naverNewsSearchUrl, opendartSearchUrl, xSearchUrl, youtubeSearchUrl } from '@/lib/externalLinks';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
@@ -45,7 +45,7 @@ function compactTheme(theme?: string | null) {
 
 function marketMeta(card: DisplayCard) {
   const parts = [compactTheme(card.theme)];
-  if (card.market === 'KR') parts.push('KOSPI');
+  if (card.market === 'KR') parts.push('KOSPI/KOSDAQ');
   else if (card.market === 'US') parts.push('NASDAQ');
   else if (card.market === 'CRYPTO') parts.push('24H');
   return parts.filter(Boolean).join(' · ') || card.marketLabel;
@@ -82,7 +82,7 @@ function benchmarkStrength(card: DisplayCard) {
   if (changePct >= 3) return '지수대비 강세';
   if (changePct <= -3) return '지수대비 약세';
   if (changePct > 0) return '시장대비 강세';
-  return '지수대비 확인중';
+  return null;
 }
 
 function supplyFact(card: DisplayCard) {
@@ -90,7 +90,7 @@ function supplyFact(card: DisplayCard) {
   if (hasKeyword(card, '외국인')) return '외국인 순매수';
   if (hasKeyword(card, '기관')) return '기관 순매수';
   if (card.amount || card.volume) return '거래대금 급증';
-  return '수급 확인중';
+  return null;
 }
 
 function eventThemeReason(card: DisplayCard) {
@@ -162,11 +162,8 @@ export function buildNewsReactionSentence(card: DisplayCard) {
 }
 
 export function buildFrontFacts(card: DisplayCard): FrontFact[] {
-  return [
-    { value: supplyFact(card) },
-    { value: chartPosition(card) },
-    { value: benchmarkStrength(card) },
-  ];
+  const facts = [supplyFact(card), chartPosition(card), benchmarkStrength(card)].filter(Boolean) as string[];
+  return facts.slice(0, 3).map((value) => ({ value }));
 }
 
 export function buildAlertConditionSummary(card: DisplayCard, formula: FormulaDefinition) {
@@ -257,29 +254,17 @@ export function buildDetailDisclosureItems(card: DisplayCard): DetailLinkItem[] 
 
 export function buildDetailedDiagnosisItems(card: DisplayCard) {
   return [
-    { label: '진단점수', value: (card.amount || card.chartSetupType ? '관심 높음' : '관찰 중'), description: '거래와 위치를 함께 반영한 종합 관심도입니다.', tone: 'good' as const },
-    { label: '거래 흐름', value: tradeReason(card) ?? '확인 중', description: '평소 대비 거래 반응이 붙는지 확인합니다.', tone: card.amount ? 'good' as const : 'neutral' as const },
-    { label: '거래대금', value: amountLabel(card), description: '자금 유입 강도를 단순화한 값입니다.', tone: card.amount ? 'good' as const : 'neutral' as const },
-    { label: '변동성', value: Math.abs(card.changePct ?? 0) >= 6 ? '주의' : '보통', description: '짧은 구간 변동 폭을 확인합니다.', tone: Math.abs(card.changePct ?? 0) >= 6 ? 'caution' as const : 'neutral' as const },
-    { label: '수급', value: supplyFact(card), description: '외국인/기관 힌트가 있으면 우선 표시합니다.', tone: hasKeyword(card, '외국인') || hasKeyword(card, '기관') ? 'good' as const : 'neutral' as const },
-    { label: '전고점 거리', value: chartPosition(card), description: '전고점 재도전인지, 눌림형인지 요약합니다.', tone: 'neutral' as const },
-    { label: '차트자리', value: chartPosition(card), description: '앞면에서 한 번만 강조한 차트 위치를 상세하게 풉니다.', tone: 'good' as const },
-    { label: '뉴스 반응', value: hasKeyword(card, '뉴스') ? '확인' : '관찰', description: '뉴스와 함께 거래 반응이 붙는지 봅니다.', tone: hasKeyword(card, '뉴스') ? 'good' as const : 'neutral' as const },
-    { label: '공시 반응', value: hasKeyword(card, '공시') || hasKeyword(card, 'SEC') ? '확인' : '확인 중', description: '공시 이벤트가 있는 경우 반응을 함께 확인합니다.', tone: hasKeyword(card, '공시') || hasKeyword(card, 'SEC') ? 'good' as const : 'neutral' as const },
-    { label: '리스크', value: benchmarkStrength(card) === '지수대비 약세' ? '주의' : Math.abs(card.changePct ?? 0) >= 6 ? '주의' : '낮음', description: '과열 또는 낙폭 리스크를 짧게 요약합니다.', tone: Math.abs(card.changePct ?? 0) >= 6 ? 'caution' as const : 'neutral' as const },
-    { label: '시간외 반응', value: card.market === 'KR' ? '확인 중' : card.market === 'US' ? '미장 추적' : '24h 기준', description: '장후/장전 또는 24시간 반응 기준입니다.', tone: 'neutral' as const },
+    { label: '수급별점', value: '★★★☆☆', description: '기관/외인 수급 원천 데이터가 아직 저장되지 않았습니다.', tone: 'caution' as const },
+    { label: '주도주체', value: '수급 자료 부족', description: '기관·외인·개인 수급 방향을 라벨로 변환했습니다.', tone: 'neutral' as const },
+    { label: '기관외인매집', value: '자료 부족', description: '기관/외인 수급 원천 데이터가 아직 저장되지 않았습니다.', tone: 'neutral' as const },
+    { label: '거래량', value: card.volume || card.amount ? '관찰' : '자료 부족', description: '최근 거래량 비교 데이터가 아직 부족합니다.', tone: card.volume || card.amount ? 'good' as const : 'neutral' as const },
+    { label: '공매도', value: '자료 부족', description: '공매도 원천 데이터가 아직 확인되지 않았습니다.', tone: 'neutral' as const },
+    { label: '변동성 ATR', value: '자료 부족', description: '고가/저가 기반 변동성 계산 데이터가 부족합니다.', tone: 'neutral' as const },
+    { label: '재무', value: '자료 부족', description: '재무비율 원천 데이터가 아직 충분하지 않습니다.', tone: 'neutral' as const },
+    { label: '현재가치', value: '자료 부족', description: 'PER/PBR 등 밸류 원천 데이터가 확인되면 라벨을 계산합니다.', tone: 'neutral' as const },
+    { label: '업종모멘텀', value: card.theme ? '중립' : '확인 중', description: '가격 등락과 테마 라벨을 기준으로 단순 분류했습니다.', tone: 'good' as const },
+    { label: '시간외 반응', value: '자료 없음', description: '시간외 데이터 제공처 확인 또는 EOD 수집이 필요합니다.', tone: 'neutral' as const },
   ];
-}
-
-export function buildConditionCopy(card: DisplayCard, formula: FormulaDefinition, platform: 'kiwoom' | 'tradingview') {
-  const heading = platform === 'kiwoom' ? '키움 조건식' : 'TradingView 조건식';
-  return [
-    `${heading} · ${card.name}(${card.symbol})`,
-    `핵심 조건: ${buildAlertConditionSummary(card, formula)}`,
-    `요약: ${buildOneLineWhySummary(card)}`,
-    '',
-    formatFormulaCopy(card, formula),
-  ].join('\n');
 }
 
 export function buildExternalLinkItems(card: DisplayCard): ExternalLinkItem[] {
@@ -313,7 +298,7 @@ export function buildShareText(args: {
     `핵심 문장: ${buildOneLineWhySummary(card)}`,
     `뉴스: ${buildNewsReactionSentence(card)}`,
     `추천 알림: ${alertCopy.shareSummary}`,
-    `조건식: ${formula.name}`,
+    `알람: ${formula.name}`,
     `근거: ${evidenceSentence}`,
     `보기: ${detailUrl}`,
     '※ 투자 추천이 아닌 참고용 조건 알림입니다.',

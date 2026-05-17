@@ -87,6 +87,7 @@ export function StockFlipCard({ card, allCards, formula }: StockFlipCardProps) {
         <StockCardBack
           card={card}
           formula={formula}
+          candidates={candidates}
           sameThemeCards={sameThemeCards}
           sameChartCards={sameChartCards}
           initialSection={backSection}

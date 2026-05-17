@@ -20,16 +20,13 @@ const marketLabels: Record<MarketSession, string> = {
 };
 
 export function getDefaultMarketByTime(date = new Date()): MarketSession {
-  const hour = date.getHours();
-  if (hour >= 7 && hour < 16) return 'KR';
-  if (hour >= 16 && hour < 22) return 'CRYPTO';
-  return 'US';
+  void date;
+  return 'KR';
 }
 
 function handRotation(activeMarket: MarketSession) {
-  if (activeMarket === 'KR') return 130;
-  if (activeMarket === 'CRYPTO') return 235;
-  return 345;
+  void activeMarket;
+  return 130;
 }
 
 export function MarketSessionClock({ activeMarket, mode, onChange, compact = false }: MarketSessionClockProps) {
@@ -94,14 +91,12 @@ export function MarketSessionClock({ activeMarket, mode, onChange, compact = fal
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-slate-50 p-3 text-center text-xs font-bold text-slate-600">
-              <span>국내 07~16</span>
-              <span>코인 16~22</span>
-              <span>미국 22~07</span>
+            <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-center text-xs font-bold text-slate-600">
+              <span>국장 KOSPI/KOSDAQ 중심</span>
             </div>
-            <div className="mt-4 grid grid-cols-4 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2">
               <button onClick={() => select(getDefaultMarketByTime(), 'auto')} className={mode === 'auto' ? 'rounded-2xl bg-slate-950 py-3 text-sm font-black text-white' : 'rounded-2xl border border-slate-200 py-3 text-sm font-black text-slate-700'}>자동</button>
-              {(['KR', 'CRYPTO', 'US'] as const).map((market) => (
+              {(['KR'] as const).map((market) => (
                 <button
                   key={market}
                   onClick={() => select(market, 'manual')}

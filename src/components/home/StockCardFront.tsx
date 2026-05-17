@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic';
 import { useMemo, useState } from 'react';
 import { Bell, Bookmark, ChevronRight, Info, Layers3, Share2 } from 'lucide-react';
-import { AlertRecommendationCompact } from '@/components/home/AlertRecommendationCompact';
 import { ShareCardSheet } from '@/components/home/ShareCardSheet';
 import { AssetChart } from '@/components/chart/AssetChart';
 import { useAppState } from '@/context/AppStateContext';
@@ -89,15 +88,17 @@ export function StockCardFront({ card, formula, candidates, onShowBack }: StockC
           <ChevronRight className="h-4 w-4 shrink-0 text-blue-100/70" />
         </button>
 
-        <div className="mt-2 rounded-full border border-white/10 bg-white/10 px-3 py-2">
-          <div className="grid grid-cols-3 gap-2">
-            {facts.map((fact, index) => (
-              <div key={`${fact.value}-${index}`} className={`min-w-0 ${index !== 0 ? 'border-l border-white/12 pl-2' : ''}`}>
-                <p className="truncate text-[11px] font-black text-blue-50">{fact.value}</p>
-              </div>
-            ))}
+        {facts.length ? (
+          <div className="mt-2 rounded-full border border-white/10 bg-white/10 px-3 py-2">
+            <div className={`grid gap-2 ${facts.length === 1 ? 'grid-cols-1' : facts.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              {facts.map((fact, index) => (
+                <div key={`${fact.value}-${index}`} className={`min-w-0 ${index !== 0 ? 'border-l border-white/12 pl-2' : ''}`}>
+                  <p className="truncate text-[11px] font-black text-blue-50">{fact.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div className="mt-3 rounded-[18px] border border-white/8 bg-white/95 p-1.5">
           <AssetChart compact market={card.market} assetKey={card.assetKey} tvSymbol={card.tvSymbol ?? undefined} coingeckoId={card.coingeckoId ?? undefined} />
