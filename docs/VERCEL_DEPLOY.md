@@ -2,6 +2,24 @@
 
 This document is for the `stock_app` Vercel Hobby deployment whose only goal is to obtain a stable HTTPS URL for the APK wrapper.
 
+## Current Production URL
+
+Use this URL for the Android wrapper:
+
+```text
+https://stock-app-mu-three.vercel.app/
+```
+
+Use the Vercel Production alias, not a branch URL, preview URL, or deployment-specific URL.
+
+Current known-good production deployment:
+
+- status: `Ready`
+- environment: `Production`
+- source branch: `main`
+- commit: `8c7fb3d`
+- commit message: `Pin Vercel build to Node 24`
+
 ## Scope
 
 - include:
@@ -18,6 +36,28 @@ This document is for the `stock_app` Vercel Hobby deployment whose only goal is 
   - DB-backed live ingestion
 
 `vercel.json` intentionally contains no `crons`.
+
+## Deployment Failure History
+
+1. Vercel Hobby cron limit
+   - earlier deploys failed because `vercel.json` contained high-frequency crons such as `*/30 * * * 1-5`
+   - Hobby does not allow that deployment shape for this project goal
+   - fix: remove Vercel cron schedules entirely
+   - current `vercel.json`: `{}`
+
+2. Node version mismatch
+   - local default `Node 18.19.1` failed on `next@16`
+   - `Node 24` builds succeeded
+   - final fix:
+     - `package.json` engines set to `24.x`
+     - `build` script prints `node -v` before `next build`
+     - `.nvmrc` = `24`
+     - `.node-version` = `24`
+
+3. Fresh install build diagnostics
+   - fallback/mock deploy still imports Prisma types during build
+   - `postinstall` now runs `prisma generate` on Node `20+`
+   - no `DATABASE_URL` is required for `prisma generate`
 
 ## Local Build Gate
 
@@ -71,6 +111,17 @@ Not required for this deploy:
 - provider API keys
 - KIS / Kiwoom / broker credentials
 
+Do not add these in this APK-wrapper preparation phase:
+
+- `DATA_GO_KR_SERVICE_KEY`
+- `NAVER_CLIENT_ID`
+- `NAVER_CLIENT_SECRET`
+- `OPENDART_API_KEY`
+- `KIS_APP_KEY`
+- `KIS_APP_SECRET`
+- `KIS_ACCOUNT_NO`
+- any Kiwoom credential
+
 ## Secrets That Must Not Be Public
 
 Do not put any broker or trading secret into client-exposed env.
@@ -80,6 +131,7 @@ Never use:
 - `NEXT_PUBLIC_KIS_APP_KEY`
 - `NEXT_PUBLIC_KIS_APP_SECRET`
 - `NEXT_PUBLIC_KIS_ACCOUNT_NO`
+- `NEXT_PUBLIC_KIWOOM_SECRET_KEY`
 
 Keep these server-only if they are ever used later on a worker server:
 
@@ -152,6 +204,48 @@ With no DB and no provider secrets:
 5. Check `/api/live-alert-triggers`.
 6. Create one condition alert from the UI if possible.
 7. Confirm no page crashes because of missing DB or missing broker keys.
+
+## Remote Smoke
+
+PowerShell example:
+
+```powershell
+$env:SMOKE_BASE_URL = "https://stock-app-mu-three.vercel.app/"
+$env:SMOKE_REQUIRE_LIVE_TRIGGER = "false"
+npm run smoke:pre-apk
+Remove-Item Env:\SMOKE_BASE_URL
+Remove-Item Env:\SMOKE_REQUIRE_LIVE_TRIGGER
+```
+
+Expected pass conditions:
+
+- `GET /`
+- `GET /alerts`
+- `GET /api/cards/feed?mode=fast`
+- `GET /api/live-signals`
+- `GET /api/live-alert-triggers`
+- `GET /api/cron/live-runtime-sync`
+- `condition-alerts CRUD`
+
+Notes:
+
+- remote Vercel smoke does not run `seed:test-alert`
+- if `SMOKE_REQUIRE_LIVE_TRIGGER=false`, `live-alert-triggers` may still pass even when current trigger count is `0`
+- forcing `count >= 1` requires seeded runtime data or a live worker path outside Vercel Hobby
+
+## Alert Scope For APK Phase
+
+- fallback mode:
+  - `condition-alerts` POST/PATCH responses work
+  - server-side permanent storage is not guaranteed
+- DB-backed mode:
+  - full server persistence is possible
+  - `/alerts` can reflect server-side saved alerts
+- this APK-wrapper phase does not include:
+  - push notifications
+  - KIS realtime worker
+  - 30-minute Vercel cron collection
+  - order execution
 
 ## Promotion Rule
 

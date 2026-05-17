@@ -3,6 +3,7 @@
 This version targets Vercel/PWA deployment. Play Store/App Store native wrapping is not included.
 
 For the APK-wrapper HTTPS URL flow on Vercel Hobby, use [VERCEL_DEPLOY.md](/home/openq/code/stock_app-main/docs/VERCEL_DEPLOY.md:1) first. This checklist below is the fuller live-data/store path and assumes DB/provider setup.
+For the exact wrapper URL handoff, use [APK_WEB_URL_HANDOFF.md](/home/openq/code/stock_app-main/docs/APK_WEB_URL_HANDOFF.md:1).
 
 ## Required Env
 
