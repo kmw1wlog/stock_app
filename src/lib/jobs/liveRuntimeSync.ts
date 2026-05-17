@@ -2,6 +2,25 @@ import type { Prisma } from '@prisma/client';
 import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
 import { getLiveAlertTriggers, getLiveFormulaSignals } from '@/lib/realtimeBackend';
 
+type OptionalRealtimeDelegates = {
+  assetTaFeature?: {
+    upsert(args: {
+      where: Record<string, unknown>;
+      update: Record<string, unknown>;
+      create: Record<string, unknown>;
+    }): Promise<unknown>;
+  };
+  formulaSignal?: {
+    findFirst(args: {
+      where: Record<string, unknown>;
+      select: { id: true };
+    }): Promise<{ id: string } | null>;
+    create(args: {
+      data: Record<string, unknown>;
+    }): Promise<unknown>;
+  };
+};
+
 export async function syncLiveRuntimeToDb() {
   const signals = await getLiveFormulaSignals(300);
   const triggers = await getLiveAlertTriggers(300);
@@ -16,6 +35,8 @@ export async function syncLiveRuntimeToDb() {
       availableTriggers: triggers.length,
     };
   }
+
+  const optionalDelegates = prisma as typeof prisma & OptionalRealtimeDelegates;
 
   const assetIds = new Map<string, string>();
   for (const signal of signals) {
@@ -65,39 +86,43 @@ export async function syncLiveRuntimeToDb() {
       },
     });
 
-    await prisma.assetTaFeature.upsert({
-      where: {
-        assetId_time_interval_source: {
+    if (optionalDelegates.assetTaFeature) {
+      await optionalDelegates.assetTaFeature.upsert({
+        where: {
+          assetId_time_interval_source: {
+            assetId: asset.id,
+            time: triggeredAt,
+            interval: '1m',
+            source: 'realtime-backend',
+          },
+        },
+        update: {
+          featuresJson: (signal.technical_snapshot ?? {}) as Prisma.InputJsonValue,
+        },
+        create: {
           assetId: asset.id,
           time: triggeredAt,
           interval: '1m',
           source: 'realtime-backend',
+          featuresJson: (signal.technical_snapshot ?? {}) as Prisma.InputJsonValue,
         },
-      },
-      update: {
-        featuresJson: (signal.technical_snapshot ?? {}) as Prisma.InputJsonValue,
-      },
-      create: {
-        assetId: asset.id,
-        time: triggeredAt,
-        interval: '1m',
-        source: 'realtime-backend',
-        featuresJson: (signal.technical_snapshot ?? {}) as Prisma.InputJsonValue,
-      },
-    });
+      });
+    }
 
-    const existingSignal = await prisma.formulaSignal.findFirst({
-      where: {
-        assetId: asset.id,
-        formulaKey: signal.formula_key,
-        triggeredAt,
-        source: 'realtime-backend',
-      },
-      select: { id: true },
-    });
+    const existingSignal = optionalDelegates.formulaSignal
+      ? await optionalDelegates.formulaSignal.findFirst({
+          where: {
+            assetId: asset.id,
+            formulaKey: signal.formula_key,
+            triggeredAt,
+            source: 'realtime-backend',
+          },
+          select: { id: true },
+        })
+      : null;
 
-    if (!existingSignal) {
-      await prisma.formulaSignal.create({
+    if (!existingSignal && optionalDelegates.formulaSignal) {
+      await optionalDelegates.formulaSignal.create({
         data: {
           assetId: asset.id,
           formulaKey: signal.formula_key,

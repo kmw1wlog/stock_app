@@ -109,6 +109,12 @@ npm run build
 
 If Vercel exposes a Node version selector, choose Node `24`.
 
+Prisma note:
+
+- this repo now runs `prisma generate` in `postinstall`
+- that is required even for fallback/mock deployment because the build imports Prisma types
+- `prisma generate` does not require `DATABASE_URL`
+
 ## Build Diagnostics
 
 The build script prints the active Node version first:

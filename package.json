@@ -6,6 +6,7 @@
     "start": "next dev -p 3000",
     "build": "node -v && next build",
     "build:stable": "next build --webpack",
+    "postinstall": "node -e \"const major=Number(process.versions.node.split('.')[0]); if (major < 20) { console.log('Skipping prisma generate on Node <20'); } else { require('child_process').execSync('prisma generate', { stdio: 'inherit' }); }\"",
     "test:ui": "playwright test",
     "typecheck": "tsc --noEmit",
     "prisma:validate": "prisma validate",
