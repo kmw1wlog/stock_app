@@ -2,70 +2,114 @@
 
 ## Environment
 
-- Date: 2026-05-14
-- Branch: `feature/krx-alternative-short-flow`
-- DATA_MODE: `live`
-- Local env: `.env` populated from user-provided API list. `.env` is gitignored and must not be committed.
-- Database: not configured locally for this run, so DB persistence jobs were not migrated/seeded here.
+- Date: 2026-05-18
+- Branch: `feature/home-feed-card-ui-v1`
+- Runtime mode: `DATA_MODE=live`
+- Local env: `.env.local`
+- Database: not configured locally in this run
 
-## Provider Results
+## Provider Smoke
 
-`npm run api:smoke` was added to test each configured provider without printing secret values. URL query secrets and token response fields are masked in output.
+Command:
 
-| Provider | Env | Runtime result | Notes |
-|---|---|---|---|
-| Data.go.kr stock | `DATA_GO_KR_SERVICE_KEY` | success | `005930` returned 2026-05-13 EOD row: close 284000, +1.79%, volume 35540134, amount 9797838529400. |
-| Data.go.kr ETF | `DATA_GO_KR_PRODUCT_SERVICE_KEY` | success | `069500` returned ETF EOD row. |
-| OpenDART | `OPENDART_API_KEY` | success | Samsung Electronics corp code `00126380` returned 5 filing rows with `bgn_de=20260101`. |
-| Naver News | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | success | Query `삼성전자` returned 3 news title/link rows. |
-| Alpaca | `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY` | success | AAPL snapshot returned daily close. |
-| FMP | `FMP_API_KEY` | success | AAPL quote returned price/change/volume. |
-| Alpha Vantage | `ALPHA_VANTAGE_API_KEY` | success | AAPL Global Quote returned price/change/volume. |
-| Twelve Data | `TWELVE_DATA_API_KEY` | success | AAPL quote returned close/change/volume. |
-| Marketaux | `MARKETAUX_API_TOKEN` | success | AAPL news returned 3 articles. |
-| Massive/Polygon REST | `POLYGON_API_KEY` | success | AAPL previous aggregate returned close/volume/OHLC. |
-| FRED | `FRED_API_KEY` | success | `DGS10` returned latest 10-year Treasury observation. |
-| BLS | `BLS_API_KEY` | success | `LNS14000000` returned unemployment series rows. |
-| Coinalyze | `COINALYZE_API_KEY` | success | BTCUSDT perpetual open interest endpoint returned data. |
-| KIS | `KIS_API_KEY`, `KIS_API_SECRET` | success | Token endpoint issued token. Note: official endpoint may rate-limit token issue to 1/min. |
-| Kiwoom REST | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET` | success | OAuth token endpoint issued token. |
-| Kiwoom KR short/flow | `KIWOOM_REST_API_KEY`, `KIWOOM_REST_API_SECRET` | success | `ka10014`, `ka20068`, and `ka10059` returned Samsung Electronics short selling, lending, and investor rows. |
-| KRX Open API | `KRX_OPENAPI_AUTH_KEY`, `KRX_SHORT_SELLING_API_ID`, `KRX_INVESTOR_FLOW_API_ID` | blocked | Auth key exists, but short selling/investor flow API IDs are missing. |
+```bash
+npm run smoke:providers
+```
 
-## Rendering Verification
+Result summary:
 
-`npm run data:verify-render` passed against `http://localhost:3000`.
+- passed: 15
+- failed: 1
+- missing: 2
+- process result: pass (`summary.ok=true`)
 
-`/api/cards/feed` returned 8 live cards:
+| Provider | Result | Notes |
+|---|---|---|
+| Data.go.kr stock | pass | `005930` EOD row returned |
+| Data.go.kr ETF | pass | `069500` ETF row returned |
+| OpenDART | pass | Samsung Electronics corp code `00126380` returned filings |
+| Naver News | pass | `삼성전자` returned 3 news items |
+| Alpaca | pass | AAPL snapshot returned |
+| FMP | pass | AAPL quote returned |
+| Alpha Vantage | pass | AAPL global quote returned |
+| Twelve Data | pass | AAPL quote returned |
+| Marketaux | pass | AAPL news returned |
+| Massive/Polygon | pass | AAPL prev aggregate returned |
+| FRED | pass | `DGS10` latest observation returned |
+| BLS | pass | unemployment series rows returned |
+| Coinalyze | pass | BTC perpetual open interest returned |
+| KIS token | pass | token issued |
+| Kiwoom token | pass | token issued |
+| Kiwoom KR short/flow | fail | token issued but downstream REST calls returned `8005: Token이 유효하지 않습니다` |
+| Database | missing | `DATABASE_URL` absent locally |
+| KRX Open API | missing | `KRX_SHORT_SELLING_API_ID`, `KRX_INVESTOR_FLOW_API_ID` missing |
 
-- Data.go.kr KR stock card: Samsung Electronics EOD price/change/volume/amount.
-- Alpaca US card: Apple daily snapshot.
-- Naver News card: Samsung Electronics news title/link basis.
-- Kiwoom REST card: Samsung Electronics short selling/lending/investor flow basis.
-- Binance crypto cards: BTC, ETH, SOL 24h data.
-- Alternative Fear & Greed card.
+## Official-doc Findings
 
-No returned card had `isMock: true`.
+- Kiwoom OAuth token endpoint is correct: `POST /oauth2/token` on `https://api.kiwoom.com`.
+- Kiwoom investor chart TR is `ka10060` on `/api/dostk/chart`.
+- Kiwoom stock code format should use exchange prefix, e.g. `KRX:005930`.
+- Even after correcting `ka10060` and `KRX:005930`, downstream Kiwoom flow endpoints still rejected the issued token in this environment.
 
-- `/api/korea/short-flow?symbol=005930` returned Kiwoom summary and rows.
-- `/api/explore/flows` returned the Kiwoom short/flow card.
+Inference from official docs + runtime behavior:
 
-`POST /api/admin/refresh-all` was called locally with `Authorization: Bearer CRON_SECRET`; it returned `ok: true`, app version `0.5.0-live-data`, and 10 job results.
+- token 발급은 성공
+- IP allowlist 자체는 통과한 가능성이 높음
+- 그러나 개별 read TR 사용 조건 또는 추가 인증 상태 때문에 실조회가 거절되는 상태로 보임
 
-## Commands Run
+## App Rendering Verification
 
-- `npm run api:smoke`: passed with 16 successes, 0 failed, 1 missing/blocked provider group (KRX API IDs).
-- `npm run data:smoke`: passed.
-- `npm run data:verify-render`: passed.
-- `npm run check:banned-copy`: passed.
-- `npm run typecheck`: passed.
-- `npm run build`: passed.
-- `npm run prisma:validate`: passed.
-- `npm run prisma:generate`: passed.
-- `npm run test:ui`: passed.
+Local dev verification was run against `http://127.0.0.1:3401`.
 
-## Remaining Problems
+### Detail API
 
-- KRX Open API cannot be called until `KRX_SHORT_SELLING_API_ID` and `KRX_INVESTOR_FLOW_API_ID` are known.
-- Local DB is not configured, so provider jobs could not persist rows locally in this run.
-- KIS is authentication-only for now. Kiwoom is used for read-only KR short selling/lending/investor-flow rendering; no order placement is used.
+Command used:
+
+```bash
+curl /api/cards/detail?...symbol=005930...
+```
+
+Observed:
+
+- `providers.news = "api"`
+- `providers.disclosures = "api"`
+- `newsCount = 3`
+- `disclosureCount = 3`
+- first disclosure URL resolved to direct DART receipt URL
+
+### Browser verification
+
+Playwright mobile viewport checks:
+
+- Home card rendered
+- Back detail opened from the card
+- `뉴스·공시·반응 이유` present
+- `알람 둘러보기` present
+- `종목진단 상세` present
+- `외부 바로가기` present
+
+## Smoke Pre APK
+
+Command:
+
+```bash
+SMOKE_BASE_URL=http://127.0.0.1:3401 npm run smoke:pre-apk
+```
+
+Result:
+
+- `/`: pass
+- `/alerts`: pass
+- `/api/cards/feed?mode=fast`: pass
+- `/api/live-signals`: pass
+- `/api/live-alert-triggers`: pass
+- `/api/cron/live-runtime-sync`: pass
+- `condition-alerts CRUD`: pass
+- fixture live trigger seed: pass
+
+## Remaining Gaps
+
+1. Local DB persistence is not verified until `DATABASE_URL` is supplied.
+2. KRX direct API still needs the two API IDs in addition to auth key.
+3. Kiwoom downstream data TRs need separate resolution even though OAuth token issuance works.
+4. KIS real-time worker is still a separate worker deployment concern, not a Vercel runtime concern.
