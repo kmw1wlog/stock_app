@@ -33,6 +33,16 @@ function hasKeyword(card: DisplayCard, keyword: string) {
   return card.labels.some((label) => label.includes(keyword));
 }
 
+function snapshotNumber(card: DisplayCard, key: string) {
+  const value = card.technicalSnapshot?.[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function snapshotText(card: DisplayCard, key: string) {
+  const value = card.technicalSnapshot?.[key];
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
 function compactTheme(theme?: string | null) {
   if (!theme) return null;
   const trimmed = theme
@@ -45,7 +55,7 @@ function compactTheme(theme?: string | null) {
 
 function marketMeta(card: DisplayCard) {
   const parts = [compactTheme(card.theme)];
-  if (card.market === 'KR') parts.push('KOSPI/KOSDAQ');
+  if (card.market === 'KR') parts.push(card.marketSegment ?? 'KOSPI/KOSDAQ');
   else if (card.market === 'US') parts.push('NASDAQ');
   else if (card.market === 'CRYPTO') parts.push('24H');
   return parts.filter(Boolean).join(' · ') || card.marketLabel;
@@ -58,6 +68,8 @@ function amountLabel(card: DisplayCard) {
 }
 
 function volumeDeltaLabel(card: DisplayCard) {
+  const volumeRatio = snapshotNumber(card, 'timeAdjustedVolumeRatio');
+  if (volumeRatio && volumeRatio >= 1) return `전일 대비 ${(volumeRatio * 100).toFixed(0)}%`;
   if (card.volume === null || card.volume === undefined) return '전일 대비 확인중';
   if (card.volume >= 10000000) return '전일 대비 230%';
   if (card.volume >= 1000000) return '전일 대비 180%';
@@ -66,6 +78,8 @@ function volumeDeltaLabel(card: DisplayCard) {
 }
 
 function chartPosition(card: DisplayCard) {
+  const previousHighLabel = snapshotText(card, 'previousHighLabel');
+  if (previousHighLabel) return previousHighLabel;
   const setup = card.chartSetupType ?? '';
   if (/위젯/.test(setup)) return '가격 흐름 확인';
   if (/전고점|재도전/.test(setup)) return '전고점 재도전';
@@ -78,6 +92,11 @@ function chartPosition(card: DisplayCard) {
 }
 
 function benchmarkStrength(card: DisplayCard) {
+  const relativeStrength = snapshotNumber(card, 'marketRelativeStrengthPct');
+  if (relativeStrength !== null) {
+    if (Math.abs(relativeStrength) < 0.05) return '지수대비 보합';
+    return `지수대비 ${relativeStrength > 0 ? '+' : ''}${relativeStrength.toFixed(1)}%p`;
+  }
   const changePct = card.changePct ?? 0;
   if (changePct >= 3) return '지수대비 강세';
   if (changePct <= -3) return '지수대비 약세';
@@ -86,6 +105,10 @@ function benchmarkStrength(card: DisplayCard) {
 }
 
 function supplyFact(card: DisplayCard) {
+  const amountRatio = snapshotNumber(card, 'timeAdjustedAmountRatio');
+  const volumeRatio = snapshotNumber(card, 'timeAdjustedVolumeRatio');
+  if (amountRatio && amountRatio >= 1.5) return `거래대금 ${amountRatio.toFixed(1)}배`;
+  if (volumeRatio && volumeRatio >= 1.5) return `거래량 ${volumeRatio.toFixed(1)}배`;
   if (hasKeyword(card, '외국인') && hasKeyword(card, '기관')) return '외인·기관 순매수';
   if (hasKeyword(card, '외국인')) return '외국인 순매수';
   if (hasKeyword(card, '기관')) return '기관 순매수';
@@ -141,6 +164,7 @@ export function buildSummaryTradeLine(card: DisplayCard) {
 }
 
 export function buildOneLineWhySummary(card: DisplayCard) {
+  if (card.headline?.trim()) return card.headline.trim();
   const parts = [eventThemeReason(card), chartPosition(card), tradeReason(card)].filter(Boolean) as string[];
   const unique = parts.filter((part, index) => parts.indexOf(part) === index);
   if (unique.length === 1 && compactTheme(card.theme)) {
@@ -150,6 +174,7 @@ export function buildOneLineWhySummary(card: DisplayCard) {
 }
 
 export function buildNewsReactionSentence(card: DisplayCard) {
+  if (card.newsSubline?.trim()) return card.newsSubline.trim();
   const theme = compactTheme(card.theme);
   if (hasKeyword(card, '공시') || hasKeyword(card, 'SEC')) {
     return `${theme ? `${theme} 관련 ` : ''}공시 이후 반응을 확인 중`;
@@ -167,6 +192,7 @@ export function buildFrontFacts(card: DisplayCard): FrontFact[] {
 }
 
 export function buildAlertConditionSummary(card: DisplayCard, formula: FormulaDefinition) {
+  if (card.alertConditionLabel?.trim()) return card.alertConditionLabel.trim();
   if (formula.key === 'chart_setup_detected') return '신고가 시도+수급 유입';
   if (formula.key === 'kr_gainer_volume_price') return '가격 상승+거래량 증가';
   if (formula.key === 'kr_volume_amount_spike') return '거래대금 급증+관심 유입';

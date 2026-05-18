@@ -60,7 +60,7 @@ export function buildFrontCardViewModel(card: DisplayCard, formula: FormulaDefin
 
   return {
     tags: tags.length ? tags : ['국장', '관심', '신호'],
-    summaryMeta: sanitizeFrontText(buildSummaryMeta(card), card.market === 'KR' ? 'KOSPI/KOSDAQ' : '국장'),
+    summaryMeta: sanitizeFrontText(buildSummaryMeta(card), card.marketSegment ?? (card.market === 'KR' ? 'KOSPI/KOSDAQ' : '국장')),
     priceLabel: buildSummaryPrice(card),
     changeLabel: buildSummaryChange(card),
     tradeLine: sanitizeFrontText(buildSummaryTradeLine(card), '거래대금 확인중 / 전일 대비 확인중'),

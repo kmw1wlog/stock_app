@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { stockCards } from '@/data/mockStocks';
 import { emptyDataMessage, getDataMode, isMockAllowed } from '@/lib/dataMode';
+import { getCachedFrontRuntimeCards } from '@/lib/cards/frontFeedRuntime';
 import { hasDatabaseUrl, prisma } from '@/lib/db/prisma';
 import type { MarketType } from '@/lib/display/displayPolicy';
 import type { DataEnvelope, DisplayCard } from '@/lib/marketDataTypes';
@@ -189,15 +190,48 @@ async function yfinanceSignalCards(limit: number): Promise<DisplayCard[]> {
 
 async function runtimeLiveCards(limit: number): Promise<DisplayCard[]> {
   try {
-    const file = path.join(process.cwd(), 'runtime_output', 'realtime_signals', 'frontend', 'live-feed.json');
-    const payload = JSON.parse(await readFile(file, 'utf-8')) as { items?: DisplayCard[]; cards?: DisplayCard[] };
-    const items = (payload.cards ?? payload.items ?? []).slice(0, limit).map((card) => ({
+    const [frontPayload, livePayload] = await Promise.all([
+      readFile(path.join(process.cwd(), 'runtime_output', 'realtime_signals', 'frontend', 'front-feed.json'), 'utf-8')
+        .then((text) => JSON.parse(text) as { items?: DisplayCard[]; cards?: DisplayCard[] })
+        .catch(() => null),
+      readFile(path.join(process.cwd(), 'runtime_output', 'realtime_signals', 'frontend', 'live-feed.json'), 'utf-8')
+        .then((text) => JSON.parse(text) as { items?: DisplayCard[]; cards?: DisplayCard[] })
+        .catch(() => null),
+    ]);
+    const frontCards = (frontPayload?.cards ?? frontPayload?.items ?? []).map((card) => ({
+      ...card,
+      source: card.source || 'front-runtime',
+      dataBasisLabel: card.dataBasisLabel || '전일 기준 · front runtime',
+      isMock: false,
+    }));
+    const liveCards = (livePayload?.cards ?? livePayload?.items ?? []).map((card) => ({
       ...card,
       source: card.source || 'realtime-backend',
       dataBasisLabel: card.dataBasisLabel || '실시간 1분봉 + 조건식 백엔드',
       isMock: false,
     }));
-    return items;
+    const frontByKey = new Map(frontCards.map((card) => [`${card.market}:${card.symbol}`, card] as const));
+    const mergedLiveCards = liveCards.map((card) => {
+      const front = frontByKey.get(`${card.market}:${card.symbol}`);
+      if (!front) return card;
+      return {
+        ...front,
+        ...card,
+        marketSegment: card.marketSegment ?? front.marketSegment,
+        headline: card.headline ?? front.headline,
+        newsSubline: card.newsSubline ?? front.newsSubline,
+        alertConditionLabel: card.alertConditionLabel ?? front.alertConditionLabel,
+        price: card.price ?? front.price,
+        changePct: card.changePct ?? front.changePct,
+        volume: card.volume ?? front.volume,
+        amount: card.amount ?? front.amount,
+        technicalSnapshot: card.technicalSnapshot ?? front.technicalSnapshot,
+        riskSnapshot: card.riskSnapshot ?? front.riskSnapshot,
+        labels: Array.from(new Set([...(card.labels ?? []), ...(front.labels ?? [])])).slice(0, 5),
+      } satisfies DisplayCard;
+    });
+    const remainingFrontCards = frontCards.filter((card) => !liveCards.some((liveCard) => `${liveCard.market}:${liveCard.symbol}` === `${card.market}:${card.symbol}`));
+    return [...mergedLiveCards, ...remainingFrontCards].slice(0, limit);
   } catch {
     return [];
   }
@@ -468,10 +502,13 @@ export async function getDisplayCards(limit = 50): Promise<DisplayCard[]> {
 }
 
 async function getFastDisplayCards(limit: number, runtimeCards: DisplayCard[]): Promise<DisplayCard[]> {
+  const frontRuntimeCards = await withTimeout(getCachedFrontRuntimeCards(Math.min(limit, 10)), 1500, [] as DisplayCard[]);
+  const runtimePriorityCards = uniqueCards([...runtimeCards, ...frontRuntimeCards]).filter((card) => card.market === 'KR');
+
   if (!hasDatabaseUrl()) {
     const yfinanceCards = await yfinanceSignalCards(limit);
-    const fastCards = uniqueCards([...runtimeCards, ...yfinanceCards, ...defaultUsWidgetCards(4)]);
-    const withKrWatch = fastCards.some((card) => card.market === 'KR') ? fastCards : uniqueCards([...defaultKrWatchCards(5), ...fastCards]);
+    const fastCards = uniqueCards([...runtimePriorityCards, ...yfinanceCards]).filter((card) => card.market === 'KR');
+    const withKrWatch = fastCards.some((card) => card.market === 'KR') ? fastCards : uniqueCards([...defaultKrWatchCards(5), ...fastCards]).filter((card) => card.market === 'KR');
     return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
   }
 
@@ -529,8 +566,8 @@ async function getFastDisplayCards(limit: number, runtimeCards: DisplayCard[]): 
     yfinanceSignalCards(limit),
   ]);
 
-  const mergedCards = uniqueCards([...runtimeCards, ...recommendationCards, ...yfinanceCards, ...dbCards, ...defaultUsWidgetCards(4)]);
-  const withKrWatch = mergedCards.some((card) => card.market === 'KR') ? mergedCards : uniqueCards([...defaultKrWatchCards(5), ...mergedCards]);
+  const mergedCards = uniqueCards([...runtimePriorityCards, ...recommendationCards, ...yfinanceCards, ...dbCards]).filter((card) => card.market === 'KR');
+  const withKrWatch = mergedCards.some((card) => card.market === 'KR') ? mergedCards : uniqueCards([...defaultKrWatchCards(5), ...mergedCards]).filter((card) => card.market === 'KR');
   return withKrWatch.length ? withKrWatch.slice(0, limit) : mockCards(limit);
 }
 

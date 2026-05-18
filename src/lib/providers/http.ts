@@ -1,4 +1,3 @@
-import 'server-only';
 import type { ProviderFetchOutcome } from '@/lib/providers/types';
 
 const defaultTimeoutMs = 15_000;

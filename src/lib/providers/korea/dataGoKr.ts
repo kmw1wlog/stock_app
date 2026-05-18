@@ -1,8 +1,8 @@
-import 'server-only';
 import { emptyProviderResult, type NormalizedCandle, type NormalizedQuote, type ProviderResult } from '@/lib/providers/types';
 import { safeFetchJson } from '@/lib/providers/http';
 
 const endpoint = 'https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo';
+const etfEndpoint = 'https://apis.data.go.kr/1160100/service/GetSecuritiesProductInfoService/getETFPriceInfo';
 
 type DataGoKrResponse = {
   response?: {
@@ -36,6 +36,17 @@ function buildUrl(symbol: string, rows: number) {
   const key = process.env.DATA_GO_KR_SERVICE_KEY;
   if (!key) return null;
   const url = new URL(endpoint);
+  url.searchParams.set('serviceKey', key);
+  url.searchParams.set('resultType', 'json');
+  url.searchParams.set('numOfRows', String(rows));
+  url.searchParams.set('likeSrtnCd', symbol);
+  return url;
+}
+
+function buildEtfUrl(symbol: string, rows: number) {
+  const key = process.env.DATA_GO_KR_PRODUCT_SERVICE_KEY ?? process.env.DATA_GO_KR_SERVICE_KEY;
+  if (!key) return null;
+  const url = new URL(etfEndpoint);
   url.searchParams.set('serviceKey', key);
   url.searchParams.set('resultType', 'json');
   url.searchParams.set('numOfRows', String(rows));
@@ -101,4 +112,32 @@ export async function fetchKoreaDailyCandles(symbol: string, limit = 120): Promi
     .filter((item) => item.close)
     .sort((a, b) => a.time.localeCompare(b.time));
   return { source: 'data.go.kr', basis: '일봉 기준 · 공공데이터', fetchedAt: new Date().toISOString(), raw, data: candles };
+}
+
+export async function fetchKoreaEtfQuote(symbol: string): Promise<ProviderResult<NormalizedQuote | null>> {
+  const url = buildEtfUrl(symbol, 1);
+  if (!url) {
+    return emptyProviderResult('data.go.kr', '전일 기준 · ETF 공공데이터 · API 키 필요', null);
+  }
+  const raw = await safeFetchJson<DataGoKrResponse>(url.toString());
+  const item = itemsFrom(raw)[0];
+  if (!item) {
+    return emptyProviderResult('data.go.kr', '전일 기준 · ETF 공공데이터 · 데이터 없음', null);
+  }
+  return {
+    source: 'data.go.kr',
+    basis: '전일 기준 · ETF 공공데이터',
+    fetchedAt: new Date().toISOString(),
+    raw,
+    data: {
+      symbol,
+      market: 'KR',
+      price: numberFrom(item.clpr ?? item.closePrice),
+      changePct: numberFrom(item.fltRt ?? item.changeRate),
+      volume: numberFrom(item.trqu),
+      amount: numberFrom(item.trPrc),
+      basis: '전일 기준 · ETF 공공데이터',
+      source: 'data.go.kr',
+    },
+  };
 }

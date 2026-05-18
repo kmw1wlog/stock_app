@@ -32,6 +32,8 @@
 - `KIS_APP_KEY`, `KIS_APP_SECRET`는 Vercel 상주 loop 용도가 아니다.
 - KIS worker는 별도 서버에 둔다.
 - secret은 절대 `NEXT_PUBLIC_*`로 두지 않는다.
+- 앞면 가격/전고점/지수대비를 안정적으로 유지하려면 `DATABASE_URL` 또는 worker/runtime cache가 함께 필요하다.
+- env를 추가/수정하면 Vercel Production/Preview 재배포가 필요하다.
 
 ## Worker
 
@@ -71,6 +73,17 @@ alias 허용:
 - `KIWOOM_APP_KEY` → `KIWOOM_REST_API_KEY` alias 허용
 - `KIWOOM_SECRET_KEY` → `KIWOOM_REST_API_SECRET` alias 허용
 - `DATA_GO_KR_SERVICE_KEY` → `DATA_GO_KR_PRODUCT_SERVICE_KEY` fallback 허용
+
+앞면 카드 1차 구현:
+
+- `DATA_GO_KR_SERVICE_KEY`만 있어도 `front-feed.json` 또는 lightweight runtime cache로
+  - 현재가
+  - 등락률
+  - 거래대금
+  - 20일 전고점 근접
+  - proxy 기준 지수대비
+  를 채울 수 있다.
+- 다만 장중 실시간 현재가/누적거래대금은 여전히 `KIS worker` 또는 broker/DB 적재가 필요하다.
 
 ## 보안 원칙
 
