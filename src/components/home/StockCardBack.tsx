@@ -81,7 +81,7 @@ export function StockCardBack({
   const { copyFormula, logEvent, showToast } = useAppState();
   const [similarTab, setSimilarTab] = useState<SimilarTab>('chart');
   const [conditionPlatform, setConditionPlatform] = useState<ConditionPlatform>('kiwoom');
-  const [floatDock, setFloatDock] = useState(false);
+  const [floatDock, setFloatDock] = useState(true);
   const containerRef = useRef<HTMLElement | null>(null);
   const topRef = useRef<HTMLDivElement | null>(null);
   const newsRef = useRef<HTMLDivElement | null>(null);

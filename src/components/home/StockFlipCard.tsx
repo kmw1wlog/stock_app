@@ -164,7 +164,7 @@ export function StockFlipCard({ card, allCards, formula }: StockFlipCardProps) {
         setDrag(null);
       }}
     >
-      <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${dragOffset}px)` }}>
+      <div className="transition-transform duration-150 ease-out" style={dragOffset ? { transform: `translateX(${dragOffset}px)` } : undefined}>
         {side === 'front' ? (
         <StockCardFront
           card={card}
