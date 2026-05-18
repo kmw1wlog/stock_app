@@ -25,6 +25,32 @@ function loadDotEnv(path = '.env') {
   }
 }
 
+function loadLocalEnvFiles() {
+  loadDotEnv('.env');
+  loadDotEnv('.env.local');
+}
+
+function normalizeEnvAliases() {
+  if (!process.env.DATA_GO_KR_PRODUCT_SERVICE_KEY && process.env.DATA_GO_KR_SERVICE_KEY) {
+    process.env.DATA_GO_KR_PRODUCT_SERVICE_KEY = process.env.DATA_GO_KR_SERVICE_KEY;
+  }
+  if (!process.env.KIS_API_KEY && process.env.KIS_APP_KEY) {
+    process.env.KIS_API_KEY = process.env.KIS_APP_KEY;
+  }
+  if (!process.env.KIS_API_SECRET && process.env.KIS_APP_SECRET) {
+    process.env.KIS_API_SECRET = process.env.KIS_APP_SECRET;
+  }
+  if (!process.env.KIWOOM_REST_API_KEY && process.env.KIWOOM_APP_KEY) {
+    process.env.KIWOOM_REST_API_KEY = process.env.KIWOOM_APP_KEY;
+  }
+  if (!process.env.KIWOOM_REST_API_SECRET && process.env.KIWOOM_SECRET_KEY) {
+    process.env.KIWOOM_REST_API_SECRET = process.env.KIWOOM_SECRET_KEY;
+  }
+  if (!process.env.POLYGON_API_KEY && process.env.MASSIVE_S3_SECRET_ACCESS_KEY) {
+    process.env.POLYGON_API_KEY = process.env.MASSIVE_S3_SECRET_ACCESS_KEY;
+  }
+}
+
 function missingEnv(keys: string[]) {
   return keys.filter((key) => !process.env[key]);
 }
@@ -342,6 +368,7 @@ async function kiwoomKrShortFlow(): Promise<SmokeResult> {
     const end = new Date();
     const start = new Date(end.getTime() - 20 * 24 * 60 * 60 * 1000);
     const ymd = (date: Date) => date.toISOString().slice(0, 10).replace(/-/g, '');
+    const kiwoomSymbol = 'KRX:005930';
     async function call(name: string, apiId: string, path: string, body: Record<string, string>) {
       const result = await fetchJson(`https://api.kiwoom.com${path}`, {
         method: 'POST',
@@ -357,12 +384,12 @@ async function kiwoomKrShortFlow(): Promise<SmokeResult> {
       const data = result.data as { return_code?: number; return_msg?: string; [key: string]: unknown } | null;
       return { name, status: result.status, ok: result.ok && data?.return_code === 0, data, snippet: result.rawTextSnippet };
     }
-    const short = await call('short', 'ka10014', '/api/dostk/shsa', { stk_cd: '005930', strt_dt: ymd(start), end_dt: ymd(end) });
-    const lending = await call('lending', 'ka20068', '/api/dostk/slb', { stk_cd: '005930' });
-    const investor = await call('investor', 'ka10059', '/api/dostk/stkinfo', { stk_cd: '005930', dt: ymd(new Date(end.getTime() - 24 * 60 * 60 * 1000)), amt_qty_tp: '1', trde_tp: '0', unit_tp: '1' });
+    const short = await call('short', 'ka10014', '/api/dostk/shsa', { stk_cd: kiwoomSymbol, strt_dt: ymd(start), end_dt: ymd(end) });
+    const lending = await call('lending', 'ka20068', '/api/dostk/slb', { stk_cd: kiwoomSymbol });
+    const investor = await call('investor', 'ka10060', '/api/dostk/chart', { stk_cd: kiwoomSymbol, dt: ymd(new Date(end.getTime() - 24 * 60 * 60 * 1000)), amt_qty_tp: '1', trde_tp: '0', unit_tp: '1' });
     const shortRows = Array.isArray(short.data?.shrts_trnsn) ? short.data.shrts_trnsn.length : 0;
     const lendingRows = Array.isArray(lending.data?.dbrt_trde_trnsn) ? lending.data.dbrt_trde_trnsn.length : 0;
-    const investorRows = Array.isArray(investor.data?.stk_invsr_orgn) ? investor.data.stk_invsr_orgn.length : 0;
+    const investorRows = Array.isArray(investor.data?.stk_invsr_orgn_chart) ? investor.data.stk_invsr_orgn_chart.length : 0;
     const ok = short.ok && lending.ok && investor.ok && shortRows > 0 && lendingRows > 0 && investorRows > 0;
     return {
       provider: 'kiwoom-kr-short-flow',
@@ -383,8 +410,29 @@ function krx(): SmokeResult {
   return { provider: 'krx', ok: false, endpoint: 'KRX Open API', error: 'not_called', summary: 'API IDs configured but endpoint format is not implemented in smoke script yet.' };
 }
 
+async function dbConnection(): Promise<SmokeResult> {
+  const endpoint = 'DATABASE_URL';
+  if (!process.env.DATABASE_URL) {
+    return skipped('database', endpoint, ['DATABASE_URL']);
+  }
+  return safe('database', endpoint, async () => {
+    const { Client } = await import('pg');
+    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    await client.connect();
+    const result = await client.query('select now() as now');
+    await client.end();
+    return {
+      provider: 'database',
+      ok: Boolean(result.rows[0]?.now),
+      endpoint,
+      summary: result.rows[0]?.now ? 'connection ok' : 'connection no rows',
+    };
+  });
+}
+
 async function main() {
-  loadDotEnv();
+  loadLocalEnvFiles();
+  normalizeEnvAliases();
   const checks = [
     dataGoKrStock(),
     dataGoKrEtf(),
@@ -402,6 +450,7 @@ async function main() {
     kisToken(),
     kiwoomToken(),
     kiwoomKrShortFlow(),
+    dbConnection(),
     Promise.resolve(krx()),
   ];
   const results = await Promise.all(checks);
