@@ -28,8 +28,8 @@ export function StickyAlertDock({ card, formula, candidates, alertSummary, onSim
 
   return (
     <div
-      className="fixed left-1/2 z-40 w-[calc(100vw-32px)] max-w-[398px] -translate-x-1/2 rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_16px_32px_rgba(15,23,42,0.14)] backdrop-blur"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 78px)' }}
+      className="sticky z-20 rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_16px_32px_rgba(15,23,42,0.14)] backdrop-blur"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
     >
       <button
         type="button"

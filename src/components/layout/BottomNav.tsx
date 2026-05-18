@@ -1,14 +1,14 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Bell, Folder, Home, Search, Trophy } from 'lucide-react';
+import { Bell, Home, Rss, Search, Sparkles } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: '홈', icon: Home },
   { href: '/explore', label: '탐색', icon: Search },
-  { href: '/rankings', label: '랭킹', icon: Trophy },
+  { href: '/ai', label: 'AI', icon: Sparkles },
   { href: '/alerts', label: '알림', icon: Bell },
-  { href: '/saved', label: '보관함', icon: Folder },
+  { href: '/feed', label: '피드', icon: Rss },
 ];
 
 export function BottomNav() {

@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, Newspaper, RotateCcw } from 'lucide-react';
-import { AlertBrowsePanel } from '@/components/home/AlertBrowsePanel';
+import { ArrowLeft, Bell, CheckCircle2, Copy, ExternalLink, Newspaper, RotateCcw } from 'lucide-react';
 import { StickyAlertDock } from '@/components/home/StickyAlertDock';
 import { useAppState } from '@/context/AppStateContext';
 import {
@@ -11,12 +10,13 @@ import {
   buildDetailedDiagnosisItems,
   buildDetailNewsItems,
   buildExternalLinkItems,
-  buildFrontFacts,
   buildNewsReactionSentence,
   buildOneLineWhySummary,
   buildSummaryChange,
   buildSummaryPrice,
 } from '@/lib/cards/cardUiCopy';
+import { buildConditionCopyViewModel } from '@/lib/cards/conditionCopy';
+import { buildFrontCardViewModel } from '@/lib/cards/frontCardViewModel';
 import { opendartSearchUrl, youtubeSearchUrl } from '@/lib/externalLinks';
 import type { FormulaCandidate, FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
@@ -40,6 +40,7 @@ const diagnosisTone = {
 } as const;
 
 type SimilarTab = 'chart' | 'theme' | 'history';
+type ConditionPlatform = 'kiwoom' | 'tradingview';
 
 function SimilarItem({ card }: { card: DisplayCard }) {
   return (
@@ -67,20 +68,23 @@ export function StockCardBack({
   initialSection = 'top',
   onShowFront,
 }: StockCardBackProps) {
-  const { logEvent } = useAppState();
+  const { copyFormula, logEvent, showToast } = useAppState();
   const [similarTab, setSimilarTab] = useState<SimilarTab>('chart');
+  const [conditionPlatform, setConditionPlatform] = useState<ConditionPlatform>('kiwoom');
   const topRef = useRef<HTMLDivElement | null>(null);
   const newsRef = useRef<HTMLDivElement | null>(null);
   const conditionRef = useRef<HTMLDivElement | null>(null);
   const similarRef = useRef<HTMLDivElement | null>(null);
 
-  const oneLineSummary = useMemo(() => buildOneLineWhySummary(card), [card]);
-  const facts = useMemo(() => buildFrontFacts(card), [card]);
-  const newsSentence = useMemo(() => buildNewsReactionSentence(card), [card]);
+  const frontVm = useMemo(() => buildFrontCardViewModel(card, formula), [card, formula]);
+  const oneLineSummary = frontVm.oneLineSummary;
+  const facts = frontVm.facts.map((value) => ({ value }));
+  const newsSentence = frontVm.newsSentence || buildNewsReactionSentence(card);
   const newsItems = useMemo(() => buildDetailNewsItems(card), [card]);
   const disclosureItems = useMemo(() => buildDetailDisclosureItems(card), [card]);
   const diagnosisItems = useMemo(() => buildDetailedDiagnosisItems(card), [card]);
   const alertSummary = useMemo(() => buildAlertConditionSummary(card, formula), [card, formula]);
+  const conditionCopy = useMemo(() => buildConditionCopyViewModel(card, formula), [card, formula]);
   const externalLinks = useMemo(() => buildExternalLinkItems(card), [card]);
   const historyCards = useMemo(() => [...sameChartCards, ...sameThemeCards].filter((item, index, array) => array.findIndex((candidate) => candidate.id === item.id) === index).slice(0, 4), [sameChartCards, sameThemeCards]);
 
@@ -117,6 +121,25 @@ export function StockCardBack({
       { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'card_back' },
     );
     if (href) window.open(href, '_blank', 'noopener,noreferrer');
+  };
+
+  const copyCondition = async () => {
+    const text = conditionPlatform === 'kiwoom' ? conditionCopy.kiwoomTemplate : conditionCopy.tradingViewTemplate;
+    const eventName = conditionPlatform === 'kiwoom' ? 'copy_condition_kiwoom' : 'copy_condition_tradingview';
+    logEvent(eventName, { cardKey: card.id, symbol: card.symbol, market: card.market, formulaKey: formula.key });
+    copyFormula(`${card.id}-${conditionPlatform}`, {
+      cardKey: card.id,
+      symbol: card.symbol,
+      market: card.market,
+      platform: conditionPlatform,
+      formulaKey: formula.key,
+    });
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(`${conditionPlatform === 'kiwoom' ? '키움' : 'TradingView'} 복사용 템플릿을 복사했습니다.`);
+    } catch {
+      showToast('복사 권한이 없어 템플릿을 직접 선택해 복사해 주세요.');
+    }
   };
 
   return (
@@ -157,6 +180,23 @@ export function StockCardBack({
             ))}
           </div>
         ) : null}
+      </div>
+
+      <div className="mt-4">
+        <StickyAlertDock
+          card={card}
+          formula={formula}
+          candidates={candidates}
+          alertSummary={alertSummary}
+          onSimilar={() => {
+            logEvent('similar_view_open', { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'back_sticky' });
+            setSimilarTab('chart');
+            similarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+          onDetailTop={() => {
+            topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        />
       </div>
 
       <section ref={newsRef} className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
@@ -217,9 +257,62 @@ export function StockCardBack({
         </div>
       </section>
 
-      <div ref={conditionRef}>
-        <AlertBrowsePanel card={card} formula={formula} />
-      </div>
+      <section ref={conditionRef} className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4 text-[#2563EB]" />
+          <h3 className="text-sm font-black text-slate-950">알림 조건 / 조건식 복사</h3>
+        </div>
+        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-3">
+          <p className="text-[11px] font-black text-blue-700">현재 추천 조건</p>
+          <p className="mt-1 text-base font-black text-slate-950">{conditionCopy.conditionName}</p>
+          <p className="mt-2 text-[12px] font-semibold leading-5 text-slate-600">
+            전고점 재시도 구간에서 거래대금과 수급이 같이 붙으면 다시 알려드립니다.
+          </p>
+        </div>
+
+        <div className="mt-4 inline-flex rounded-full bg-slate-100 p-1">
+          {([
+            ['kiwoom', '키움'],
+            ['tradingview', 'TradingView'],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setConditionPlatform(key)}
+              className={`rounded-full px-4 py-2 text-[11px] font-black ${conditionPlatform === key ? 'bg-white text-[#2563EB] shadow-sm' : 'text-slate-500'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-950 px-3 py-3 text-left">
+          <p className="text-[11px] font-black text-blue-200">{conditionPlatform === 'kiwoom' ? '키움 조건식 복사용 템플릿' : 'TradingView 복사용 템플릿'}</p>
+          <pre className="mt-2 max-h-44 overflow-hidden whitespace-pre-wrap text-[11px] font-semibold leading-5 text-slate-100">
+            {conditionPlatform === 'kiwoom' ? conditionCopy.kiwoomTemplate : conditionCopy.tradingViewTemplate}
+          </pre>
+        </div>
+        <p className="mt-2 text-[11px] font-semibold leading-5 text-slate-500">{conditionCopy.explanation}</p>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={copyCondition}
+            className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] text-xs font-black text-white"
+          >
+            <Copy className="h-4 w-4" />
+            조건식 복사
+          </button>
+          <a
+            href={`/alerts/browse?symbol=${encodeURIComponent(card.symbol)}&cardKey=${encodeURIComponent(card.id)}&formulaKey=${encodeURIComponent(formula.key)}`}
+            onClick={() => logEvent('alert_browse_open', { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'card_back_link' })}
+            className="flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-xs font-black text-slate-700"
+          >
+            <CheckCircle2 className="h-4 w-4 text-[#2563EB]" />
+            알람 둘러보기
+          </a>
+        </div>
+      </section>
 
       <section className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-black text-slate-950">종목진단 상세</h3>
@@ -308,20 +401,6 @@ export function StockCardBack({
         </button>
       </div>
 
-      <StickyAlertDock
-        card={card}
-        formula={formula}
-        candidates={candidates}
-        alertSummary={alertSummary}
-        onSimilar={() => {
-          logEvent('similar_view_open', { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'back_sticky' });
-          setSimilarTab('chart');
-          similarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }}
-        onDetailTop={() => {
-          topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }}
-      />
     </section>
   );
 }
