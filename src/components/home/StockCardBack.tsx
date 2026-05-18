@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Bell, CheckCircle2, ExternalLink, Newspaper, RotateCcw } from 'lucide-react';
+import { AlertBrowsePanel } from '@/components/home/AlertBrowsePanel';
 import { StickyAlertDock } from '@/components/home/StickyAlertDock';
 import { useAppState } from '@/context/AppStateContext';
 import {
@@ -16,6 +17,7 @@ import {
   buildSummaryChange,
   buildSummaryPrice,
 } from '@/lib/cards/cardUiCopy';
+import type { CardDetailData } from '@/lib/cards/cardDataContract';
 import { pickRecommendedAlertEngine } from '@/lib/cards/alertEngineCatalog';
 import { buildFrontCardViewModel } from '@/lib/cards/frontCardViewModel';
 import { opendartSearchUrl, youtubeSearchUrl } from '@/lib/externalLinks';
@@ -84,6 +86,7 @@ export function StockCardBack({
   const [similarTab, setSimilarTab] = useState<SimilarTab>('chart');
   const [floatDock, setFloatDock] = useState(true);
   const [alertOpen, setAlertOpen] = useState(false);
+  const [detailData, setDetailData] = useState<CardDetailData | null>(null);
   const containerRef = useRef<HTMLElement | null>(null);
   const topRef = useRef<HTMLDivElement | null>(null);
   const newsRef = useRef<HTMLDivElement | null>(null);
@@ -94,13 +97,33 @@ export function StockCardBack({
   const oneLineSummary = frontVm.oneLineSummary;
   const facts = frontVm.facts.map((value) => ({ value }));
   const newsSentence = frontVm.newsSentence || buildNewsReactionSentence(card);
-  const newsItems = useMemo(() => buildDetailNewsItems(card), [card]);
-  const disclosureItems = useMemo(() => buildDetailDisclosureItems(card), [card]);
+  const fallbackNewsItems = useMemo(() => buildDetailNewsItems(card), [card]);
+  const fallbackDisclosureItems = useMemo(() => buildDetailDisclosureItems(card), [card]);
   const diagnosisItems = useMemo(() => buildDetailedDiagnosisItems(card), [card]);
   const alertSummary = useMemo(() => buildAlertConditionSummary(card, formula), [card, formula]);
   const recommendedEngine = useMemo(() => pickRecommendedAlertEngine(formula.key), [formula.key]);
   const externalLinks = useMemo(() => buildExternalLinkItems(card), [card]);
   const historyCards = useMemo(() => [...sameChartCards, ...sameThemeCards].filter((item, index, array) => array.findIndex((candidate) => candidate.id === item.id) === index).slice(0, 4), [sameChartCards, sameThemeCards]);
+  const newsItems = detailData?.news?.length
+    ? detailData.news.map((item) => ({
+        title: item.title,
+        source: item.source,
+        timeLabel: item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('ko-KR') : item.isFallback ? '장중 모니터링' : '최근 확인',
+        summary: item.summary ?? newsSentence,
+        href: item.url ?? youtubeSearchUrl(card.name),
+        eventType: 'news' as const,
+      }))
+    : fallbackNewsItems;
+  const disclosureItems = detailData?.disclosures?.length
+    ? detailData.disclosures.map((item) => ({
+        title: item.title,
+        source: item.source,
+        timeLabel: item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('ko-KR') : item.isFallback ? '확인 가능' : '최근 확인',
+        summary: item.summary ?? '최근 공시와 이벤트를 원문으로 확인할 수 있습니다.',
+        href: item.url ?? opendartSearchUrl(card.name, card.symbol),
+        eventType: 'disclosure' as const,
+      }))
+    : fallbackDisclosureItems;
 
   useEffect(() => {
     setSimilarTab(initialSection === 'similar' ? 'chart' : 'chart');
@@ -115,6 +138,52 @@ export function StockCardBack({
       mapping[initialSection].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }, [initialSection]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      cardKey: card.id,
+      assetKey: card.assetKey,
+      symbol: card.symbol,
+      name: card.name,
+      market: card.market,
+      marketLabel: card.marketLabel,
+      formulaKey: formula.key,
+      theme: card.theme ?? '',
+      cardType: card.cardType,
+      title: card.title,
+      primaryReason: card.primaryReason,
+      secondaryReason: card.secondaryReason ?? '',
+      dataBasisLabel: card.dataBasisLabel,
+      source: card.source,
+      chartSetupType: card.chartSetupType ?? '',
+      isWidget: card.isWidget ? 'true' : 'false',
+      isMock: card.isMock ? 'true' : 'false',
+    });
+    if (card.price !== null && card.price !== undefined) params.set('price', String(card.price));
+    if (card.changePct !== null && card.changePct !== undefined) params.set('changePct', String(card.changePct));
+    if (card.volume !== null && card.volume !== undefined) params.set('volume', String(card.volume));
+    if (card.amount !== null && card.amount !== undefined) params.set('amount', String(card.amount));
+    if (card.updatedAt) params.set('updatedAt', card.updatedAt);
+    if (card.tvSymbol) params.set('tvSymbol', card.tvSymbol);
+    if (card.coingeckoId) params.set('coingeckoId', card.coingeckoId);
+    if (card.binanceSymbol) params.set('binanceSymbol', card.binanceSymbol);
+    if (card.upbitMarket) params.set('upbitMarket', card.upbitMarket);
+    card.labels.forEach((label) => params.append('label', label));
+
+    fetch(`/api/cards/detail?${params.toString()}`, { signal: controller.signal, cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const payload = (await response.json()) as { ok?: boolean; detail?: CardDetailData };
+        return payload.ok ? payload.detail ?? null : null;
+      })
+      .then((payload) => {
+        if (payload) setDetailData(payload);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, [card, formula.key]);
 
   useEffect(() => {
     let frameId = 0;
@@ -235,9 +304,9 @@ export function StockCardBack({
         </div>
         <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">{newsSentence}.</p>
         <div className="mt-4 space-y-3">
-          {newsItems.map((item) => (
+          {newsItems.map((item, index) => (
             <a
-              key={`${item.title}-${item.source}`}
+              key={`${item.title}-${item.source}-${item.timeLabel}-${index}`}
               href={item.href}
               target="_blank"
               rel="noreferrer"
@@ -256,9 +325,9 @@ export function StockCardBack({
           ))}
         </div>
         <div className="mt-3 space-y-3">
-          {disclosureItems.map((item) => (
+          {disclosureItems.map((item, index) => (
             <a
-              key={`${item.title}-${item.source}`}
+              key={`${item.title}-${item.source}-${item.timeLabel}-${index}`}
               href={item.href}
               target="_blank"
               rel="noreferrer"
@@ -276,6 +345,9 @@ export function StockCardBack({
             </a>
           ))}
         </div>
+        <p className="mt-3 text-[11px] font-semibold text-slate-400">
+          뉴스: {detailData?.providers.news ?? 'fallback'} · 공시: {detailData?.providers.disclosures ?? 'fallback'}
+        </p>
         <div className="mt-3 flex gap-2">
           <a href={newsItems[0]?.href ?? youtubeSearchUrl(card.name)} target="_blank" rel="noreferrer" className="flex h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700">
             뉴스 더 보기
@@ -285,6 +357,8 @@ export function StockCardBack({
           </a>
         </div>
       </section>
+
+      <AlertBrowsePanel card={card} formula={formula} />
 
       <section className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-black text-slate-950">종목진단 상세</h3>
