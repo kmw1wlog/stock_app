@@ -42,6 +42,16 @@ const diagnosisTone = {
 type SimilarTab = 'chart' | 'theme' | 'history';
 type ConditionPlatform = 'kiwoom' | 'tradingview';
 
+function getScrollParent(element: HTMLElement | null): HTMLElement | Window {
+  let current = element?.parentElement ?? null;
+  while (current) {
+    const style = window.getComputedStyle(current);
+    if (/(auto|scroll|overlay)/.test(`${style.overflowY}${style.overflow}`)) return current;
+    current = current.parentElement;
+  }
+  return window;
+}
+
 function SimilarItem({ card }: { card: DisplayCard }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
@@ -105,21 +115,35 @@ export function StockCardBack({
   }, [initialSection]);
 
   useEffect(() => {
+    let frameId = 0;
+
     const updateDockMode = () => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
       const viewportHeight = window.innerHeight;
-      const hasEntered = rect.top < viewportHeight - 180;
-      const hasRoomBeforeBottom = rect.bottom > viewportHeight + 220;
+      const dockTopLine = viewportHeight - 78 - 112;
+      const hasEntered = rect.top < viewportHeight - 120;
+      const hasRoomBeforeBottom = rect.bottom > dockTopLine + 24;
       setFloatDock(hasEntered && hasRoomBeforeBottom);
     };
 
+    const onScroll = () => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(updateDockMode);
+    };
+
+    const scrollParent = getScrollParent(containerRef.current);
     updateDockMode();
-    window.addEventListener('scroll', updateDockMode, { passive: true });
-    window.addEventListener('resize', updateDockMode);
+    frameId = window.requestAnimationFrame(updateDockMode);
+
+    scrollParent.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
-      window.removeEventListener('scroll', updateDockMode);
-      window.removeEventListener('resize', updateDockMode);
+      window.cancelAnimationFrame(frameId);
+      scrollParent.removeEventListener('scroll', onScroll);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
     };
   }, []);
 

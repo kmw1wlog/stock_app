@@ -34,7 +34,7 @@ export function StickyAlertDock({ card, formula, candidates, alertSummary, onSim
           ? 'fixed left-1/2 z-40 w-[calc(100vw-32px)] max-w-[398px] -translate-x-1/2 rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_16px_32px_rgba(15,23,42,0.14)] backdrop-blur'
           : 'rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_16px_32px_rgba(15,23,42,0.14)] backdrop-blur'
       }
-      style={floating ? { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 76px)' } : undefined}
+      style={floating ? { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 78px)' } : undefined}
     >
       <button
         type="button"
