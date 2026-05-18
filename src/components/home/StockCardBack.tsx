@@ -71,6 +71,8 @@ export function StockCardBack({
   const { copyFormula, logEvent, showToast } = useAppState();
   const [similarTab, setSimilarTab] = useState<SimilarTab>('chart');
   const [conditionPlatform, setConditionPlatform] = useState<ConditionPlatform>('kiwoom');
+  const [floatDock, setFloatDock] = useState(false);
+  const containerRef = useRef<HTMLElement | null>(null);
   const topRef = useRef<HTMLDivElement | null>(null);
   const newsRef = useRef<HTMLDivElement | null>(null);
   const conditionRef = useRef<HTMLDivElement | null>(null);
@@ -101,6 +103,25 @@ export function StockCardBack({
       mapping[initialSection].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }, [initialSection]);
+
+  useEffect(() => {
+    const updateDockMode = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const viewportHeight = window.innerHeight;
+      const hasEntered = rect.top < viewportHeight - 180;
+      const hasRoomBeforeBottom = rect.bottom > viewportHeight + 220;
+      setFloatDock(hasEntered && hasRoomBeforeBottom);
+    };
+
+    updateDockMode();
+    window.addEventListener('scroll', updateDockMode, { passive: true });
+    window.addEventListener('resize', updateDockMode);
+    return () => {
+      window.removeEventListener('scroll', updateDockMode);
+      window.removeEventListener('resize', updateDockMode);
+    };
+  }, []);
 
   const onExternalClick = (key: 'mts' | 'opendart' | 'youtube' | 'x', href?: string) => {
     if (key === 'mts') {
@@ -143,7 +164,7 @@ export function StockCardBack({
   };
 
   return (
-    <section className="rounded-[30px] border border-slate-200 bg-white p-5 pb-28 shadow-[0_16px_36px_rgba(15,23,42,0.10)]">
+    <section ref={containerRef} className="rounded-[30px] border border-slate-200 bg-white p-5 pb-6 shadow-[0_16px_36px_rgba(15,23,42,0.10)]">
       <div ref={topRef} className="mb-4 flex items-center justify-between gap-3">
         <button
           type="button"
@@ -182,12 +203,13 @@ export function StockCardBack({
         ) : null}
       </div>
 
-      <div className="mt-4">
+      {floatDock ? (
         <StickyAlertDock
           card={card}
           formula={formula}
           candidates={candidates}
           alertSummary={alertSummary}
+          floating
           onSimilar={() => {
             logEvent('similar_view_open', { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'back_sticky' });
             setSimilarTab('chart');
@@ -197,7 +219,7 @@ export function StockCardBack({
             topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
-      </div>
+      ) : null}
 
       <section ref={newsRef} className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-2">
@@ -386,6 +408,25 @@ export function StockCardBack({
           ))}
         </div>
       </section>
+
+      {!floatDock ? (
+        <div className="mt-5">
+          <StickyAlertDock
+            card={card}
+            formula={formula}
+            candidates={candidates}
+            alertSummary={alertSummary}
+            onSimilar={() => {
+              logEvent('similar_view_open', { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'back_inline' });
+              setSimilarTab('chart');
+              similarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            onDetailTop={() => {
+              topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-4">
         <button

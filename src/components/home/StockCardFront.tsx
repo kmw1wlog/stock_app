@@ -13,6 +13,13 @@ import type { DisplayCard } from '@/lib/marketDataTypes';
 
 const AlertSetupModal = dynamic(() => import('@/components/alerts/AlertSetupModal').then((mod) => mod.AlertSetupModal), { ssr: false });
 
+function tagClassName(index: number) {
+  if (index === 2) {
+    return 'inline-flex h-7 items-center whitespace-nowrap rounded-full bg-violet-100 px-2.5 text-[11px] font-black text-violet-700 shadow-sm shadow-violet-950/10';
+  }
+  return 'inline-flex h-7 items-center whitespace-nowrap rounded-full bg-white px-2.5 text-[11px] font-black text-[#071A3A] shadow-sm shadow-slate-950/10';
+}
+
 type StockCardFrontProps = {
   card: DisplayCard;
   formula: FormulaDefinition;
@@ -33,7 +40,7 @@ export function StockCardFront({ card, formula, candidates, onOpenQuick, onOpenF
       <article className="overflow-hidden rounded-[30px] border border-[#D8E2F4] bg-[linear-gradient(180deg,#09244A_0%,#071A3A_100%)] px-4 pb-3 pt-3 text-white shadow-[0_16px_32px_rgba(8,27,56,0.16)]">
         <div className="flex min-w-0 flex-nowrap gap-1.5 overflow-x-auto pb-1 pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {vm.tags.map((tag, index) => (
-            <span key={`${tag}-${index}`} className="inline-flex h-7 items-center whitespace-nowrap rounded-full border border-white/12 bg-white/10 px-2.5 text-[11px] font-black text-blue-50">
+            <span key={`${tag}-${index}`} className={tagClassName(index)}>
               {tag}
             </span>
           ))}

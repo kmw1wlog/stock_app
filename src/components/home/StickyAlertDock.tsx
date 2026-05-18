@@ -18,9 +18,10 @@ type StickyAlertDockProps = {
   alertSummary: string;
   onSimilar: () => void;
   onDetailTop: () => void;
+  floating?: boolean;
 };
 
-export function StickyAlertDock({ card, formula, candidates, alertSummary, onSimilar, onDetailTop }: StickyAlertDockProps) {
+export function StickyAlertDock({ card, formula, candidates, alertSummary, onSimilar, onDetailTop, floating = false }: StickyAlertDockProps) {
   const { saveCard, logEvent, showToast } = useAppState();
   const [alertOpen, setAlertOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -28,8 +29,12 @@ export function StickyAlertDock({ card, formula, candidates, alertSummary, onSim
 
   return (
     <div
-      className="sticky z-20 rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_16px_32px_rgba(15,23,42,0.14)] backdrop-blur"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
+      className={
+        floating
+          ? 'fixed left-1/2 z-40 w-[calc(100vw-32px)] max-w-[398px] -translate-x-1/2 rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_16px_32px_rgba(15,23,42,0.14)] backdrop-blur'
+          : 'rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_16px_32px_rgba(15,23,42,0.14)] backdrop-blur'
+      }
+      style={floating ? { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' } : undefined}
     >
       <button
         type="button"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type PointerEvent, type TouchEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { HomeStockCardQuickBack } from '@/components/home/card/HomeStockCardQuickBack';
 import { StockCardBack } from '@/components/home/StockCardBack';
 import { StockCardFront } from '@/components/home/StockCardFront';
@@ -24,11 +24,12 @@ export function StockFlipCard({ card, allCards, formula }: StockFlipCardProps) {
   const [side, setSide] = useState<CardSide>('front');
   const [backSection, setBackSection] = useState<BackSection>('top');
   const [quickSection, setQuickSection] = useState<QuickSection>('top');
+  const [drag, setDrag] = useState<{ startX: number; startY: number; deltaX: number; deltaY: number; active: boolean; locked?: 'horizontal' | 'vertical' } | null>(null);
   const { logEvent } = useAppState();
   const candidates = useMemo(() => getFormulaCandidatesForCard(card), [card]);
   const sameThemeCards = useMemo(() => getSameThemeCards(card, allCards, 6), [allCards, card]);
   const sameChartCards = useMemo(() => getSameChartTypeCards(card, allCards, 6), [allCards, card]);
-  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ startX: number; startY: number; deltaX: number; deltaY: number; active: boolean; locked?: 'horizontal' | 'vertical' } | null>(null);
   const backOpenedAt = useRef<number | null>(null);
 
   useEffect(() => {
@@ -73,27 +74,98 @@ export function StockFlipCard({ card, allCards, formula }: StockFlipCardProps) {
     setSide('front');
   };
 
+  const isInteractiveTarget = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false;
+    return Boolean(target.closest('button, a, input, select, textarea, [role="button"]'));
+  };
+
+  const startDrag = (clientX: number, clientY: number) => {
+    const nextDrag = { startX: clientX, startY: clientY, deltaX: 0, deltaY: 0, active: true };
+    dragRef.current = nextDrag;
+    setDrag(nextDrag);
+  };
+
+  const moveDrag = (clientX: number, clientY: number) => {
+    const current = dragRef.current;
+    if (!current?.active) return;
+    const deltaX = clientX - current.startX;
+    const deltaY = clientY - current.startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    const locked = current.locked ?? (absX > 10 || absY > 10 ? (absX > absY ? 'horizontal' : 'vertical') : undefined);
+    const nextDrag = { ...current, deltaX, deltaY, locked };
+    dragRef.current = nextDrag;
+    setDrag(nextDrag);
+  };
+
+  const finishDrag = (source: 'pointer' | 'touch') => {
+    const current = dragRef.current;
+    if (!current?.active) return;
+    const absX = Math.abs(current.deltaX);
+    const absY = Math.abs(current.deltaY);
+    if (absX > 72 && absX > absY * 1.25) {
+      if (current.deltaX < 0 && side === 'front') {
+        openQuick('swipe', 'top');
+      } else if (current.deltaX > 0 && side !== 'front') {
+        closeBack();
+      }
+      logEvent('stock_flip_drag_complete', {
+        cardKey: card.id,
+        symbol: card.symbol,
+        market: card.market,
+        side,
+        source,
+        deltaX: Math.round(current.deltaX),
+      });
+    }
+    dragRef.current = null;
+    setDrag(null);
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (isInteractiveTarget(event.target)) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    startDrag(event.clientX, event.clientY);
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (isInteractiveTarget(event.target)) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    startDrag(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    moveDrag(touch.clientX, touch.clientY);
+    if (dragRef.current?.locked === 'horizontal') event.preventDefault();
+  };
+
+  const dragOffset = drag && drag.locked === 'horizontal' ? Math.max(-26, Math.min(26, drag.deltaX * 0.1)) : 0;
+
   return (
     <div
       className="px-4 pb-2"
       style={{ touchAction: 'pan-y' }}
-      onPointerDown={(event) => {
-        pointerStart.current = { x: event.clientX, y: event.clientY };
+      onPointerDown={handlePointerDown}
+      onPointerMove={(event) => moveDrag(event.clientX, event.clientY)}
+      onPointerUp={() => finishDrag('pointer')}
+      onPointerCancel={() => {
+        dragRef.current = null;
+        setDrag(null);
       }}
-      onPointerUp={(event) => {
-        if (!pointerStart.current) return;
-        const dx = event.clientX - pointerStart.current.x;
-        const dy = event.clientY - pointerStart.current.y;
-        pointerStart.current = null;
-        if (Math.abs(dx) < 70 || Math.abs(dx) <= Math.abs(dy) + 16) return;
-        if (dx < 0 && side === 'front') {
-          openQuick('swipe', 'top');
-        } else if (dx > 0 && side !== 'front') {
-          closeBack();
-        }
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={() => finishDrag('touch')}
+      onTouchCancel={() => {
+        dragRef.current = null;
+        setDrag(null);
       }}
     >
-      {side === 'front' ? (
+      <div className="transition-transform duration-150 ease-out" style={{ transform: `translateX(${dragOffset}px)` }}>
+        {side === 'front' ? (
         <StockCardFront
           card={card}
           formula={formula}
@@ -101,7 +173,7 @@ export function StockFlipCard({ card, allCards, formula }: StockFlipCardProps) {
           onOpenQuick={(section) => openQuick('click', section ?? 'top')}
           onOpenFull={(section) => openFull('click', section ?? 'top')}
         />
-      ) : side === 'quick' ? (
+        ) : side === 'quick' ? (
         <HomeStockCardQuickBack
           card={card}
           formula={formula}
@@ -111,7 +183,7 @@ export function StockFlipCard({ card, allCards, formula }: StockFlipCardProps) {
           onShowFront={closeBack}
           onOpenFull={(section) => openFull('quick', section ?? 'top')}
         />
-      ) : (
+        ) : (
         <StockCardBack
           card={card}
           formula={formula}
@@ -121,7 +193,8 @@ export function StockFlipCard({ card, allCards, formula }: StockFlipCardProps) {
           initialSection={backSection}
           onShowFront={closeBack}
         />
-      )}
+        )}
+      </div>
     </div>
   );
 }
