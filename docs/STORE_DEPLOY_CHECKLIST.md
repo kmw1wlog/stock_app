@@ -55,3 +55,13 @@ For the exact wrapper URL handoff, use [APK_WEB_URL_HANDOFF.md](/home/openq/code
 ## Native Store Wrapping
 
 TWA/Capacitor wrapping is not implemented in v0.5.0. The next step is to wrap the deployed PWA URL after live data provider status is stable in production.
+
+## Current Play Closed Testing Handoff
+
+- `stock_app` Production URL: `https://stock-app-mu-three.vercel.app/`
+- `stock_app` Production commit: `57b584f`
+- `phone_stock_app` release wrapper commit: `601060c`
+- `phone_stock_app` release artifact: `phone-stock-app-release-aab`
+- `phone_stock_app` applicationId: `com.kmw1wlog.phonestockapp`
+
+Use the Production URL for all WebView releases. When only `stock_app` changes, update Vercel Production and retest. When `phone_stock_app` native code changes, increment `versionCode` and build a new signed AAB.

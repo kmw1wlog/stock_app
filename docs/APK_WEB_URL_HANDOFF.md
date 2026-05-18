@@ -25,8 +25,8 @@ Do not use:
 - status: `Ready`
 - environment: `Production`
 - branch: `main`
-- commit: `8c7fb3d`
-- commit message: `Pin Vercel build to Node 24`
+- commit: `57b584f`
+- commit message: `Merge PR #8: Finalize Korean-only home card UI for Play testing`
 
 ## Expected Fallback Env On Vercel
 
@@ -76,3 +76,9 @@ Expected:
 - `/api/live-alert-triggers` pass
 - `/api/cron/live-runtime-sync` pass
 - `condition-alerts CRUD` pass
+
+## Update Policy
+
+- `stock_app` UI or API changes are reflected by updating this Production URL.
+- `phone_stock_app` does not need a new APK or AAB when only the web app changes.
+- `phone_stock_app` does need a new AAB when native settings change, such as app name, icon, permissions, signing, or Capacitor/Android configuration.
