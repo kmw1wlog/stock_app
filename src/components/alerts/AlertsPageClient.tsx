@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Bookmark, Clock, Pause, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, Bookmark, ChevronRight, Clock, Pause, RefreshCw } from 'lucide-react';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { useAppState } from '@/context/AppStateContext';
 import type { DisplayCard } from '@/lib/marketDataTypes';
@@ -70,6 +71,24 @@ export function AlertsPageClient({ initialLiveTriggers, fetchOnMount = false }: 
           <Metric label="만료 예정" value={`${expiring.length}`} />
           <Metric label="최근 발생" value={`${alerts.filter((alert) => alert.lastTriggeredAt).length}`} />
         </section>
+
+        <Link
+          href="/alerts/browse"
+          onClick={() => logEvent('alert_browse_open', { source: 'alerts_tab' })}
+          className="flex items-center justify-between rounded-[28px] border border-blue-100 bg-[linear-gradient(135deg,#EEF5FF_0%,#FFFFFF_100%)] p-4 shadow-sm"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#0B63F6] text-white">
+              <Bell className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-black text-[#0B63F6]">자체 알람 엔진</p>
+              <h2 className="mt-1 text-xl font-black text-slate-950">알람둘러보기</h2>
+              <p className="mt-1 truncate text-xs font-semibold text-slate-500">A-O 국장 알람 목록과 추천 조건을 확인합니다.</p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+        </Link>
 
         <section className="space-y-3">
           <div className="flex items-end justify-between gap-3">

@@ -8,7 +8,7 @@ export type ExploreSlug = 'movers' | 'amount' | 'themes' | 'news' | 'flows' | 'p
 export const exploreMeta: Record<ExploreSlug, { title: string; basis: string; sortOptions: string[]; source: string }> = {
   movers: {
     title: '급상승',
-    basis: '전일대비 상승률 기준 · 코인은 24h 기준 · 미장은 위젯/SEC 기준',
+    basis: '국장 전일대비 상승률 기준',
     sortOptions: ['상승률', '최신 데이터', '시장별'],
     source: 'db/provider',
   },
@@ -26,7 +26,7 @@ export const exploreMeta: Record<ExploreSlug, { title: string; basis: string; so
   },
   news: {
     title: '뉴스·공시',
-    basis: 'Naver 뉴스/OpenDART/SEC EDGAR 제목·링크 기준',
+    basis: 'Naver 뉴스/OpenDART 제목·링크 기준',
     sortOptions: ['최신순', '공시 우선', '시장별'],
     source: 'naver-news/opendart/sec-edgar',
   },
@@ -49,10 +49,10 @@ export const exploreMeta: Record<ExploreSlug, { title: string; basis: string; so
     source: 'provider',
   },
   maps: {
-    title: '코인/공포탐욕',
-    basis: 'Alternative Fear & Greed 및 저장된 섹터 metadata 기준',
-    sortOptions: ['시장', '섹터', '공포탐욕'],
-    source: 'alternative-fng/db',
+    title: '시장지도',
+    basis: '국장 테마/업종 metadata 기준',
+    sortOptions: ['업종', '테마', '거래대금'],
+    source: 'kr-theme/db',
   },
 };
 
@@ -71,23 +71,24 @@ function hasFlowLabel(card: DisplayCard) {
 }
 
 function filterCards(slug: ExploreSlug, cards: DisplayCard[]) {
+  const krCards = cards.filter((card) => card.market === 'KR');
   switch (slug) {
     case 'movers':
-      return sortCards(cards.filter((card) => card.market !== 'US' || card.isWidget), 'gainer').slice(0, 20);
+      return sortCards(krCards, 'gainer').slice(0, 20);
     case 'amount':
-      return sortCards(cards, 'amount').slice(0, 20);
+      return sortCards(krCards, 'amount').slice(0, 20);
     case 'themes':
-      return cards.filter((card) => card.theme).slice(0, 20);
+      return krCards.filter((card) => card.theme).slice(0, 20);
     case 'news':
-      return cards.filter(hasNewsOrDisclosure).slice(0, 20);
+      return krCards.filter(hasNewsOrDisclosure).slice(0, 20);
     case 'flows':
-      return cards.filter(hasFlowLabel).slice(0, 20);
+      return krCards.filter(hasFlowLabel).slice(0, 20);
     case 'pullback':
-      return sortCards(cards.filter((card) => (card.changePct ?? 0) < 0 || card.labels.some((label) => label.includes('차트자리'))), 'loser').slice(0, 20);
+      return sortCards(krCards.filter((card) => (card.changePct ?? 0) < 0 || card.labels.some((label) => label.includes('차트자리'))), 'loser').slice(0, 20);
     case 'after-hours':
-      return cards.filter((card) => card.labels.some((label) => label.includes('시간외'))).slice(0, 20);
+      return krCards.filter((card) => card.labels.some((label) => label.includes('시간외'))).slice(0, 20);
     case 'maps':
-      return cards.filter((card) => card.market === 'CRYPTO' || card.labels.some((label) => label.includes('공포탐욕'))).slice(0, 20);
+      return krCards.filter((card) => card.theme || card.labels.some((label) => label.includes('테마') || label.includes('업종'))).slice(0, 20);
   }
 }
 

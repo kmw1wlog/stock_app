@@ -279,6 +279,21 @@ export function StockCardBack({
         </div>
       </section>
 
+      <section className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
+        <h3 className="text-sm font-black text-slate-950">종목진단 상세</h3>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {diagnosisItems.map((item) => (
+            <div key={item.label} className={`rounded-2xl border px-3 py-3 ${diagnosisTone[item.tone]}`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-black opacity-80">{item.label}</p>
+                <p className="text-[12px] font-black">{item.value}</p>
+              </div>
+              <p className="mt-2 text-[12px] font-semibold leading-5">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section ref={conditionRef} className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-2">
           <Bell className="h-4 w-4 text-[#2563EB]" />
@@ -333,21 +348,6 @@ export function StockCardBack({
             <CheckCircle2 className="h-4 w-4 text-[#2563EB]" />
             알람 둘러보기
           </a>
-        </div>
-      </section>
-
-      <section className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
-        <h3 className="text-sm font-black text-slate-950">종목진단 상세</h3>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {diagnosisItems.map((item) => (
-            <div key={item.label} className={`rounded-2xl border px-3 py-3 ${diagnosisTone[item.tone]}`}>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-black opacity-80">{item.label}</p>
-                <p className="text-[12px] font-black">{item.value}</p>
-              </div>
-              <p className="mt-2 text-[12px] font-semibold leading-5">{item.description}</p>
-            </div>
-          ))}
         </div>
       </section>
 
