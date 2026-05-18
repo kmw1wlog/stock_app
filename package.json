@@ -14,6 +14,7 @@
     "db:seed": "prisma db seed",
     "data:smoke": "tsx scripts/data-smoke.ts",
     "api:smoke": "tsx scripts/api-provider-smoke.ts",
+    "smoke:providers": "tsx scripts/api-provider-smoke.ts",
     "data:verify-render": "tsx scripts/verify-render-data.ts",
     "smoke:pre-apk": "tsx scripts/smoke-pre-apk.ts",
     "seed:test-alert": "tsx scripts/seed-test-live-alert.ts",
