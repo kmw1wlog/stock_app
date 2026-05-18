@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, ExternalLink, X } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import type { FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import { buildCardEvidenceLine } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
@@ -25,8 +25,8 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
       <section className="w-full max-w-[430px] rounded-[28px] bg-white p-5 shadow-2xl">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black text-[#0B63F6]">조건식 알림 설정</p>
-            <h2 className="mt-1 text-2xl font-black text-slate-950">이 조건 알림 받기</h2>
+            <p className="text-xs font-black text-[#0B63F6]">알람 설정</p>
+            <h2 className="mt-1 text-2xl font-black text-slate-950">이 조건으로 알림 받기</h2>
           </div>
           <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full bg-slate-100" aria-label="닫기">
             <X className="h-5 w-5" />
@@ -35,7 +35,7 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
 
         <div className="rounded-3xl border border-blue-100 bg-blue-50 p-4">
           <p className="text-sm font-bold leading-6 text-slate-700">
-            {card.name}에서 <span className="text-[#0B63F6]">{formula.name}</span> 조건이 다시 발생하면 알려드립니다.
+            {card.name}에서 <span className="text-[#0B63F6]">{formula.name}</span> 알람 흐름이 다시 발생하면 알려드립니다.
           </p>
           <p className="mt-3 text-sm font-semibold text-slate-600">알림 유효기간: {formula.defaultExpiresInDays}일</p>
           <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">만료 전 다시 확인하고 연장할 수 있습니다.</p>
@@ -43,12 +43,11 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
 
         <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs font-black text-slate-500">알림 미리보기</p>
-          <p className="mt-2 text-base font-black text-slate-950">{card.name} 조건식 알림</p>
+          <p className="mt-2 text-base font-black text-slate-950">{card.name} 알람</p>
           <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{evidenceLine}</p>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] font-black">
-            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">상세보기</span>
-            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">MTS에서 보기</span>
-            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">다른 MTS</span>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-black">
+            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">카드에서 확인</span>
+            <span className="rounded-full bg-white px-2 py-2 text-center text-slate-700">알림 탭에서 관리</span>
           </div>
         </div>
 
@@ -71,7 +70,7 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
                 alertId: alert.id,
                 evidenceLine,
               });
-              showToast('조건식 알림을 설정했습니다.');
+              showToast('알림을 설정했습니다.');
               onClose();
             } catch {
               showToast('알림 설정에 실패했습니다.');
@@ -80,14 +79,6 @@ export function AlertSetupModal({ card, formula, open, onClose }: AlertSetupModa
         >
           <Bell className="h-5 w-5" />
           알림 받기
-        </button>
-        <button
-          type="button"
-          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-sm font-black text-slate-700"
-          onClick={() => window.location.assign(`/cards/${card.id}`)}
-        >
-          <ExternalLink className="h-4 w-4" />
-          상세에서 더 확인
         </button>
       </section>
     </div>

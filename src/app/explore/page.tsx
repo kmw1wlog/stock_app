@@ -17,7 +17,7 @@ export default async function ExplorePage() {
         <header className="flex items-center justify-between px-5">
           <div>
             <h1 className="text-3xl font-black">탐색</h1>
-            <p className="mt-2 text-sm font-semibold text-slate-500">급상승, 거래대금, 테마, 뉴스·공시를 한곳에서 봅니다.</p>
+            <p className="mt-2 text-sm font-semibold text-slate-500">KOSPI/KOSDAQ 급상승, 거래대금, 테마, 뉴스·공시를 한곳에서 봅니다.</p>
           </div>
           <div className="flex gap-3 text-slate-600">
             <Link href="/search" aria-label="종목 검색" className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-sm">

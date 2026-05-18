@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Clock, Pause, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, Bookmark, ChevronRight, Clock, Pause, RefreshCw } from 'lucide-react';
 import { MobileShell } from '@/components/layout/MobileShell';
 import { useAppState } from '@/context/AppStateContext';
+import type { DisplayCard } from '@/lib/marketDataTypes';
 import type { LiveAlertTrigger } from '@/lib/realtimeBackend';
 import { extendConditionAlert, fetchConditionAlerts, pauseConditionAlert, type ConditionAlertDto } from '@/lib/user/userConditionAlerts';
 
@@ -15,9 +17,10 @@ function formatDate(value?: string | null) {
 export function AlertsPageClient({ initialLiveTriggers, fetchOnMount = false }: { initialLiveTriggers: LiveAlertTrigger[]; fetchOnMount?: boolean }) {
   const [alerts, setAlerts] = useState<ConditionAlertDto[]>([]);
   const [liveTriggers, setLiveTriggers] = useState<LiveAlertTrigger[]>(initialLiveTriggers);
+  const [cards, setCards] = useState<DisplayCard[]>([]);
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [liveLoading, setLiveLoading] = useState(fetchOnMount && initialLiveTriggers.length === 0);
-  const { anonymousId, showToast, logEvent } = useAppState();
+  const { anonymousId, showToast, logEvent, state } = useAppState();
   const hasFetchedLiveRef = useRef(false);
 
   useEffect(() => {
@@ -42,6 +45,17 @@ export function AlertsPageClient({ initialLiveTriggers, fetchOnMount = false }: 
 
   const active = useMemo(() => alerts.filter((alert) => alert.status === 'active'), [alerts]);
   const expiring = active.filter((alert) => alert.expiresAt && new Date(alert.expiresAt).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000);
+  const savedCards = useMemo(() => {
+    const saved = new Set(state.savedCardIds);
+    return cards.filter((card) => card.market === 'KR' && saved.has(card.id)).slice(0, 6);
+  }, [cards, state.savedCardIds]);
+
+  useEffect(() => {
+    fetch('/api/cards/feed?mode=fast')
+      .then((response) => response.json())
+      .then((data: { items?: DisplayCard[] }) => setCards((data.items ?? []).filter((card) => card.market === 'KR')))
+      .catch(() => setCards([]));
+  }, []);
 
   return (
     <MobileShell>
@@ -56,6 +70,58 @@ export function AlertsPageClient({ initialLiveTriggers, fetchOnMount = false }: 
           <Metric label="활성" value={`${active.length}`} />
           <Metric label="만료 예정" value={`${expiring.length}`} />
           <Metric label="최근 발생" value={`${alerts.filter((alert) => alert.lastTriggeredAt).length}`} />
+        </section>
+
+        <Link
+          href="/alerts/browse"
+          onClick={() => logEvent('alert_browse_open', { source: 'alerts_tab' })}
+          className="flex items-center justify-between rounded-[28px] border border-blue-100 bg-[linear-gradient(135deg,#EEF5FF_0%,#FFFFFF_100%)] p-4 shadow-sm"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#0B63F6] text-white">
+              <Bell className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-black text-[#0B63F6]">자체 알람 엔진</p>
+              <h2 className="mt-1 text-xl font-black text-slate-950">알람둘러보기</h2>
+              <p className="mt-1 truncate text-xs font-semibold text-slate-500">A-O 국장 알람 목록과 추천 조건을 확인합니다.</p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+        </Link>
+
+        <section className="space-y-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-black">관심종목</h2>
+              <p className="mt-1 text-xs font-semibold text-slate-500">저장한 종목은 알림을 만들기 전 임시 관찰 카드로 모읍니다.</p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-black text-blue-700">{state.savedCardIds.length}</span>
+          </div>
+          {savedCards.length ? (
+            <div className="grid grid-cols-1 gap-2">
+              {savedCards.map((card) => (
+                <div key={card.id} className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-blue-50 text-[#0B63F6]">
+                      <Bookmark className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-black text-slate-950">{card.name}</p>
+                      <p className="mt-1 truncate text-xs font-semibold text-slate-500">{card.symbol} · {card.theme ?? '국장 관심'}</p>
+                    </div>
+                  </div>
+                  <span className={(card.changePct ?? 0) < 0 ? 'shrink-0 text-sm font-black text-blue-600' : 'shrink-0 text-sm font-black text-rose-500'}>
+                    {typeof card.changePct === 'number' ? `${card.changePct > 0 ? '+' : ''}${card.changePct.toFixed(1)}%` : '관찰'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 text-center text-sm font-bold text-slate-500">
+              홈 카드의 저장 버튼을 누르면 여기에 관심종목 카드가 쌓입니다.
+            </div>
+          )}
         </section>
 
         <section className="space-y-3">
