@@ -2,52 +2,72 @@
 
 ## Environment
 
-- Date: 2026-05-14
-- Branch: `feature/krx-alternative-short-flow`
-- App version: `0.5.0-live-data`
-- Database: not configured locally for this run
+- Date: 2026-05-18
+- Branch: `feature/home-feed-card-ui-v1`
+- App URL under local verification: `http://127.0.0.1:3401`
+- Production target URL: `https://stock-app-mu-three.vercel.app/`
 
-## Public Provider Smoke Test
+## Rendering Policy
 
-`npm run data:smoke` succeeded with at least one keyless public provider. All three checked providers returned data:
+Current phase is Korean-equity-first.
 
-| Provider | Endpoint | Result |
-|---|---|---|
-| Binance | `https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT` | HTTP 200, BTCUSDT live price/change/volume returned. |
-| Upbit | `https://api.upbit.com/v1/ticker?markets=KRW-BTC` | HTTP 200, KRW-BTC live price/change/volume returned. |
-| Alternative Fear & Greed | `https://api.alternative.me/fng/?limit=1` | HTTP 200, value/classification returned. |
+- Home/Explore UI shows KR cards only
+- US/crypto providers may still exist in the codebase, but are not the active phase-1 UI surface
+- Home first response should stay fast by preferring runtime/DB/fallback over blocking provider fetch
 
-## Rendering Path
+## What was implemented in this pass
 
-- When the database is unavailable or empty, `/api/cards/feed` attempts real public crypto providers before considering mock mode.
-- In `DATA_MODE=live`, mock cards are not returned unless mock mode is explicitly enabled.
-- Public crypto cards include `dataBasisLabel`, `source`, `updatedAt`, `price`, `changePct`, `volume`, and `isMock: false`.
+1. `scripts/api-provider-smoke.ts`
+   - loads `.env.local`
+   - supports env alias normalization
+   - adds DB connectivity smoke
 
-## UI Verification
+2. `src/app/api/cards/detail/route.ts`
+   - card back can now request live detail data by symbol/card context
 
-| Page | Data Source | Status | Notes |
-|---|---|---|---|
-| Home | `/api/cards/feed` | implemented | Shows live public crypto cards or an honest empty state. |
-| Data status | `/api/provider-status` | implemented | Shows provider state and missing env. |
-| Rankings/report | DB/provider APIs | implemented policy | Uses data APIs and no premium/user-behavior copy. |
+3. `src/lib/cards/buildCardDetailData.ts`
+   - Naver News live fetch
+   - OpenDART live fetch
+   - DB-first fallback if present
+   - search-entry fallback if live/DB unavailable
 
-`npm run data:verify-render` passed against `http://localhost:3000`; the feed returned 8 live cards with `isMock: false`.
+4. `src/components/home/StockCardBack.tsx`
+   - uses detail API response for news/disclosures
+   - shows provider source hint
+   - renders `AlertBrowsePanel` inline for A-O alert browsing
 
-`POST /api/admin/refresh-all` was also called locally with `Authorization: Bearer CRON_SECRET`; it returned `ok: true` and 10 job results.
+## Verified UI behavior
 
-Additional cards now render from configured API keys:
+### Front
 
-- Data.go.kr: Samsung Electronics EOD price/change/volume/amount.
-- Alpaca: Apple daily snapshot.
-- Naver News: Samsung Electronics news title/link basis.
-- Kiwoom REST: Samsung Electronics short selling, stock lending, and investor-flow summary.
+- KR home card renders
+- feed fast mode responds quickly
+- sample/live card chart path remains intact
 
-## Banned Copy Verification
+### Back
 
-`npm run check:banned-copy` passed for `src/app`, `src/components`, `src/lib`, and `src/context`.
+- actual Naver News items render when available
+- actual OpenDART filings render when corp code is available
+- direct DART receipt link is used
+- `알람 둘러보기` section is visible
+- diagnosis/external-link sections remain visible
 
-## Known Gaps
+## Smoke Results
 
-- DB-backed persistence for KR EOD, OpenDART, Naver, SEC, and KRX requires deployment env and database migration.
-- US direct price API is optional. If disabled, US price/rate/chart must be shown through TradingView widgets only.
-- KRX direct short/flow labels are still blocked by missing KRX API IDs. The app now uses Kiwoom REST as the tested read-only fallback and documents redistribution caveats.
+```text
+[PASS] GET / 52ms
+[PASS] GET /alerts 75ms
+[PASS] GET /api/cards/feed?mode=fast 13ms count=9
+[PASS] GET /api/live-signals 165ms count=0
+[PASS] GET /api/live-alert-triggers 106ms count=0
+[PASS] GET /api/cron/live-runtime-sync 118ms mode=fallback
+[PASS] condition-alerts CRUD fallback 142ms
+[PASS] fixture live-alert-triggers count=1
+```
+
+## Limits of this phase
+
+- DB-backed NewsMention persistence is not locally proven without `DATABASE_URL`
+- KIS minute-bar runtime is still a worker concern
+- Kiwoom downstream read TRs remain blocked despite token issuance
+- KRX direct API remains blocked until API IDs are available
