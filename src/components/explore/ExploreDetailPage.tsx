@@ -5,7 +5,7 @@ import { MobileShell } from '@/components/layout/MobileShell';
 import { exploreMeta, getExplorePayload, type ExploreSlug } from '@/lib/exploreLive';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
-const marketFilters = ['전체', '국장', '미장', '코인'];
+const marketFilters = ['전체', '국장'];
 
 export async function ExploreDetailPage({ slug }: { slug: ExploreSlug }) {
   const config = exploreMeta[slug];

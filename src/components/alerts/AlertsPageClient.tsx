@@ -47,13 +47,13 @@ export function AlertsPageClient({ initialLiveTriggers, fetchOnMount = false }: 
   const expiring = active.filter((alert) => alert.expiresAt && new Date(alert.expiresAt).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000);
   const savedCards = useMemo(() => {
     const saved = new Set(state.savedCardIds);
-    return cards.filter((card) => saved.has(card.id)).slice(0, 6);
+    return cards.filter((card) => card.market === 'KR' && saved.has(card.id)).slice(0, 6);
   }, [cards, state.savedCardIds]);
 
   useEffect(() => {
     fetch('/api/cards/feed?mode=fast')
       .then((response) => response.json())
-      .then((data: { items?: DisplayCard[] }) => setCards(data.items ?? []))
+      .then((data: { items?: DisplayCard[] }) => setCards((data.items ?? []).filter((card) => card.market === 'KR')))
       .catch(() => setCards([]));
   }, []);
 

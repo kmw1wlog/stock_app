@@ -1,7 +1,8 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Bell, CheckCircle2, Copy, ExternalLink, Newspaper, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Bell, CheckCircle2, ExternalLink, Newspaper, RotateCcw } from 'lucide-react';
 import { StickyAlertDock } from '@/components/home/StickyAlertDock';
 import { useAppState } from '@/context/AppStateContext';
 import {
@@ -15,13 +16,15 @@ import {
   buildSummaryChange,
   buildSummaryPrice,
 } from '@/lib/cards/cardUiCopy';
-import { buildConditionCopyViewModel } from '@/lib/cards/conditionCopy';
+import { pickRecommendedAlertEngine } from '@/lib/cards/alertEngineCatalog';
 import { buildFrontCardViewModel } from '@/lib/cards/frontCardViewModel';
 import { opendartSearchUrl, youtubeSearchUrl } from '@/lib/externalLinks';
 import type { FormulaCandidate, FormulaDefinition } from '@/lib/formulas/formulaCatalog';
 import type { DisplayCard } from '@/lib/marketDataTypes';
 
 type BackSection = 'top' | 'news' | 'condition' | 'similar';
+
+const AlertSetupModal = dynamic(() => import('@/components/alerts/AlertSetupModal').then((mod) => mod.AlertSetupModal), { ssr: false });
 
 type StockCardBackProps = {
   card: DisplayCard;
@@ -40,7 +43,6 @@ const diagnosisTone = {
 } as const;
 
 type SimilarTab = 'chart' | 'theme' | 'history';
-type ConditionPlatform = 'kiwoom' | 'tradingview';
 
 function getScrollParent(element: HTMLElement | null): HTMLElement | Window {
   let current = element?.parentElement ?? null;
@@ -78,10 +80,10 @@ export function StockCardBack({
   initialSection = 'top',
   onShowFront,
 }: StockCardBackProps) {
-  const { copyFormula, logEvent, showToast } = useAppState();
+  const { logEvent } = useAppState();
   const [similarTab, setSimilarTab] = useState<SimilarTab>('chart');
-  const [conditionPlatform, setConditionPlatform] = useState<ConditionPlatform>('kiwoom');
   const [floatDock, setFloatDock] = useState(true);
+  const [alertOpen, setAlertOpen] = useState(false);
   const containerRef = useRef<HTMLElement | null>(null);
   const topRef = useRef<HTMLDivElement | null>(null);
   const newsRef = useRef<HTMLDivElement | null>(null);
@@ -96,7 +98,7 @@ export function StockCardBack({
   const disclosureItems = useMemo(() => buildDetailDisclosureItems(card), [card]);
   const diagnosisItems = useMemo(() => buildDetailedDiagnosisItems(card), [card]);
   const alertSummary = useMemo(() => buildAlertConditionSummary(card, formula), [card, formula]);
-  const conditionCopy = useMemo(() => buildConditionCopyViewModel(card, formula), [card, formula]);
+  const recommendedEngine = useMemo(() => pickRecommendedAlertEngine(formula.key), [formula.key]);
   const externalLinks = useMemo(() => buildExternalLinkItems(card), [card]);
   const historyCards = useMemo(() => [...sameChartCards, ...sameThemeCards].filter((item, index, array) => array.findIndex((candidate) => candidate.id === item.id) === index).slice(0, 4), [sameChartCards, sameThemeCards]);
 
@@ -166,25 +168,6 @@ export function StockCardBack({
       { cardKey: card.id, symbol: card.symbol, market: card.market, source: 'card_back' },
     );
     if (href) window.open(href, '_blank', 'noopener,noreferrer');
-  };
-
-  const copyCondition = async () => {
-    const text = conditionPlatform === 'kiwoom' ? conditionCopy.kiwoomTemplate : conditionCopy.tradingViewTemplate;
-    const eventName = conditionPlatform === 'kiwoom' ? 'copy_condition_kiwoom' : 'copy_condition_tradingview';
-    logEvent(eventName, { cardKey: card.id, symbol: card.symbol, market: card.market, formulaKey: formula.key });
-    copyFormula(`${card.id}-${conditionPlatform}`, {
-      cardKey: card.id,
-      symbol: card.symbol,
-      market: card.market,
-      platform: conditionPlatform,
-      formulaKey: formula.key,
-    });
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast(`${conditionPlatform === 'kiwoom' ? '키움' : 'TradingView'} 복사용 템플릿을 복사했습니다.`);
-    } catch {
-      showToast('복사 권한이 없어 템플릿을 직접 선택해 복사해 주세요.');
-    }
   };
 
   return (
@@ -321,48 +304,33 @@ export function StockCardBack({
       <section ref={conditionRef} className="mt-5 rounded-[28px] border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-2">
           <Bell className="h-4 w-4 text-[#2563EB]" />
-          <h3 className="text-sm font-black text-slate-950">알림 조건 / 조건식 복사</h3>
+          <h3 className="text-sm font-black text-slate-950">알림 조건</h3>
         </div>
         <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-3">
-          <p className="text-[11px] font-black text-blue-700">현재 추천 조건</p>
-          <p className="mt-1 text-base font-black text-slate-950">{conditionCopy.conditionName}</p>
-          <p className="mt-2 text-[12px] font-semibold leading-5 text-slate-600">
-            전고점 재시도 구간에서 거래대금과 수급이 같이 붙으면 다시 알려드립니다.
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-black text-blue-700">현재 추천 알림</p>
+              <p className="mt-1 text-base font-black text-slate-950">{alertSummary}</p>
+            </div>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#0B63F6] text-xs font-black text-white">
+              {recommendedEngine.code}
+            </span>
+          </div>
+          <p className="mt-2 text-[12px] font-semibold leading-5 text-slate-600">{recommendedEngine.summary}</p>
+          <p className="mt-2 text-[11px] font-black text-slate-500">{recommendedEngine.easyRule}</p>
         </div>
-
-        <div className="mt-4 inline-flex rounded-full bg-slate-100 p-1">
-          {([
-            ['kiwoom', '키움'],
-            ['tradingview', 'TradingView'],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setConditionPlatform(key)}
-              className={`rounded-full px-4 py-2 text-[11px] font-black ${conditionPlatform === key ? 'bg-white text-[#2563EB] shadow-sm' : 'text-slate-500'}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-950 px-3 py-3 text-left">
-          <p className="text-[11px] font-black text-blue-200">{conditionPlatform === 'kiwoom' ? '키움 조건식 복사용 템플릿' : 'TradingView 복사용 템플릿'}</p>
-          <pre className="mt-2 max-h-44 overflow-hidden whitespace-pre-wrap text-[11px] font-semibold leading-5 text-slate-100">
-            {conditionPlatform === 'kiwoom' ? conditionCopy.kiwoomTemplate : conditionCopy.tradingViewTemplate}
-          </pre>
-        </div>
-        <p className="mt-2 text-[11px] font-semibold leading-5 text-slate-500">{conditionCopy.explanation}</p>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={copyCondition}
+            onClick={() => {
+              logEvent('card_alert_setup_click', { cardKey: card.id, symbol: card.symbol, market: card.market, formulaKey: formula.key, source: 'back_section' });
+              setAlertOpen(true);
+            }}
             className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#0B63F6] text-xs font-black text-white"
           >
-            <Copy className="h-4 w-4" />
-            조건식 복사
+            <Bell className="h-4 w-4" />
+            이 알람으로 받기
           </button>
           <a
             href={`/alerts/browse?symbol=${encodeURIComponent(card.symbol)}&cardKey=${encodeURIComponent(card.id)}&formulaKey=${encodeURIComponent(formula.key)}`}
@@ -465,7 +433,7 @@ export function StockCardBack({
           앞면으로 돌아가기
         </button>
       </div>
-
+      <AlertSetupModal card={card} formula={formula} open={alertOpen} onClose={() => setAlertOpen(false)} />
     </section>
   );
 }
