@@ -126,6 +126,10 @@ function dateRange(days = 20) {
   return { start: ymd(start), end: ymd(end) };
 }
 
+function kiwoomStockCode(symbol: string) {
+  return symbol.includes(':') ? symbol : `KRX:${symbol}`;
+}
+
 function tokenExpiresAt(expiresDt?: string) {
   if (!expiresDt || !/^\d{14}$/.test(expiresDt)) return Date.now() + 55 * 60 * 1000;
   const year = Number(expiresDt.slice(0, 4));
@@ -190,13 +194,14 @@ export async function fetchKiwoomKrFlow(symbol = '005930'): Promise<ProviderResu
   if (cachedFlow && cachedFlow.key === cacheKey && cachedFlow.expiresAt > Date.now()) return cachedFlow.result;
 
   const { start, end } = dateRange(20);
-  const shortSelling = await callKiwoomRest('ka10014', '/api/dostk/shsa', { stk_cd: symbol, strt_dt: start, end_dt: end });
-  const lending = await callKiwoomRest('ka20068', '/api/dostk/slb', { stk_cd: symbol });
-  const investor = await callKiwoomRest('ka10059', '/api/dostk/stkinfo', { stk_cd: symbol, dt: end, amt_qty_tp: '1', trde_tp: '0', unit_tp: '1' });
+  const stockCode = kiwoomStockCode(symbol);
+  const shortSelling = await callKiwoomRest('ka10014', '/api/dostk/shsa', { stk_cd: stockCode, strt_dt: start, end_dt: end });
+  const lending = await callKiwoomRest('ka20068', '/api/dostk/slb', { stk_cd: stockCode });
+  const investor = await callKiwoomRest('ka10060', '/api/dostk/chart', { stk_cd: stockCode, dt: end, amt_qty_tp: '1', trde_tp: '0', unit_tp: '1' });
 
   const shortSellingRows = asRows<KiwoomShortSellingRow>(shortSelling.shrts_trnsn);
   const lendingRows = asRows<KiwoomLendingRow>(lending.dbrt_trde_trnsn);
-  const investorRows = asRows<KiwoomInvestorRow>(investor.stk_invsr_orgn);
+  const investorRows = asRows<KiwoomInvestorRow>(investor.stk_invsr_orgn_chart);
   const latestShort = shortSellingRows[0];
   const latestLending = lendingRows[0];
   const latestInvestor = investorRows[0];
