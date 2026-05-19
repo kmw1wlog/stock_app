@@ -16,6 +16,7 @@
     "api:smoke": "tsx scripts/api-provider-smoke.ts",
     "smoke:providers": "tsx scripts/api-provider-smoke.ts",
     "front-feed:build": "tsx scripts/build-front-feed-runtime.ts",
+    "verify:front-card": "node scripts/verify-front-card-render.mjs",
     "data:verify-render": "tsx scripts/verify-render-data.ts",
     "smoke:pre-apk": "tsx scripts/smoke-pre-apk.ts",
     "seed:test-alert": "tsx scripts/seed-test-live-alert.ts",

@@ -33,12 +33,25 @@ export function isFallbackCard(card: DisplayCard) {
     .join(' ')
     .toLowerCase();
 
-  return (
+  const hasQuantitativeFrontData =
+    typeof card.price === 'number' ||
+    typeof card.changePct === 'number' ||
+    typeof card.amount === 'number' ||
+    typeof card.volume === 'number' ||
+    Boolean(card.technicalSnapshot && Object.keys(card.technicalSnapshot).length > 0) ||
+    Boolean(card.headline?.trim()) ||
+    Boolean(card.newsSubline?.trim()) ||
+    Boolean(card.alertConditionLabel?.trim());
+
+  const hardFallbackSource =
     card.isMock === true ||
     card.id.startsWith('fallback-') ||
-    /fallback|default-watchlist|shell-first|mock|fixture|local/.test(joined) ||
-    bannedFrontPhrases.some((phrase) => joined.includes(phrase.toLowerCase()))
-  );
+    /default-watchlist|shell-first|local-fallback|front-runtime-fallback/.test(joined) ||
+    bannedFrontPhrases.some((phrase) => joined.includes(phrase.toLowerCase()));
+
+  if (hardFallbackSource) return true;
+  if (hasQuantitativeFrontData) return false;
+  return /fallback|mock|local/.test(joined);
 }
 
 export function sanitizeFrontText(value: string | null | undefined, fallback = '') {

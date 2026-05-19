@@ -2,7 +2,7 @@
 
 ## Environment
 
-- Date: 2026-05-18
+- Date: 2026-05-19
 - Branch: `feature/home-feed-card-ui-v1`
 - Runtime mode: `DATA_MODE=live`
 - Local env: `.env.local`
@@ -40,7 +40,7 @@ Result summary:
 | Coinalyze | pass | BTC perpetual open interest returned |
 | KIS token | pass | token issued |
 | Kiwoom token | pass | token issued |
-| Kiwoom KR short/flow | fail | token issued but downstream REST calls returned `8005: Token이 유효하지 않습니다` |
+| Kiwoom KR short/flow | partial pass | token issued and downstream REST calls now return `return_code=0`, but meaningful rows are still empty |
 | Database | missing | `DATABASE_URL` absent locally |
 | KRX Open API | missing | `KRX_SHORT_SELLING_API_ID`, `KRX_INVESTOR_FLOW_API_ID` missing |
 
@@ -54,8 +54,8 @@ Result summary:
 Inference from official docs + runtime behavior:
 
 - token 발급은 성공
-- IP allowlist 자체는 통과한 가능성이 높음
-- 그러나 개별 read TR 사용 조건 또는 추가 인증 상태 때문에 실조회가 거절되는 상태로 보임
+- downstream 단건 조회도 `return_code=0` 응답까지는 올라옴
+- 다만 현재 샘플 호출에서는 공매도/대차/투자자 수급 row가 비어 있어, 실제 의미 있는 실데이터 적재 검증은 추가 TR/장중 데이터로 이어서 확인 필요
 
 ## App Rendering Verification
 
